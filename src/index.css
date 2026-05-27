@@ -168,7 +168,7 @@ header {
 
 /* HERO */
 .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://salamaleques.pt/services/sesimbra-castle-espichel-cape/') center/cover no-repeat;
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://salamaleques.pt/wp-content/uploads/2023/08/Castelo-Sesimbra-1f2ff80958ccd906cbdd9964405c06d1.jpeg') center/cover no-repeat;
     min-height: 85vh;
     display: flex;
     align-items: center;
