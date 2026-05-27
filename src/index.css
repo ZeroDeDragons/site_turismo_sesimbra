@@ -168,7 +168,7 @@ header {
 
 /* HERO */
 .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1590077428593-a55bb4cae5fb?q=80&w=2070&auto=format') center/cover no-repeat;
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://salamaleques.pt/services/sesimbra-castle-espichel-cape/') center/cover no-repeat;
     min-height: 85vh;
     display: flex;
     align-items: center;
