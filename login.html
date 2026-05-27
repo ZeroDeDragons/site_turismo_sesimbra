@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login | Castelo Sesimbra</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="src/login.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- lado esquerdo -->
+<div class="login-visual">
+  <a href="#" class="visual-logo">Castelo<span>Sesimbra</span></a>
+
+  <div>
+    <div class="visual-tag">
+      <span></span>
+      Plataforma Turística
+    </div>
+    <h1 class="visual-title">Entre a serra<br>e o <em>mar azul</em></h1>
+    <p class="visual-sub">Descobre rotas históricas, pontos de interesse e paisagens únicas da freguesia do Castelo de Sesimbra.</p>
+  </div>
+</div>
+
+<!-- lado direito -->
+<div class="login-panel">
+  <div class="panel-content">
+
+    <span class="panel-eyebrow">Área Pessoal</span>
+    <h2 class="panel-title">Bem-vindo<br>de volta</h2>
+    <p class="panel-sub">Ainda não tens conta? <a href="#">Regista-te aqui</a></p>
+
+    <div class="error-msg" id="errorMsg">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Email ou palavra-passe incorretos.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <div class="input-wrap">
+        <input class="form-input" type="email" id="email" placeholder="o.teu@email.pt" autocomplete="email">
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">Palavra-passe</label>
+      <div class="input-wrap">
+        <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <button class="password-toggle" id="togglePwd" type="button" aria-label="Mostrar palavra-passe">
+          <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="remember-label">
+        <input type="checkbox" id="remember">
+        Lembrar-me
+      </label>
+      <a href="#" class="forgot-link">Esqueci a palavra-passe</a>
+    </div>
+
+    <button class="btn-login" id="loginBtn" type="button">
+      Entrar na plataforma
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+
+    <div class="divider">ou</div>
+
+    <a href="#" class="btn-guest">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Continuar como visitante
+    </a>
+
+    <div class="panel-footer">
+      Ao entrar, aceitas os nossos <a href="#">Termos de Utilização</a> e <a href="#">Política de Privacidade</a>.
+    </div>
+
+  </div>
+</div>
+
+    <script src="src/login.js"></script>
+
+</body>
+</html>     
