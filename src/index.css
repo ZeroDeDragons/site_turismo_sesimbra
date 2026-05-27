@@ -144,6 +144,10 @@ header {
     color: var(--secondary);
 }
 
+.nav-links a:hover::after { 
+    width: 100%; 
+}
+
 .logout-header-btn {
     display: flex;
     align-items: center;
