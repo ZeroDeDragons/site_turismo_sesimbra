@@ -346,7 +346,7 @@ header {
 }
 
 .search-btn-action {
-    background: var(--secondary);
+    background: #db6e43;
     border: none;
     color: white;
     width: 44px;
@@ -362,7 +362,7 @@ header {
 
 .search-btn-action:hover {
     transform: scale(1.05);
-    background: #176488;
+    background: #c55a33;
 }
 
 .search-results-dropdown {
