@@ -534,4 +534,4 @@ function gerarCardsHTML(locais) {
             </div>
         `;
     }).join('');
-}   
+}
