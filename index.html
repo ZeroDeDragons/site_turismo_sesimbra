@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Castelo de Sesimbra | Rotas e História</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;800&family=Poppins:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+    <link rel="icon" type="image/png" href="Imagens/logo.png">
+    <link rel="stylesheet" href="src/index.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="navbar">
+                <a href="#" class="logo">Castelo<span>Sesimbra</span></a>
+                <ul class="nav-links">
+                    <li><a href="#">Início</a></li>
+                    <li><a href="#rotas">Rotas</a></li>
+                    <li><a href="#historicos">Pontos Históricos</a></li>
+                    <li><a href="#mapa">Mapa</a></li>
+                    <li class="user-nav-item">
+                        <div class="user-header-btn" id="userHeaderBtn">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="user-header-name">Visitante</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="user-header-dropdown" id="userHeaderDropdown">
+                            <button class="dropdown-item" id="fakeProfileBtn">
+                                <i class="fas fa-user"></i> Meu Perfil
+                            </button>
+                            <hr class="dropdown-divider">
+                            <button class="dropdown-item logout-item" id="fakeLogoutBtn">
+                                <i class="fas fa-sign-out-alt"></i> Sair
+                            </button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Descobre a História e as Rotas do Castelo de Sesimbra</h1>
+                    <p>Entre a serra e o mar, uma viagem pela herança medieval, paisagens únicas e trilhos
+                        inesquecíveis.</p>
+                    <div class="btn-group">
+                        <a href="#rotas" class="btn btn-primary"><i class="fas fa-route"></i> Ver Rotas</a>
+                        <a href="#historicos" class="btn btn-outline"><i class="fas fa-landmark"></i> Pontos
+                            Históricos</a>
+                        <a href="#mapa" class="btn btn-outline"><i class="fas fa-map-marked-alt"></i> Mapa
+                            Interativo</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="rotas" class="section">
+            <div class="container">
+                <div class="section-title">
+                    <h2><i class="fas fa-hiking"></i> Rotas Turísticas</h2>
+                    <p>Percursos pedestres que revelam a natureza e a história da freguesia do Castelo</p>
+                </div>
+                <div class="cards-grid" id="rotas-container">
+                    <!-- Rotas serão carregadas dinamicamente -->
+                </div>
+            </div>
+        </section>
+
+        <section id="historicos" class="section section-light">
+            <div class="container">
+                <div class="section-title">
+                    <h2><i class="fas fa-monument"></i> Pontos Históricos</h2>
+                    <p>Património que conta a história do Castelo e da sua comunidade</p>
+                </div>
+                <div class="cards-grid" id="historicos-container">
+                    <!-- Pontos históricos serão carregados dinamicamente -->
+                </div>
+            </div>
+        </section>
+
+        <section id="mapa" class="section">
+            <div class="container">
+                <div class="section-title">
+                    <h2><i class="fas fa-map"></i> Mapa Interativo</h2>
+                    <p>Navegue pelos principais atrativos do território - Castelo, Farol, Miradouros e Trilhos</p>
+                </div>
+
+                <div class="search-bar-container">
+                    <div class="search-bar-wrapper">
+                        <div class="search-input-group">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="search-location-input" placeholder="Pesquisar lugar em Sesimbra..."
+                                class="search-input">
+                            <button id="search-location-btn" class="search-btn-action">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <div id="search-results-dropdown" class="search-results-dropdown" style="display: none;">
+                            <div class="search-results-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mapa-container">
+                    <div id="map"></div>
+                </div>
+
+                <div class="filtro-categorias-container" style="margin-top: 20px;">
+                    <div class="filtro-header">
+                        <i class="fas fa-filter"></i>
+                        <h4>Filtrar por Categoria</h4>
+                    </div>
+                    <div class="filtro-botoes" id="filtro-botoes-container">
+                        <!-- Botões de filtro serão gerados dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>Castelo de Sesimbra</h4>
+                    <p>Uma freguesia rica em história, natureza e tradições. Entre a serra e o mar, descubra património
+                        único e paisagens de tirar o fôlego.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Youtube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="#">Início</a></li>
+                        <li><a href="#rotas">Rotas Turísticas</a></li>
+                        <li><a href="#historicos">Pontos Históricos</a></li>
+                        <li><a href="#mapa">Mapa Interativo</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Contactos</h4>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Castelo, Sesimbra, Portugal</li>
+                        <li><i class="fas fa-phone"></i> +351 212 345 678</li>
+                        <li><i class="fas fa-envelope"></i> geral@jf-castelo.pt</li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Informação</h4>
+                    <ul>
+                        <li><a href="#">Política de Privacidade</a></li>
+                        <li><a href="#">Termos de Utilização</a></li>
+                        <li><a href="#">Livro de Reclamações</a></li>
+                        <li><a href="#">Acessibilidade</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-left">
+                    <p>© 2026 Castelo de Sesimbra — Turismo, História e Natureza</p>
+                </div>
+                <div class="footer-bottom-right">
+                    <p><i class="fas fa-user-check"></i> Bem-vindo, <strong>Visitante</strong></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <script type="module" src="/src/index.js"></script>
+</body>
+</html>

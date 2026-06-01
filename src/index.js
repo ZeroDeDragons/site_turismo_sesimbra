@@ -358,7 +358,6 @@ async function gerenciarEstadoUsuario() {
 gerenciarEstadoUsuario();
 
 // Configuração do clique no botão principal (Visitante / Nome do Usuário)
-// Configuração do clique no botão principal (Visitante / Nome do Usuário)
 if (userBtn) {
     userBtn.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -368,42 +367,8 @@ if (userBtn) {
         const usuarioLogado = await gerenciarEstadoUsuario();
 
         if (!usuarioLogado) {
-            // DEBUG: Verificar onde o login.html está
-            console.log('=== DEBUG LOGIN ===');
-            console.log('URL atual:', window.location.href);
-            console.log('Origem:', window.location.origin);
-            console.log('Caminho base:', window.location.pathname);
-            
-            // Tentar encontrar o login.html
-            const possiveisCaminhos = [
-                '/login.html',
-                'login.html',
-                './login.html',
-                `${window.location.origin}/login.html`,
-                '/public/login.html',
-                'public/login.html'
-            ];
-            
-            for (const caminho of possiveisCaminhos) {
-                try {
-                    const response = await fetch(caminho, { method: 'HEAD' });
-                    if (response.ok) {
-                        console.log(`✅ login.html encontrado em: ${caminho}`);
-                        // Redireciona para o caminho que funcionou
-                        window.location.href = caminho;
-                        return;
-                    } else {
-                        console.log(`❌ ${caminho} - Status: ${response.status}`);
-                    }
-                } catch (err) {
-                    console.log(`❌ ${caminho} - Erro:`, err.message);
-                }
-            }
-            
-            // Se nenhum caminho funcionou, mostra mensagem de erro
-            alert('Página de login não encontrada. Contate o administrador.');
-            console.error('❌ login.html não encontrado em nenhum caminho testado!');
-            
+            // SE NÃO ESTIVER LOGADO: Manda direto para a página de login
+            window.location.href = 'login.html'; 
         } else {
             // SE ESTIVER LOGADO: Mostra/oculta as opções "Meu Perfil" e "Sair"
             userBtn.classList.toggle('active');
