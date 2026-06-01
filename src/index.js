@@ -322,93 +322,93 @@ async function initMap() {
         }
     });
 
-    // --- CONFIGURAÇÃO E AUTENTICAÇÃO DO USUÁRIO (SUPABASE) ---
+// --- CONFIGURAÇÃO E AUTENTICAÇÃO DO USUÁRIO (SUPABASE) ---
 
-    // Elementos do DOM
-    const userBtn = document.getElementById('userHeaderBtn');
-    const userDropdown = document.getElementById('userHeaderDropdown');
-    const userHeaderName = document.querySelector('.user-header-name');
-    const profileBtn = document.getElementById('profileBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
+// Elementos do DOM
+const userBtn = document.getElementById('userHeaderBtn');
+const userDropdown = document.getElementById('userHeaderDropdown');
+const userHeaderName = document.querySelector('.user-header-name');
+const fakeProfileBtn = document.getElementById('fakeProfileBtn');
+const fakeLogoutBtn = document.getElementById('fakeLogoutBtn');
 
-    // Função global para verificar o status do login e atualizar o botão
-    async function gerenciarEstadoUsuario() {
-        try {
-            const { data: { user }, error } = await supabase.auth.getUser();
+// Função global para verificar o status do login e atualizar o botão
+async function gerenciarEstadoUsuario() {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
 
-            if (error || !user) {
-                // Se NÃO está logado: Garante que o texto seja Visitante
-                if (userHeaderName) userHeaderName.textContent = 'Visitante';
-                return null;
-            }
-
-            // Se ESTÁ logado: Muda o texto do botão "Visitante" para o nome do usuário
-            const nomeUsuario = user.user_metadata?.full_name || user.email.split('@')[0];
-            if (userHeaderName) userHeaderName.textContent = nomeUsuario;
-            
-            return user;
-        } catch (err) {
-            console.error("Erro ao verificar autenticação:", err);
+        if (error || !user) {
+            // Se NÃO está logado: Garante que o texto seja Visitante
             if (userHeaderName) userHeaderName.textContent = 'Visitante';
             return null;
         }
+
+        // Se ESTÁ logado: Muda o texto do botão "Visitante" para o nome do usuário
+        const nomeUsuario = user.user_metadata?.full_name || user.email.split('@')[0];
+        if (userHeaderName) userHeaderName.textContent = nomeUsuario;
+        
+        return user;
+    } catch (err) {
+        console.error("Erro ao verificar autenticação:", err);
+        if (userHeaderName) userHeaderName.textContent = 'Visitante';
+        return null;
     }
+}
 
-    // Executa assim que o script carrega para definir o nome correto no botão
-    await gerenciarEstadoUsuario();
+// Executa assim que o script carrega para definir o nome correto no botão
+gerenciarEstadoUsuario();
 
-    // Configuração do clique no botão principal (Visitante / Nome do Usuário)
-    if (userBtn) {
-        userBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+// Configuração do clique no botão principal (Visitante / Nome do Usuário)
+if (userBtn) {
+    userBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-            // Verifica o estado atual do Supabase no exato momento do clique
-            const usuarioLogado = await gerenciarEstadoUsuario();
+        // Verifica o estado atual do Supabase no exato momento do clique
+        const usuarioLogado = await gerenciarEstadoUsuario();
 
-            if (!usuarioLogado) {
-                // SE NÃO ESTIVER LOGADO: Manda direto para a página de login
-                window.location.href = '/login.html'; 
-            } else {
-                // SE ESTIVER LOGADO: Mostra/oculta as opções "Meu Perfil" e "Sair"
-                userBtn.classList.toggle('active');
-                userDropdown.classList.toggle('show');
-            }
-        });
-    }
-
-    // Fecha o menu de opções se o usuário clicar em qualquer outro lugar da tela
-    document.addEventListener('click', (e) => {
-        if (userBtn && userDropdown && !userBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-            userBtn.classList.remove('active');
-            userDropdown.classList.remove('show');
+        if (!usuarioLogado) {
+            // SE NÃO ESTIVER LOGADO: Manda direto para a página de login
+            window.location.href = 'login.html'; 
+        } else {
+            // SE ESTIVER LOGADO: Mostra/oculta as opções "Meu Perfil" e "Sair"
+            userBtn.classList.toggle('active');
+            userDropdown.classList.toggle('show');
         }
     });
-
-    // Ação do botão "Meu Perfil"
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            window.location.href = 'perfil.html';
-        });
-    }
-
-    // Ação do botão "Sair" (Logout Real no Supabase)
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const { error } = await supabase.auth.signOut();
-            
-            if (error) {
-                alert('Erro ao sair: ' + error.message);
-            } else {
-                alert('Sessão encerrada com sucesso!');
-                window.location.reload(); // Recarrega a página para voltar a ser "Visitante"
-            }
-        });
-    }
-
-    console.log(`Sistema de login e mapa inicializados com sucesso.`);
 }
+
+// Fecha o menu de opções se o usuário clicar em qualquer outro lugar da tela
+document.addEventListener('click', (e) => {
+    if (userBtn && userDropdown && !userBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+        userBtn.classList.remove('active');
+        userDropdown.classList.remove('show');
+    }
+});
+
+// Ação do botão "Meu Perfil" (Ver...)
+if (fakeProfileBtn) {
+    fakeProfileBtn.addEventListener('click', () => {
+        alert("Redirecionando para a área do usuário...");
+        // window.location.href = 'perfil.html'; // Remova o comentário se tiver essa página
+    });
+}
+
+// Ação do botão "Sair" (Logout Real no Supabase)
+if (fakeLogoutBtn) {
+    fakeLogoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+            alert('Erro ao sair: ' + error.message);
+        } else {
+            alert('Sessão encerrada com sucesso!');
+            window.location.reload(); // Recarrega a página para voltar a ser "Visitante"
+        }
+    });
+}
+
+console.log(`Sistema de login e mapa inicializados com sucesso.`);
 
 function atualizarBotoesFiltroComCategorias(locaisData) {
     const categoriasContainer = document.getElementById('filtro-botoes-container');
