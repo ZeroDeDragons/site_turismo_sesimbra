@@ -1,8 +1,7 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 
-// Configuração do Supabase (SUBSTITUA PELAS SUAS CREDENCIAIS)
-const SUPABASE_URL = 'https://seusupabaseurl.supabase.co';  // ← Coloque sua URL
-const SUPABASE_ANON_KEY = 'sua-chave-anon-aqui';  // ← Coloque sua chave anônima
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Inicializa o Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
