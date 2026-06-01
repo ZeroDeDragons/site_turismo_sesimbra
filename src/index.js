@@ -367,7 +367,15 @@ if (userBtn) {
         const usuarioLogado = await gerenciarEstadoUsuario();
 
         if (!usuarioLogado) {
-            // SE NÃO ESTIVER LOGADO: Manda direto para a página de login
+            // Verificar se o login.html está acessível
+            fetch('/login.html', { method: 'HEAD' })
+                .then(r => console.log('Status do login.html:', r.status, r.ok ? '✅ Encontrado' : '❌ Não encontrado'))
+                .catch(e => console.error('Erro:', e));
+            console.log('URL atual:', window.location.href);
+            fetch('public/login.html', { method: 'HEAD' })
+                .then(r => console.log('Status do login.html:', r.status, r.ok ? '✅ Encontrado' : '❌ Não encontrado'))
+                .catch(e => console.error('Erro:', e));
+            console.log('URL atual:', window.location.href);
             window.location.href = '/public/login.html'; 
         } else {
             // SE ESTIVER LOGADO: Mostra/oculta as opções "Meu Perfil" e "Sair"
