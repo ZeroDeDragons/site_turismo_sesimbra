@@ -368,7 +368,7 @@ async function initMap() {
 
             if (!usuarioLogado) {
                 // SE NÃO ESTIVER LOGADO: Manda direto para a página de login
-                window.location.href = 'login.html'; 
+                window.location.href = '../login.html'; 
             } else {
                 // SE ESTIVER LOGADO: Mostra/oculta as opções "Meu Perfil" e "Sair"
                 userBtn.classList.toggle('active');
