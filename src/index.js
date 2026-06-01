@@ -376,7 +376,7 @@ if (userBtn) {
                 .then(r => console.log('Status do login.html:', r.status, r.ok ? '✅ Encontrado' : '❌ Não encontrado'))
                 .catch(e => console.error('Erro:', e));
             console.log('URL atual:', window.location.href);
-            window.location.href = '/public/login.html'; 
+             
         } else {
             // SE ESTIVER LOGADO: Mostra/oculta as opções "Meu Perfil" e "Sair"
             userBtn.classList.toggle('active');
