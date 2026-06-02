@@ -49,6 +49,7 @@ h4 {
 :root {
     --primary: #979d23;
     --secondary: #23769d;
+    --secondary-dark:#1a5a7a;
     --dark: #37474f;
     --light-bg: #f0f5fc;
     --grey-text: #686868;
@@ -346,7 +347,7 @@ header {
 }
 
 .search-btn-action {
-    background: #db6e43;
+    background: var(--secondary);
     border: none;
     color: white;
     width: 44px;
@@ -362,7 +363,7 @@ header {
 
 .search-btn-action:hover {
     transform: scale(1.05);
-    background: #c55a33;
+    background: var(--secondary-dark);
 }
 
 .search-results-dropdown {
