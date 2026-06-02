@@ -1,17 +1,32 @@
-// Importa o Supabase
 import { createClient } from '@supabase/supabase-js';
 
-// Usa as mesmas variáveis de ambiente do index.js
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Inicializa o Supabase
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SU
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Aguarda o DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('=== DEBUG LOGIN ===');
+    console.log('1. DOM carregado');
+    console.log('2. SUPABASE_URL existe?', !!SUPABASE_URL);
+    console.log('3. SUPABASE_ANON_KEY existe?', !!SUPABASE_ANON_KEY);
     
     // Elementos do DOM
+    const loginBtn = document.getElementById('loginBtn');
+    console.log('4. Botão login encontrado?', loginBtn);
+    
+    if (loginBtn) {
+        console.log('5. Botão encontrado, adicionando evento de clique');
+        loginBtn.addEventListener('click', () => {
+            console.log('6. BOTÃO CLICADO!!!');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            console.log('7. Email:', email);
+            console.log('8. Password preenchida?', password ? 'Sim' : 'Não');
+        });
+    } else {
+        console.error('Botão de login NÃO encontrado! Verifique o ID "loginBtn" no HTML');
+    }
+
     const togglePwd = document.getElementById('togglePwd');
     const pwdInput = document.getElementById('password');
     const eyeIcon = document.getElementById('eyeIcon');
@@ -22,11 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const guestBtn = document.querySelector('.btn-guest');
     const registerLink = document.querySelector('.panel-sub a');
 
-    // Ícones do olho
     const eyeOpenSVG = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
     const eyeClosedSVG = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
 
-    // Mostrar/esconder senha
     if (togglePwd && pwdInput && eyeIcon) {
         togglePwd.addEventListener('click', () => {
             const show = pwdInput.type === 'password';
@@ -35,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Função para mostrar erro
     function showError(message) {
         if (errorMsg) {
             errorMsg.style.display = 'flex';
