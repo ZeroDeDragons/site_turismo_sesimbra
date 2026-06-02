@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient.js';
+
 let currentStep = 1;
 
 function showError(msg){
@@ -133,16 +135,59 @@ document.getElementById('next2').addEventListener('click',()=>{
 
 document.getElementById('back3').addEventListener('click',()=>setStep(2));
 
-document.getElementById('submitBtn').addEventListener('click',()=>{
-  const terms=document.getElementById('terms').checked;
-  if(!terms){ showError('Deves aceitar os Termos de Utilização para continuar.'); return; }
+/* registro com Supabase */
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const terms = document.getElementById('terms').checked;
+  if (!terms) {
+    showError('Deves aceitar os Termos de Utilização para continuar.');
+    return;
+  }
 
-  const btn=document.getElementById('submitBtn');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  const interest = document.getElementById('interest').value;
+  const howFound = document.getElementById('howFound').value;
+  const newsletter = document.getElementById('newsletter').checked;
+
+  const btn = document.getElementById('submitBtn');
   btn.classList.add('loading');
-  btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> A criar…`;
+  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> A criar…`;
 
-  setTimeout(()=>{
-    document.getElementById('panelContent').style.display='none';
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: `${firstName} ${lastName}`,
+          first_name: firstName,
+          last_name: lastName,
+          interest: interest,
+          how_found: howFound,
+          newsletter: newsletter
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    document.getElementById('panelContent').style.display = 'none';
     document.getElementById('successScreen').classList.add('show');
-  },1800);
+
+  } catch (error) {
+    showError(error.message);
+    btn.classList.remove('loading');
+    btn.innerHTML = `Criar Conta <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+  }
 });
+
+/* link para login */
+const loginLink = document.querySelector('.panel-sub a');
+if (loginLink) {
+  loginLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = 'login.html';
+  });
+}

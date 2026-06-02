@@ -1,41 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SU
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('=== DEBUG LOGIN ===');
     console.log('1. DOM carregado');
-    console.log('2. SUPABASE_URL existe?', !!SUPABASE_URL);
-    console.log('3. SUPABASE_ANON_KEY existe?', !!SUPABASE_ANON_KEY);
-    
+
     // Elementos do DOM
     const loginBtn = document.getElementById('loginBtn');
-    console.log('4. Botão login encontrado?', loginBtn);
-    
-    if (loginBtn) {
-        console.log('5. Botão encontrado, adicionando evento de clique');
-        loginBtn.addEventListener('click', () => {
-            console.log('6. BOTÃO CLICADO!!!');
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            console.log('7. Email:', email);
-            console.log('8. Password preenchida?', password ? 'Sim' : 'Não');
-        });
-    } else {
-        console.error('Botão de login NÃO encontrado! Verifique o ID "loginBtn" no HTML');
-    }
-
     const togglePwd = document.getElementById('togglePwd');
     const pwdInput = document.getElementById('password');
     const eyeIcon = document.getElementById('eyeIcon');
-    const loginBtn = document.getElementById('loginBtn');
     const emailInput = document.getElementById('email');
     const errorMsg = document.getElementById('errorMsg');
     const rememberCheckbox = document.getElementById('remember');
     const guestBtn = document.querySelector('.btn-guest');
     const registerLink = document.querySelector('.panel-sub a');
+
+    console.log('2. Botão login encontrado?', !!loginBtn);
+    console.log('3. Supabase importado?', !!supabase);
 
     const eyeOpenSVG = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
     const eyeClosedSVG = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
@@ -59,21 +40,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 </svg>
                 ${message}
             `;
-            
+
             setTimeout(() => {
                 errorMsg.style.display = 'none';
             }, 5000);
         }
     }
 
-    // Função para esconder erro
     function hideError() {
         if (errorMsg) {
             errorMsg.style.display = 'none';
         }
     }
 
-    // Função para salvar sessão
     function salvarSessao(email) {
         if (rememberCheckbox && rememberCheckbox.checked) {
             localStorage.setItem('savedEmail', email);
@@ -84,43 +63,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Carregar email salvo
     function carregarEmailSalvo() {
         const savedEmail = localStorage.getItem('savedEmail');
         const rememberMe = localStorage.getItem('rememberMe');
-        
+
         if (rememberMe === 'true' && savedEmail && emailInput) {
             emailInput.value = savedEmail;
             if (rememberCheckbox) rememberCheckbox.checked = true;
         }
     }
 
-    // Carregar email salvo
     carregarEmailSalvo();
 
-    // Função de login
     async function fazerLogin(email, password) {
         try {
             console.log('Tentando login com:', email);
-            
+
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
                 password: password
             });
-            
+
             if (error) throw error;
-            
+
             console.log('Login bem sucedido!', data.user);
             salvarSessao(email);
-            
-            // Redirecionar para página principal
+
             window.location.href = '/index.html';
-            
+
             return { success: true, user: data.user };
-            
+
         } catch (error) {
             console.error('Erro detalhado:', error);
-            
+
             if (error.message.includes('Invalid login credentials')) {
                 throw new Error('Email ou palavra-passe incorretos');
             } else if (error.message.includes('Email not confirmed')) {
@@ -131,28 +106,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Evento de login
     if (loginBtn && emailInput && pwdInput) {
         loginBtn.addEventListener('click', async () => {
             const email = emailInput.value.trim();
             const password = pwdInput.value;
-            
+
             console.log('Botão clicado - Email:', email);
-            
-            // Validar campos
+
             if (!email || !password) {
                 showError('Preencha todos os campos');
                 return;
             }
-            
-            // Validar formato do email
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showError('Por favor, insira um email válido');
                 return;
             }
-            
-            // Mostrar loading
+
             hideError();
             loginBtn.classList.add('loading');
             const originalBtnHTML = loginBtn.innerHTML;
@@ -163,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 A entrar...
             `;
             loginBtn.disabled = true;
-            
+
             try {
                 await fazerLogin(email, password);
             } catch (error) {
@@ -180,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('pwdInput:', pwdInput);
     }
 
-    // Login com Enter
     if (emailInput && pwdInput && loginBtn) {
         const handleEnter = (e) => {
             if (e.key === 'Enter') {
@@ -188,12 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginBtn.click();
             }
         };
-        
+
         emailInput.addEventListener('keypress', handleEnter);
         pwdInput.addEventListener('keypress', handleEnter);
     }
 
-    // Botão visitante
     if (guestBtn) {
         guestBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -201,40 +170,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Link de registro
     if (registerLink) {
         registerLink.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('Funcionalidade de registro em breve!');
+            window.location.href = 'registo.html';
         });
     }
 
-    // Link "Esqueci a palavra-passe"
     const forgotLink = document.querySelector('.forgot-link');
     if (forgotLink) {
-        forgotLink.addEventListener('click', (e) => {
+        forgotLink.addEventListener('click', async (e) => {
             e.preventDefault();
             const email = emailInput ? emailInput.value.trim() : '';
             if (!email) {
                 showError('Digite seu email para recuperar a palavra-passe');
-            } else {
-                alert(`Um link de recuperação será enviado para ${email}`);
+                return;
+            }
+
+            try {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/login.html',
+                });
+                if (error) throw error;
+                alert(`Um link de recuperação foi enviado para ${email}`);
+            } catch (err) {
+                showError('Erro ao enviar recuperação: ' + err.message);
             }
         });
     }
 
-    // Estilo para animação
     const style = document.createElement('style');
     style.textContent = `
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .btn-login.loading {
             opacity: 0.7;
             cursor: not-allowed;
         }
-        
+
         .error-msg {
             display: none;
             align-items: center;
@@ -246,13 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
             margin-bottom: 20px;
             font-size: 14px;
         }
-        
+
         .error-msg svg {
             flex-shrink: 0;
         }
     `;
     document.head.appendChild(style);
-    
+
     console.log('Sistema de login inicializado');
-    console.log('Supabase URL:', SUPABASE_URL);
 });
