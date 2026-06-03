@@ -1,200 +1,274 @@
-function showSection(id, el) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('sec-' + id).classList.add('active');
-  el.classList.add('active');
-  const titles = {dashboard:'Painel de Administração',utilizadores:'Utilizadores',rotas:'Rotas Turísticas',postos:'Postos Turísticos'};
-  document.getElementById('topbarTitle').textContent = titles[id] || id;
-  if(id==='utilizadores') renderUsers(users);
-  if(id==='rotas') renderRoutes();
-  if(id==='postos') renderPostos();
-}
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Página de Administração</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="src/paginaAdmin.css" rel="stylesheet">
+<link rel="icon" type="image/png" href="Imagens/logo.png">
 
-// ── USERS ──
-function initials(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-const avatarCls = ['','green','orange','','green','','orange','green'];
+</head>
+<body>
 
-function renderUsers(list) {
-  const tb = document.getElementById('userTable');
-  const statusMap = {active:'active',inactive:'inactive',pending:'pending'};
-  const statusLabel = {active:'Ativo',inactive:'Inativo',pending:'Pendente'};
-  const roleLabel = {admin:'Administrador',user:'Utilizador'};
-  const roleCls = {admin:'admin',user:'user'};
-  tb.innerHTML = list.map((u,i) => `
-    <tr>
-      <td><div class="td-name">
-        <div class="td-avatar ${avatarCls[i%8]}">${initials(u.name)}</div>
-        <div><div class="td-main">${u.name}</div></div>
-      </div></td>
-      <td style="color:var(--mid);font-size:13px">${u.email}</td>
-      <td><span class="badge ${roleCls[u.role]}">${roleLabel[u.role]}</span></td>
-      <td style="font-size:13px;color:var(--mid)">${u.interest}</td>
-      <td><span class="badge ${statusMap[u.status]}"><span class="badge-dot"></span>${statusLabel[u.status]}</span></td>
-      <td style="font-size:13px;color:#9ca3af">${u.date}</td>
-      <td><div class="td-actions">
-        <button class="action-btn view" title="Ver" onclick="showToast('A abrir perfil de ${u.name}…')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="action-btn edit" title="Editar" onclick="openModal('user')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="action-btn del" title="Eliminar" onclick="showToast('Utilizador eliminado.')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
-      </div></td>
-    </tr>`).join('');
-}
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="#" class="sidebar-logo">Castelo<span>Sesimbra</span></a>
 
-function filterUsers() {
-  const q = document.getElementById('userSearch').value.toLowerCase();
-  const role = document.getElementById('userRoleFilter').value;
-  const status = document.getElementById('userStatusFilter').value;
-  const filtered = users.filter(u =>
-    (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
-    (!role || u.role === role) &&
-    (!status || u.status === status)
-  );
-  renderUsers(filtered);
-  document.getElementById('userCount').textContent = filtered.length + ' registos';
-}
+  <div class="sidebar-section">Principal</div>
 
-// ── ROUTES ──
-function renderRoutes() {
-  const dif = {Fácil:'#22c55e',Moderada:'#f97316',Difícil:'#ef4444'};
-  document.getElementById('routeGrid').innerHTML = rotas.map(r => `
-    <div class="route-card">
-      <div class="route-img">
-        <div class="route-img-icon" style="font-size:24px">${r.icon}</div>
-        <span style="position:absolute;top:10px;right:10px" class="badge ${r.status==='active'?'active':'inactive'}">
-          <span class="badge-dot"></span>${r.status==='active'?'Ativa':'Inativa'}
-        </span>
+  <a class="nav-item active" onclick="showSection('dashboard',this)">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Painel de Administração
+  </a>
+
+  <div class="sidebar-section">Gestão</div>
+
+  <a class="nav-item" onclick="showSection('utilizadores',this)">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Utilizadores
+    <span class="nav-badge">0</span>
+  </a>
+
+  <a class="nav-item" onclick="showSection('rotas',this)">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    Rotas Turísticas
+  </a>
+
+  <a class="nav-item" onclick="showSection('postos',this)">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+    Pontos Turísticos
+  </a>
+
+  <div class="sidebar-section">Sistema</div>
+
+  <a class="nav-item" onclick="showSection('dashboard',this)">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    Definições
+  </a>
+
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">AS</div>
+      <div class="user-info">
+        <div class="user-name">Admin Sesimbra</div>
+        <div class="user-role">Administrador</div>
       </div>
-      <div class="route-body">
-        <div class="route-name">${r.name}</div>
-        <div class="route-meta">
-          <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18"/></svg>${r.dist}</span>
-          <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${r.dur}</span>
-          <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>${r.pontos} pontos</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="topbarTitle">Painel de Administração</span>
+    <div class="topbar-right">
+      <div class="btn-icon" title="Notificações">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div class="btn-icon" title="Sair">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <button class="btn-primary" id="topbarAddBtn" onclick="openModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Adicionar
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAINEL DE ADMINISTRAÇÃO -->
+    <div class="section active" id="sec-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card c1">
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="stat-label">Utilizadores</div>
+          <div class="stat-value">0</div>
+          <div class="stat-delta up">↑ +6 este mês</div>
         </div>
-        <div class="route-footer">
-          <span style="font-size:11.5px;font-weight:700;color:${dif[r.dif]}">${r.dif}</span>
-          <div style="display:flex;gap:5px">
-            <button class="action-btn view" onclick="showToast('A abrir rota ${r.name}…')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-            <button class="action-btn edit" onclick="openModal('rota')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-            <button class="action-btn del" onclick="showToast('Rota eliminada.')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        <div class="stat-card c2">
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
+          <div class="stat-label">Rotas Ativas</div>
+          <div class="stat-value">12</div>
+          <div class="stat-delta up">↑ +2 novas</div>
+        </div>
+        <div class="stat-card c3">
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div class="stat-label">Postos</div>
+          <div class="stat-value">27</div>
+          <div class="stat-delta up">↑ +3 adicionados</div>
+        </div>
+        <div class="stat-card c4">
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="stat-label">Visitas Hoje</div>
+          <div class="stat-value">134</div>
+          <div class="stat-delta down">↓ -12 vs ontem</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Últimos Registos</div>
+          <span class="card-count">5 recentes</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Utilizador</th><th>Email</th><th>Registo</th><th>Estado</th>
+            </tr></thead>
+            <tbody>
+              <!--<tr><td><div class="td-name"><div class="td-avatar green">LF</div><div><div class="td-main">Luísa Ferreira</div></div></div></td><td>luisa.f@hotmail.com</td><td>02/06/2026</td><td><span class="badge active"><span class="badge-dot"></span>Ativo</span></td></tr>-->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- UTILIZADORES -->
+    <div class="section" id="sec-utilizadores">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Utilizadores</div>
+          <span class="card-count" id="userCount">0 registos</span>
+          <div class="card-actions">
+            <button class="btn-primary" onclick="openModal('user')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo Utilizador
+            </button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" id="userSearch" placeholder="Pesquisar utilizador…" oninput="filterUsers()">
+          </div>
+          <select class="filter-select" id="userRoleFilter" onchange="filterUsers()">
+            <option value="">Todos os perfis</option>
+            <option value="admin">Administrador</option>
+            <option value="user">Utilizador</option>
+          </select>
+          <select class="filter-select" id="userStatusFilter" onchange="filterUsers()">
+            <option value="">Todos os estados</option>
+            <option value="active">Ativo</option>
+            <option value="inactive">Inativo</option>
+            <option value="pending">Pendente</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Nome</th><th>Email</th><th>Perfil</th><th>Interesse</th><th>Estado</th><th>Registo</th><th>Ações</th>
+            </tr></thead>
+            <tbody id="userTable"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="userFooterText">A mostrar 1 de 1</span>
+          <div class="pagination">
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">›</button>
           </div>
         </div>
       </div>
-    </div>`).join('');
-}
+    </div>
 
-// ── PONTOS ──
-function renderPostos() {
-  document.getElementById('postoGrid').innerHTML = postos.map(p => `
-    <div class="posto-card">
-      <div class="posto-icon ${p.cls}">${p.emoji}</div>
-      <div class="posto-info">
-        <div class="posto-name">${p.name}</div>
-        <div class="posto-cat">${p.cat} · ${p.desc}</div>
-        <div class="posto-actions">
-          <button class="action-btn view" onclick="showToast('A abrir ${p.name}…')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-          <button class="action-btn edit" onclick="openModal('posto')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          <button class="action-btn del" onclick="showToast('Posto eliminado.')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
-          <span class="badge ${p.status==='active'?'active':'inactive'}" style="margin-left:auto"><span class="badge-dot"></span>${p.status==='active'?'Ativo':'Inativo'}</span>
+    <!-- ROTAS -->
+    <div class="section" id="sec-rotas">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-title">Rotas Turísticas</div>
+          <span class="card-count">0 rotas</span>
+          <div class="card-actions">
+            <button class="btn-primary" onclick="openModal('rota')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nova Rota
+            </button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" placeholder="Pesquisar rota…">
+          </div>
+          <select class="filter-select">
+            <option value="">Todas as categorias</option>
+            <option>Histórica</option><option>Natural</option><option>Costeira</option>
+          </select>
+          <select class="filter-select">
+            <option value="">Todas as dificuldades</option>
+            <option>Fácil</option><option>Moderada</option><option>Difícil</option>
+          </select>
+        </div>
+        <div style="padding:20px 22px">
+          <div class="route-grid" id="routeGrid"></div>
         </div>
       </div>
-    </div>`).join('');
-}
+    </div>
 
-// ── MODAL ──
-let currentModal = 'user';
-const modalForms = {
-  user: {
-    title: 'Novo Utilizador',
-    html: `
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Nome *</label><input class="modal-input" placeholder="João"></div>
-        <div class="modal-form-group"><label class="modal-label">Apelido *</label><input class="modal-input" placeholder="Silva"></div>
-      </div>
-      <div class="modal-form-group"><label class="modal-label">Email *</label><input class="modal-input" type="email" placeholder="joao@email.pt"></div>
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Perfil</label>
-          <select class="modal-select"><option>Utilizador</option><option>Administrador</option></select>
+    <!-- PONTOS -->
+    <div class="section" id="sec-postos">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Pontos Turísticos e Históricos</div>
+          <span class="card-count">27 pontos</span>
+          <div class="card-actions">
+            <button class="btn-primary" onclick="openModal('posto')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo Ponto  
+            </button>
+          </div>
         </div>
-        <div class="modal-form-group"><label class="modal-label">Estado</label>
-          <select class="modal-select"><option>Ativo</option><option>Inativo</option><option>Pendente</option></select>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" placeholder="Pesquisar ponto...">
+          </div>
+          <select class="filter-select">
+            <option value="">Todas as categorias</option>
+            <option>Histórico</option><option>Natural</option><option>Cultural</option><option>Panorâmico</option>
+          </select>
         </div>
-      </div>
-      <div class="modal-form-group"><label class="modal-label">Interesse Principal</label>
-        <select class="modal-select"><option value="">Seleciona…</option><option>História e Património</option><option>Natureza e Trilhos</option><option>Gastronomia Local</option><option>Praias e Mar</option><option>Fotografia</option></select>
-      </div>`
-  },
-  rota: {
-    title: 'Nova Rota Turística',
-    html: `
-      <div class="modal-form-group"><label class="modal-label">Nome da Rota *</label><input class="modal-input" placeholder="Ex: Trilho do Castelo"></div>
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Categoria</label>
-          <select class="modal-select"><option>Histórica</option><option>Natural</option><option>Costeira</option><option>Cultural</option></select>
-        </div>
-        <div class="modal-form-group"><label class="modal-label">Dificuldade</label>
-          <select class="modal-select"><option>Fácil</option><option>Moderada</option><option>Difícil</option></select>
+        <div style="padding:20px 22px">
+          <div class="posto-grid" id="postoGrid"></div>
         </div>
       </div>
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Distância (km)</label><input class="modal-input" type="number" placeholder="4.5"></div>
-        <div class="modal-form-group"><label class="modal-label">Duração estimada</label><input class="modal-input" placeholder="1h30"></div>
-      </div>
-      <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" placeholder="Descrição da rota…"></textarea></div>
-      <div class="modal-form-group"><label class="modal-label">Estado</label>
-        <select class="modal-select"><option>Ativa</option><option>Inativa</option></select>
-      </div>`
-  },
-  posto: {
-    title: 'Novo Posto Turístico / Histórico',
-    html: `
-      <div class="modal-form-group"><label class="modal-label">Nome do Posto *</label><input class="modal-input" placeholder="Ex: Forte de Santiago"></div>
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Categoria</label>
-          <select class="modal-select"><option>Histórico</option><option>Natural</option><option>Cultural</option><option>Panorâmico</option></select>
-        </div>
-        <div class="modal-form-group"><label class="modal-label">Estado</label>
-          <select class="modal-select"><option>Ativo</option><option>Inativo</option></select>
-        </div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Latitude</label><input class="modal-input" placeholder="38.4412"></div>
-        <div class="modal-form-group"><label class="modal-label">Longitude</label><input class="modal-input" placeholder="-9.1000"></div>
-      </div>
-      <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" placeholder="Breve descrição do posto…"></textarea></div>
-      <div class="modal-form-group"><label class="modal-label">Horário de Visita</label><input class="modal-input" placeholder="Ex: 09:00 – 18:00 (Ter–Dom)"></div>`
-  }
-};
+    </div>
 
-function openModal(type) {
-  currentModal = type || currentModal;
-  const f = modalForms[currentModal];
-  document.getElementById('modalTitle').textContent = f.title;
-  document.getElementById('modalBody').innerHTML = f.html;
-  document.getElementById('modalOverlay').classList.add('show');
-}
+  </div>
+</div>
 
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
-}
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span class="modal-title" id="modalTitle">Adicionar</span>
+      <button class="modal-close" onclick="closeModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
 
-function closeModalOutside(e) {
-  if(e.target === document.getElementById('modalOverlay')) closeModal();
-}
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg">Guardado com sucesso.</span>
+</div>
 
-function saveModal() {
-  closeModal();
-  const msgs = {user:'Utilizador guardado com sucesso!',rota:'Rota adicionada com sucesso!',posto:'Posto adicionado com sucesso!'};
-  showToast(msgs[currentModal] || 'Guardado com sucesso!');
-}
+<script src="src/paginaAdmin.js" ></script>
 
-// ── TOAST ──
-let toastTimer;
-function showToast(msg) {
-  clearTimeout(toastTimer);
-  document.getElementById('toastMsg').textContent = msg;
-  document.getElementById('toast').classList.add('show');
-  toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
-}
-
-// init
-renderUsers(users);
+</body>
+</html>
