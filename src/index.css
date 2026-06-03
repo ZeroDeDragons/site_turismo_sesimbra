@@ -138,11 +138,20 @@ header {
     text-decoration: none;
     font-weight: 600;
     color: var(--dark);
-    transition: 0.2s;
+    transition: all 0.22s cubic-bezier(.4,0,.2,1);
+    padding: 6px 6px;
+    border-radius: 8px;
 }
 
 .nav-links a:hover {
-    color: var(--secondary);
+    color: var(--primary);
+    background: rgba(151, 157, 35, 0.10);
+}
+
+.nav-links a.active {
+    color: var(--primary);
+    background: rgba(151, 157, 35, 0.12);
+    
 }
 
 .logout-header-btn {
