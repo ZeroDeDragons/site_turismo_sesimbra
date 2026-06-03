@@ -1,36 +1,3 @@
-// ── DATA ──
-const users = [
-  {id:1,name:'Maria Rodrigues',email:'maria.r@gmail.com',role:'user',interest:'Historia',status:'pending',date:'02/06/2026'},
-  {id:2,name:'João Silva',email:'joao.s@outlook.pt',role:'admin',interest:'Natureza',status:'active',date:'02/06/2026'},
-  {id:3,name:'Ana Costa',email:'ana.costa@sapo.pt',role:'user',interest:'Praia',status:'active',date:'01/06/2026'},
-  {id:4,name:'Pedro Matos',email:'pmatos@gmail.com',role:'user',interest:'Fotografia',status:'inactive',date:'01/06/2026'},
-  {id:5,name:'Luísa Ferreira',email:'luisa.f@hotmail.com',role:'user',interest:'Gastronomia',status:'active',date:'31/05/2026'},
-  {id:6,name:'Rui Gomes',email:'rui.gomes@gmail.com',role:'user',interest:'Historia',status:'active',date:'30/05/2026'},
-  {id:7,name:'Carla Nunes',email:'carla.n@sapo.pt',role:'user',interest:'Natureza',status:'active',date:'29/05/2026'},
-  {id:8,name:'Filipe Santos',email:'filipe.s@gmail.com',role:'admin',interest:'Historia',status:'active',date:'28/05/2026'},
-];
-
-const rotas = [
-  {id:1,name:'Rota do Castelo',cat:'Histórica',dist:'4.2 km',dur:'1h30',dif:'Fácil',pontos:6,status:'active',icon:'🏰'},
-  {id:2,name:'Trilho da Serra',cat:'Natural',dist:'8.5 km',dur:'3h',dif:'Moderada',pontos:4,status:'active',icon:'🌿'},
-  {id:3,name:'Caminho da Costa',cat:'Costeira',dist:'6.1 km',dur:'2h',dif:'Fácil',pontos:5,status:'active',icon:'🌊'},
-  {id:4,name:'Percurso da Aldeia',cat:'Cultural',dist:'3.0 km',dur:'1h',dif:'Fácil',pontos:8,status:'active',icon:'🏘️'},
-  {id:5,name:'Rota dos Pescadores',cat:'Histórica',dist:'5.5 km',dur:'2h',dif:'Moderada',pontos:5,status:'inactive',icon:'⚓'},
-  {id:6,name:'Trilho do Miradouro',cat:'Natural',dist:'7.0 km',dur:'2h30',dif:'Difícil',pontos:3,status:'active',icon:'🦅'},
-];
-
-const postos = [
-  {id:1,name:'Castelo de Sesimbra',cat:'Histórico',emoji:'🏰',cls:'cast',desc:'Fortaleza medieval do séc. XII',status:'active'},
-  {id:2,name:'Forte de Santiago',cat:'Histórico',emoji:'⚓',cls:'hist',desc:'Forte quinhentista na costa',status:'active'},
-  {id:3,name:'Praia do Ouro',cat:'Natural',emoji:'🏖️',cls:'nat',desc:'Praia de areia dourada',status:'active'},
-  {id:4,name:'Miradouro da Arrábida',cat:'Panorâmico',emoji:'🌅',cls:'pov',desc:'Vista sobre o Parque Natural',status:'active'},
-  {id:5,name:'Igreja de Santiago',cat:'Cultural',emoji:'⛪',cls:'hist',desc:'Igreja paroquial histórica',status:'active'},
-  {id:6,name:'Lagoa de Albufeira',cat:'Natural',emoji:'🦢',cls:'nat',desc:'Lagoa costeira com fauna diversa',status:'active'},
-  {id:7,name:'Museu Municipal',cat:'Cultural',emoji:'🏛️',cls:'hist',desc:'Acervo arqueológico local',status:'inactive'},
-  {id:8,name:'Cabo Espichel',cat:'Panorâmico',emoji:'🌊',cls:'pov',desc:'Ponta extrema da Serra da Arrábida',status:'active'},
-];
-
-// ── NAV ──
 function showSection(id, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
