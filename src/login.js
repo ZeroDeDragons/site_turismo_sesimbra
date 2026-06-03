@@ -75,6 +75,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     carregarEmailSalvo();
 
+    // ── FUNÇÃO PARA VERIFICAR SE UTILIZADOR É ADMIN ──
+    async function verificarRoleUtilizador(userId) {
+        try {
+            console.log('Verificando role do utilizador:', userId);
+            
+            // Buscar o role na tabela profiles
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .single();
+            
+            if (error) {
+                console.error('Erro ao buscar role:', error);
+                // Se não encontrar na tabela profiles, assume user normal
+                return 'user';
+            }
+            
+            console.log('Role encontrado:', data?.role);
+            return data?.role || 'user';
+            
+        } catch (error) {
+            console.error('Erro ao verificar role:', error);
+            return 'user';
+        }
+    }
+
     async function fazerLogin(email, password) {
         try {
             console.log('Tentando login com:', email);
@@ -87,11 +114,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error) throw error;
 
             console.log('Login bem sucedido!', data.user);
+            
+            // Salvar sessão
             salvarSessao(email);
+            
+            // Verificar se o utilizador é admin
+            const role = await verificarRoleUtilizador(data.user.id);
+            
+            // Guardar role na sessão (opcional, para uso posterior)
+            sessionStorage.setItem('userRole', role);
+            sessionStorage.setItem('userId', data.user.id);
+            
+            console.log('Role do utilizador:', role);
+            
+            // Redirecionar baseado no role
+            if (role === 'admin') {
+                console.log('Redirecionando para página de admin...');
+                window.location.href = '/paginaAdmin.html';
+            } else {
+                console.log('Redirecionando para página inicial...');
+                window.location.href = '/index.html';
+            }
 
-            window.location.href = '/index.html';
-
-            return { success: true, user: data.user };
+            return { success: true, user: data.user, role: role };
 
         } catch (error) {
             console.error('Erro detalhado:', error);
@@ -198,6 +243,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ── VERIFICAR SE JÁ ESTÁ LOGADO ──
+    async function verificarSessaoExistente() {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                console.log('Sessão existente encontrada:', session.user.id);
+                
+                // Verificar role
+                const role = await verificarRoleUtilizador(session.user.id);
+                
+                if (role === 'admin') {
+                    console.log('Utilizador admin já logado, redirecionando...');
+                    window.location.href = '/paginaAdmin.html';
+                } else {
+                    console.log('Utilizador normal já logado, redirecionando...');
+                    window.location.href = '/index.html';
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao verificar sessão:', error);
+        }
+    }
+    
+    // Verificar se já existe sessão ativa
+    verificarSessaoExistente();
 
     const style = document.createElement('style');
     style.textContent = `
