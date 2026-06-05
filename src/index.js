@@ -553,7 +553,7 @@ function dadosExemplo() {
       descricao: 'Percurso pedestre com vista para a lagoa',
       categoria: 'rota',
       categorias_locais: [{ categorias: { nome: 'rota', cor: '#228B22', simbolo: 'route' } }],
-      fotos: [{url: "https://q-xx.bstatic.com/xdata/images/city/608x352/657864.webp?k=5b90f3939214b31c4f074fde2e87bdee9300620190c89a2cd0359ca20b8b316e&o="}]
+      fotos: [{url: "https://sandee.com/_next/image?url=https%3A%2F%2Flh5.googleusercontent.com%2Fp%2FAF1QipOtAAlbE-YnNp8GjLREX25ZPn5y26JTsrdE9HJ9%3Ds1600-k-no&w=3840&q=75"}]
     }
   ];
 }
