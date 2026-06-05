@@ -7,54 +7,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="src/paginaAdmin.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="Imagens/logo.png">
-
 </head>
 <body>
 
 <!-- SIDEBAR -->
 <nav class="sidebar">
   <a href="#" class="sidebar-logo">Castelo<span>Sesimbra</span></a>
-
   <div class="sidebar-section">Principal</div>
-
   <a class="nav-item active" onclick="showSection('dashboard',this)">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    Painel de Administração
+    Painel
   </a>
-
   <div class="sidebar-section">Gestão</div>
-
   <a class="nav-item" onclick="showSection('utilizadores',this)">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Utilizadores
-    <span class="nav-badge">48</span>
+    Utilizadores <span class="nav-badge">0</span>
   </a>
-
   <a class="nav-item" onclick="showSection('rotas',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-    Rotas Turísticas
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+    Rotas
   </a>
-
   <a class="nav-item" onclick="showSection('postos',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-    Pontos Turísticos
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Pontos
   </a>
-
-  <div class="sidebar-section">Sistema</div>
-
-  <a class="nav-item" onclick="showSection('dashboard',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-    Definições
-  </a>
-
   <div class="sidebar-bottom">
     <div class="user-card">
-      <div class="user-avatar">AS</div>
+      <div class="user-avatar">AD</div>
       <div class="user-info">
-        <div class="user-name">Admin Sesimbra</div>
+        <div class="user-name">Admin</div>
         <div class="user-role">Administrador</div>
       </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
     </div>
   </div>
 </nav>
@@ -64,69 +47,41 @@
   <div class="topbar">
     <span class="topbar-title" id="topbarTitle">Painel de Administração</span>
     <div class="topbar-right">
-      <div class="btn-icon" title="Notificações">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <div class="btn-icon" title="Sair">
+      <div class="btn-icon" title="Sair" id="btnSair">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </div>
-      <button class="btn-primary" id="topbarAddBtn" onclick="openModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Adicionar
-      </button>
     </div>
   </div>
 
   <div class="content">
 
-    <!-- PAINEL DE ADMINISTRAÇÃO -->
+    <!-- DASHBOARD -->
     <div class="section active" id="sec-dashboard">
       <div class="stat-grid">
         <div class="stat-card c1">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
           <div class="stat-label">Utilizadores</div>
-          <div class="stat-value">48</div>
-          <div class="stat-delta up">↑ +6 este mês</div>
+          <div class="stat-value" id="statUsers">0</div>
         </div>
         <div class="stat-card c2">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
-          <div class="stat-label">Rotas Ativas</div>
-          <div class="stat-value">12</div>
-          <div class="stat-delta up">↑ +2 novas</div>
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
+          <div class="stat-label">Rotas</div>
+          <div class="stat-value" id="statRotas">0</div>
         </div>
         <div class="stat-card c3">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
           <div class="stat-label">Postos</div>
-          <div class="stat-value">27</div>
-          <div class="stat-delta up">↑ +3 adicionados</div>
+          <div class="stat-value" id="statPostos">0</div>
         </div>
         <div class="stat-card c4">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-          <div class="stat-label">Visitas Hoje</div>
-          <div class="stat-value">134</div>
-          <div class="stat-delta down">↓ -12 vs ontem</div>
+          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="stat-label">Categorias</div>
+          <div class="stat-value" id="statCats">0</div>
         </div>
       </div>
-
       <div class="card">
-        <div class="card-header">
-          <div class="card-title">Últimos Registos</div>
-          <span class="card-count">5 recentes</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Utilizador</th><th>Email</th><th>Registo</th><th>Estado</th>
-            </tr></thead>
-            <tbody>
-              <tr><td><div class="td-name"><div class="td-avatar">MR</div><div><div class="td-main">Maria Rodrigues</div></div></div></td><td>maria.r@gmail.com</td><td>Hoje, 14:32</td><td><span class="badge pending"><span class="badge-dot"></span>Pendente</span></td></tr>
-              <tr><td><div class="td-name"><div class="td-avatar green">JS</div><div><div class="td-main">João Silva</div></div></div></td><td>joao.s@outlook.pt</td><td>Hoje, 11:05</td><td><span class="badge active"><span class="badge-dot"></span>Ativo</span></td></tr>
-              <tr><td><div class="td-name"><div class="td-avatar orange">AC</div><div><div class="td-main">Ana Costa</div></div></div></td><td>ana.costa@sapo.pt</td><td>Ontem, 18:47</td><td><span class="badge active"><span class="badge-dot"></span>Ativo</span></td></tr>
-              <tr><td><div class="td-name"><div class="td-avatar">PM</div><div><div class="td-main">Pedro Matos</div></div></div></td><td>pmatos@gmail.com</td><td>Ontem, 09:20</td><td><span class="badge inactive"><span class="badge-dot"></span>Inativo</span></td></tr>
-              <tr><td><div class="td-name"><div class="td-avatar green">LF</div><div><div class="td-main">Luísa Ferreira</div></div></div></td><td>luisa.f@hotmail.com</td><td>02/06/2026</td><td><span class="badge active"><span class="badge-dot"></span>Ativo</span></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="card-header"><div class="card-title">Últimos Registos</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Utilizador</th><th>Email</th><th>Registo</th><th>Estado</th></tr></thead><tbody id="dashLastUsers"></tbody></table></div>
       </div>
     </div>
 
@@ -135,13 +90,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Utilizadores</div>
-          <span class="card-count" id="userCount">48 registos</span>
-          <div class="card-actions">
-            <button class="btn-primary" onclick="openModal('user')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Novo Utilizador
-            </button>
-          </div>
+          <span class="card-count" id="userCount">0</span>
         </div>
         <div class="filter-bar">
           <div class="search-wrap">
@@ -149,67 +98,35 @@
             <input class="search-input" id="userSearch" placeholder="Pesquisar utilizador…" oninput="filterUsers()">
           </div>
           <select class="filter-select" id="userRoleFilter" onchange="filterUsers()">
-            <option value="">Todos os perfis</option>
-            <option value="admin">Administrador</option>
-            <option value="user">Utilizador</option>
+            <option value="">Todos os perfis</option><option value="admin">Administrador</option><option value="user">Utilizador</option>
           </select>
           <select class="filter-select" id="userStatusFilter" onchange="filterUsers()">
-            <option value="">Todos os estados</option>
-            <option value="active">Ativo</option>
-            <option value="inactive">Inativo</option>
-            <option value="pending">Pendente</option>
+            <option value="">Todos os estados</option><option value="active">Ativo</option><option value="inactive">Inativo</option><option value="pending">Pendente</option>
           </select>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Nome</th><th>Email</th><th>Perfil</th><th>Interesse</th><th>Estado</th><th>Registo</th><th>Ações</th>
-            </tr></thead>
-            <tbody id="userTable"></tbody>
-          </table>
-        </div>
-        <div class="table-footer">
-          <span id="userFooterText">A mostrar 1–10 de 48</span>
-          <div class="pagination">
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">›</button>
-          </div>
-        </div>
+        <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Estado</th><th>Registo</th><th>Ações</th></tr></thead><tbody id="userTable"></tbody></table></div>
       </div>
     </div>
 
     <!-- ROTAS -->
     <div class="section" id="sec-rotas">
-      <div class="card" style="margin-bottom:20px">
+      <div class="card">
         <div class="card-header">
           <div class="card-title">Rotas Turísticas</div>
-          <span class="card-count">12 rotas</span>
+          <span class="card-count" id="rotaCount">0</span>
           <div class="card-actions">
-            <button class="btn-primary" onclick="openModal('rota')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Nova Rota
-            </button>
+            <button class="btn-icon" title="Gerir Categorias" onclick="openModal('categoria')" style="width:auto; padding:0 10px; font-size:12px; font-weight:700">⚙️ Categorias</button>
+            <button class="btn-primary" onclick="openModal('rota')">+ Nova Rota</button>
           </div>
         </div>
         <div class="filter-bar">
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="search-input" placeholder="Pesquisar rota…">
+            <input class="search-input" id="rotaSearch" placeholder="Pesquisar rota…" oninput="filterRotas()">
           </div>
-          <select class="filter-select">
-            <option value="">Todas as categorias</option>
-            <option>Histórica</option><option>Natural</option><option>Costeira</option>
-          </select>
-          <select class="filter-select">
-            <option value="">Todas as dificuldades</option>
-            <option>Fácil</option><option>Moderada</option><option>Difícil</option>
-          </select>
+          <select class="filter-select" id="rotaCatFilter" onchange="filterRotas()"><option value="">Todas as categorias</option></select>
         </div>
-        <div style="padding:20px 22px">
-          <div class="route-grid" id="routeGrid"></div>
-        </div>
+        <div style="padding:20px 22px"><div class="route-grid" id="routeGrid"></div></div>
       </div>
     </div>
 
@@ -218,27 +135,19 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Pontos Turísticos e Históricos</div>
-          <span class="card-count">27 pontos</span>
+          <span class="card-count" id="postoCount">0</span>
           <div class="card-actions">
-            <button class="btn-primary" onclick="openModal('posto')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Novo Ponto  
-            </button>
+            <button class="btn-primary" onclick="openModal('posto')">+ Novo Ponto</button>
           </div>
         </div>
         <div class="filter-bar">
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="search-input" placeholder="Pesquisar ponto...">
+            <input class="search-input" id="postoSearch" placeholder="Pesquisar ponto..." oninput="filterPostos()">
           </div>
-          <select class="filter-select">
-            <option value="">Todas as categorias</option>
-            <option>Histórico</option><option>Natural</option><option>Cultural</option><option>Panorâmico</option>
-          </select>
+          <select class="filter-select" id="postoCatFilter" onchange="filterPostos()"><option value="">Todas as categorias</option></select>
         </div>
-        <div style="padding:20px 22px">
-          <div class="posto-grid" id="postoGrid"></div>
-        </div>
+        <div style="padding:20px 22px"><div class="posto-grid" id="postoGrid"></div></div>
       </div>
     </div>
 
@@ -256,23 +165,16 @@
       </button>
     </div>
     <div class="modal-body" id="modalBody"></div>
-    <div class="modal-footer">
+    <div class="modal-footer" id="modalFooter">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveModal()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Guardar
-      </button>
+      <button class="btn-primary" onclick="saveModal()">Guardar</button>
     </div>
   </div>
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast">
-  <div class="toast-dot"></div>
-  <span id="toastMsg">Guardado com sucesso.</span>
-</div>
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg">Guardado com sucesso.</span></div>
 
 <script type="module" src="src/paginaAdmin.js"></script>
-
 </body>
 </html>
