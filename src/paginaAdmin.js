@@ -69,19 +69,28 @@ async function verificarSessaoAdmin() {
   // Pedir ao Supabase a sessão atual
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Se não há sessão, o utilizador não está logado → ir para o login
   if (!session) {
     window.location.href = '/login.html';
     return;
   }
 
-  // Buscar o 'role' do utilizador na tabela 'profiles'
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('role, full_name')
-    .eq('id', session.user.id)  // .eq() = "WHERE id = ..."
-    .single();                   // .single() = esperamos exatamente 1 resultado
+    .eq('id', session.user.id)
+    .single();
 
+  // Debug - verificar o que está sendo retornado
+  console.log('Profile:', profile);
+  console.log('Error:', error);
+  console.log('Role:', profile?.role);
+
+  if (!profile || profile.role !== 'admin') {
+    console.log('Redirecionando porque role é:', profile?.role);
+    window.location.href = '/index.html';
+    return;
+  }
+  
   // Se o role não é 'admin', reencaminhar para a página principal
   if (!profile || profile.role !== 'admin') {
     window.location.href = '/index.html';
