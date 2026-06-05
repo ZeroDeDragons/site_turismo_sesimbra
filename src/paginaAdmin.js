@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 //  2. SEGURANÇA — verificar se o utilizador é mesmo admin
 // ============================================================
 async function verificarSessaoAdmin() {
-  // Pedir ao Supabase a sessão atual
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -80,29 +79,31 @@ async function verificarSessaoAdmin() {
     .eq('id', session.user.id)
     .single();
 
-  // Debug - verificar o que está sendo retornado
-  console.log('Profile:', profile);
-  console.log('Error:', error);
-  console.log('Role:', profile?.role);
+  // ⬇️ Agora verificamos o erro ANTES de decidir o redirecionamento
+  if (error) {
+    console.error('Erro ao buscar perfil:', error.message);
+    console.error('Código do erro:', error.code);
+    // Se o erro for PGRST116 = nenhuma linha encontrada (RLS bloqueou)
+    if (error.code === 'PGRST116') {
+      console.error('RLS está a bloquear o acesso ao perfil!');
+    }
+    window.location.href = '/index.html';
+    return;
+  }
 
   if (!profile || profile.role !== 'admin') {
     console.log('Redirecionando porque role é:', profile?.role);
     window.location.href = '/index.html';
     return;
   }
-  
-  // Se o role não é 'admin', reencaminhar para a página principal
-  if (!profile || profile.role !== 'admin') {
-    window.location.href = '/index.html';
-    return;
-  }
+
+  // Remover o bloco duplicado que existia aqui ↑
 
   // Atualizar o nome do admin na sidebar
   const nomeEl = document.querySelector('.user-name');
   const iniciais = document.querySelector('.user-avatar');
   if (nomeEl && profile.full_name) {
     nomeEl.textContent = profile.full_name;
-    // Gerar iniciais: "João Silva" → "JS"
     const partes = profile.full_name.split(' ');
     if (iniciais) {
       iniciais.textContent = (partes[0][0] + (partes[1]?.[0] || '')).toUpperCase();
