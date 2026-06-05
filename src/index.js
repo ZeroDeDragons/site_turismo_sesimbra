@@ -521,7 +521,7 @@ function dadosExemplo() {
       descricao: 'Fortificação medieval com vista deslumbrante sobre a vila',
       categoria: 'historico',
       categorias_locais: [{ categorias: { nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: [url: "https://www.castelosdeportugal.pt/castelos/assets/img/CastelosSECXIII/sesimbra/sesimbra1.jpg"]
+      fotos: [{url: "https://www.castelosdeportugal.pt/castelos/assets/img/CastelosSECXIII/sesimbra/sesimbra1.jpg"}]
     },
     {
       id: 2, nome: 'Farol do Cabo Espichel',
