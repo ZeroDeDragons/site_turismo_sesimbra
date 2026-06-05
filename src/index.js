@@ -521,7 +521,7 @@ function dadosExemplo() {
       descricao: 'Fortificação medieval com vista deslumbrante sobre a vila',
       categoria: 'historico',
       categorias_locais: [{ categorias: { nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: []
+      fotos: [url: "https://www.castelosdeportugal.pt/castelos/assets/img/CastelosSECXIII/sesimbra/sesimbra1.jpg"]
     },
     {
       id: 2, nome: 'Farol do Cabo Espichel',
@@ -529,7 +529,7 @@ function dadosExemplo() {
       descricao: 'Farol histórico do século XVIII',
       categoria: 'historico',
       categorias_locais: [{ categorias: { nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: []
+      fotos: [{url:"https://elements-resized.envatousercontent.com/elements-video-cover-images/fed34031-4317-40fe-a87c-2daeed6c0b2f/video_preview/video_preview_0000.jpg?w=500&cf_fit=cover&q=85&format=auto&s=9b33f8c113d6a19bd45ce0c8cd322d4c95d021c6bd47490bfb87c123299aebcf"}]
     },
     {
       id: 3, nome: 'Miradouro do Facho',
@@ -537,7 +537,7 @@ function dadosExemplo() {
       descricao: 'Vista panorâmica sobre a costa e a vila',
       categoria: 'miradouro',
       categorias_locais: [{ categorias: { nome: 'miradouro', cor: '#FFA500', simbolo: 'mountain' } }],
-      fotos: []
+      fotos: [{url:""}]
     },
     {
       id: 4, nome: 'Praia do Ouro',
@@ -545,7 +545,7 @@ function dadosExemplo() {
       descricao: 'Praia urbana muito procurada na época balnear',
       categoria: 'praia',
       categorias_locais: [{ categorias: { nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' } }],
-      fotos: []
+      fotos: [{url:""}]
     },
     {
       id: 5, nome: 'Trilho da Lagoa de Albufeira',
