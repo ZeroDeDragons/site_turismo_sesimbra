@@ -545,7 +545,7 @@ function dadosExemplo() {
       descricao: 'Praia urbana muito procurada na época balnear',
       categoria: 'praia',
       categorias_locais: [{ categorias: { nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' } }],
-      fotos: [{url:""}]
+      fotos: [{url:"https://www.guiadacidade.pt/assets/capas_poi/capa_284029.jpg"}]
     },
     {
       id: 5, nome: 'Trilho da Lagoa de Albufeira',
