@@ -312,12 +312,18 @@ window.filterPostos = function() {
   renderizarPostos(filtrados);
 };
 
-// Inicializar o mapa de seleção de localização
+// Inicializar o mapa de seleção de localização (versão melhorada)
 function initLocationMap(lat, lng, onLocationSelect) {
   // Verificar se o Leaflet está carregado
   if (typeof L === 'undefined') {
     console.error('Leaflet não está carregado');
     mostrarToast('Erro ao carregar o mapa. Recarregue a página.', true);
+    return null;
+  }
+
+  const container = document.getElementById('location-pick-map');
+  if (!container) {
+    console.error('Container do mapa não encontrado');
     return null;
   }
 
@@ -327,8 +333,13 @@ function initLocationMap(lat, lng, onLocationSelect) {
     locationMap = null;
   }
 
+  // Garantir que o container tem tamanho
+  container.style.height = '300px';
+  container.style.width = '100%';
+  container.style.backgroundColor = '#e8e8e8';
+  
   // Criar novo mapa
-  const map = L.map('location-pick-map').setView([lat, lng], 15);
+  const map = L.map(container).setView([lat, lng], 15);
   
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
@@ -336,7 +347,7 @@ function initLocationMap(lat, lng, onLocationSelect) {
     maxZoom: 19
   }).addTo(map);
 
-  // Adicionar marcador
+  // Adicionar marcador arrastável
   const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
   
   // Atualizar coordenadas quando o marcador for arrastado
@@ -351,7 +362,13 @@ function initLocationMap(lat, lng, onLocationSelect) {
     onLocationSelect(e.latlng.lat, e.latlng.lng);
   });
 
+  // Forçar o mapa a redimensionar corretamente após ser exibido
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 100);
+
   locationMap = map;
+  locationMarker = marker;
   return { map, marker };
 }
 
@@ -364,7 +381,7 @@ function updateCoordsDisplay(lat, lng) {
 }
 
 // ============================================================
-//  MODAL COM MAPA PARA POSTOS
+//  MODAL COM MAPA PARA POSTOS - VERSÃO CORRIGIDA
 // ============================================================
 window.openModal = function(tipo, dadosEditar = null) {
   modalTipo = tipo;
@@ -387,6 +404,7 @@ window.openModal = function(tipo, dadosEditar = null) {
         <div class="modal-form-group"><label class="modal-label">Estado</label><select class="modal-select" id="m-status"><option value="active" ${dadosEditar?.status === 'active' ? 'selected' : ''}>Ativo</option><option value="inactive" ${dadosEditar?.status === 'inactive' ? 'selected' : ''}>Inativo</option><option value="pending" ${dadosEditar?.status === 'pending' ? 'selected' : ''}>Pendente</option></select></div>
       </div>`;
     footer.style.display = isEditing ? 'flex' : 'none';
+    overlay.classList.add('show');
   } 
   else if (tipo === 'rota') {
     titulo.textContent = isEditing ? 'Editar Rota' : 'Nova Rota';
@@ -398,6 +416,7 @@ window.openModal = function(tipo, dadosEditar = null) {
         <div class="modal-form-group"><label class="modal-label">Cor</label><input class="modal-input" id="m-cor" type="color" value="${dadosEditar?.cor || '#979d23'}" style="padding:4px; height:42px;"></div>
       </div>`;
     footer.style.display = 'flex';
+    overlay.classList.add('show');
   } 
   else if (tipo === 'posto') {
     titulo.textContent = isEditing ? 'Editar Ponto Turístico' : 'Novo Ponto Turístico';
@@ -440,14 +459,29 @@ window.openModal = function(tipo, dadosEditar = null) {
     
     footer.style.display = 'flex';
     
-    // Inicializar o mapa após o modal ser aberto (delay para garantir que o DOM está pronto)
+    // Mostrar o modal PRIMEIRO
+    overlay.classList.add('show');
+    
+    // Aguardar o modal ser completamente renderizado e visível
     setTimeout(() => {
-      initLocationMap(initialLat, initialLng, (lat, lng) => {
-        currentLat = lat;
-        currentLng = lng;
-        updateCoordsDisplay(lat, lng);
-      });
-    }, 100);
+      const mapContainer = document.getElementById('location-pick-map');
+      if (mapContainer && mapContainer.offsetWidth > 0) {
+        initLocationMap(initialLat, initialLng, (lat, lng) => {
+          currentLat = lat;
+          currentLng = lng;
+          updateCoordsDisplay(lat, lng);
+        });
+      } else {
+        // Tentar novamente após mais tempo
+        setTimeout(() => {
+          initLocationMap(initialLat, initialLng, (lat, lng) => {
+            currentLat = lat;
+            currentLng = lng;
+            updateCoordsDisplay(lat, lng);
+          });
+        }, 200);
+      }
+    }, 150);
   }
   else if (tipo === 'categoria') {
     titulo.textContent = 'Gerir Categorias';
@@ -466,9 +500,8 @@ window.openModal = function(tipo, dadosEditar = null) {
         `).join('')}
       </div>`;
     footer.style.display = 'none';
+    overlay.classList.add('show');
   }
-
-  overlay.classList.add('show');
 };
 
 window.closeModal = function() {
@@ -476,6 +509,7 @@ window.closeModal = function() {
   if (locationMap) {
     locationMap.remove();
     locationMap = null;
+    locationMarker = null;
   }
   document.getElementById('modalOverlay')?.classList.remove('show');
   editandoId = null;
@@ -594,7 +628,7 @@ async function atualizarEstatisticasDashboard() {
     tbody.innerHTML = ultimos.map(u => {
       const nome = u.full_name || 'Sem nome';
       const data = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-PT') : '—';
-      return `<tr><td><div class="td-name">${nome}</div></td><td>${u.email || '—'}</td><td>${data}</td><td><span class="badge ${statusBadges[u.status]||'pending'}"><span class="badge-dot"></span>${statusNomes[u.status]||'Pendente'}</span></td></tr>`;
+      return `<tr><td style="padding:13px 22px">${nome}</td><td style="padding:13px 22px">${u.email || '—'}</td><td style="padding:13px 22px">${data}</td><td style="padding:13px 22px"><span class="badge ${statusBadges[u.status]||'pending'}"><span class="badge-dot"></span>${statusNomes[u.status]||'Pendente'}</span></td></tr>`;
     }).join('');
   }
 }
