@@ -481,3 +481,131 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
   .stat-grid{grid-template-columns:repeat(2,1fr)}
   .route-grid{grid-template-columns:repeat(2,1fr)}
 }
+
+/* Estilos para o modal grande com mapa */
+.modal-large {
+  max-width: 800px;
+  width: 90%;
+}
+
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Mapa para seleção de localização */
+.location-map-container {
+  margin: 15px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.location-map {
+  height: 300px;
+  width: 100%;
+  background: #f0f0f0;
+}
+
+.location-coords-display {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.location-coords-display .coord-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+}
+
+.location-coords-display .coord-item i {
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.location-coords-display .coord-value {
+  font-family: monospace;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.map-instruction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: #fef3c7;
+  border-radius: 8px;
+}
+
+.map-instruction i {
+  color: #f59e0b;
+}
+
+/* Ajuste para o grid de postos */
+.posto-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.posto-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.posto-card:hover {
+  background: white;
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.posto-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 24px;
+  background: #f3f4f6;
+}
+
+.posto-info {
+  flex: 1;
+}
+
+.posto-name {
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.posto-cat {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.posto-actions {
+  display: flex;
+  gap: 8px;
+}

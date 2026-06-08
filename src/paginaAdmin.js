@@ -14,6 +14,14 @@ let todosPostos = [];
 let todasCategorias = [];
 let modalTipo = null;
 let editandoId = null;
+let locationMap = null;
+let locationMarker = null;
+let currentLat = null;
+let currentLng = null;
+
+// Coordenadas padrão - Castelo de Sesimbra
+const DEFAULT_LAT = 38.4455;
+const DEFAULT_LNG = -9.1011;
 
 // ============================================================
 //  INICIALIZAÇÃO
@@ -22,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sessaoValida = await verificarSessaoAdmin();
   if (!sessaoValida) return;
 
-  await carregarCategorias(); // Precisamos das categorias primeiro para os dropdowns
+  await carregarCategorias();
   await Promise.all([
     carregarUtilizadores(),
     carregarRotas(),
@@ -54,7 +62,6 @@ async function verificarSessaoAdmin() {
     return false;
   }
 
-  // Atualizar sidebar
   const nomeEl = document.querySelector('.user-name');
   const avatarEl = document.querySelector('.user-avatar');
   if (nomeEl) nomeEl.textContent = profile.full_name || 'Admin';
@@ -79,7 +86,7 @@ window.showSection = function(secao, elem) {
 };
 
 // ============================================================
-//  CATEGORIAS (Gestão Central)
+//  CATEGORIAS
 // ============================================================
 async function carregarCategorias() {
   const { data, error } = await supabase.from('categorias').select('*').order('nome');
@@ -259,7 +266,7 @@ window.eliminarRota = async function(id, nome) {
 };
 
 // ============================================================
-//  POSTOS / LOCAIS
+//  POSTOS / LOCAIS COM MAPA
 // ============================================================
 async function carregarPostos() {
   const { data, error } = await supabase.from('locais').select(`*, categorias_locais ( categoria_id, categorias ( id, nome, cor, simbolo ) ), fotos ( url )`).order('criado_em', { ascending: false });
@@ -272,7 +279,7 @@ async function carregarPostos() {
 function renderizarPostos(lista) {
   const grid = document.getElementById('postoGrid');
   if (!grid) return;
-  if (lista.length === 0) { grid.innerHTML = `<div class="empty"><p>Nenhum posto encontrado.</p></div>`; return; }
+  if (lista.length === 0) { grid.innerHTML = `<div class="empty"><p>Nenhum ponto encontrado.</p></div>`; return; }
 
   grid.innerHTML = lista.map(p => {
     const cat = p.categorias_locais?.[0]?.categorias;
@@ -283,7 +290,7 @@ function renderizarPostos(lista) {
         <div class="posto-icon" style="background:${cor}22; color:${cor}">${cat?.simbolo || '📍'}</div>
         <div class="posto-info">
           <div class="posto-name">${p.nome}</div>
-          <div class="posto-cat">${catNome} · 📍 ${p.latitude}, ${p.longitude}</div>
+          <div class="posto-cat">${catNome} · 📍 ${p.latitude?.toFixed(6) || '?'}, ${p.longitude?.toFixed(6) || '?'}</div>
           <div class="posto-actions">
             <button class="action-btn edit" onclick="editarPosto(${p.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
             <button class="action-btn del" onclick="eliminarPosto(${p.id}, '${p.nome.replace(/'/g, "\\'")}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
@@ -305,55 +312,59 @@ window.filterPostos = function() {
   renderizarPostos(filtrados);
 };
 
-window.editarPosto = function(id) {
-  const p = todosPostos.find(x => x.id === id);
-  if (!p) return;
-  editandoId = id;
-  const catId = p.categorias_locais?.[0]?.categorias?.id || '';
-  const fotoUrl = p.fotos?.[0]?.url || '';
-  openModal('posto', { ...p, categoria_id: catId, foto_url: fotoUrl });
-};
-
-window.eliminarPosto = async function(id, nome) {
-  if (!confirm(`Eliminar o ponto "${nome}"?`)) return;
-  await supabase.from('fotos').delete().eq('locais_id', id);
-  await supabase.from('categorias_locais').delete().eq('local_id', id);
-  await supabase.from('segmentos_rota').delete().or(`local_origem_id.eq.${id},local_destino_id.eq.${id}`);
-  const { error } = await supabase.from('locais').delete().eq('id', id);
-  if (error) { mostrarToast('Erro: ' + error.message, true); return; }
-  mostrarToast(`Ponto eliminado.`);
-  await carregarPostos();
-};
-
-// ============================================================
-//  DASHBOARD STATS
-// ============================================================
-async function atualizarEstatisticasDashboard() {
-  const { count: uC } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-  const { count: rC } = await supabase.from('rotas').select('*', { count: 'exact', head: true });
-  const { count: pC } = await supabase.from('locais').select('*', { count: 'exact', head: true });
-  
-  document.getElementById('statUsers').textContent = uC ?? 0;
-  document.getElementById('statRotas').textContent = rC ?? 0;
-  document.getElementById('statPostos').textContent = pC ?? 0;
-  document.getElementById('statCats').textContent = todasCategorias.length;
-  document.querySelector('.nav-badge').textContent = uC ?? 0;
-
-  const { data: ultimos } = await supabase.from('profiles').select('full_name, email, created_at, status').order('created_at', { ascending: false }).limit(5);
-  const tbody = document.getElementById('dashLastUsers');
-  if (tbody && ultimos) {
-    const statusBadges = { active: 'active', inactive: 'inactive', pending: 'pending' };
-    const statusNomes = { active: 'Ativo', inactive: 'Inativo', pending: 'Pendente' };
-    tbody.innerHTML = ultimos.map(u => {
-      const nome = u.full_name || 'Sem nome';
-      const data = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-PT') : '—';
-      return `<tr><td>${nome}</td><td>${u.email || '—'}</td><td>${data}</td><td><span class="badge ${statusBadges[u.status]||'pending'}"><span class="badge-dot"></span>${statusNomes[u.status]||'Pendente'}</span></td></tr>`;
-    }).join('');
+// Inicializar o mapa de seleção de localização
+function initLocationMap(lat, lng, onLocationSelect) {
+  // Verificar se o Leaflet está carregado
+  if (typeof L === 'undefined') {
+    console.error('Leaflet não está carregado');
+    mostrarToast('Erro ao carregar o mapa. Recarregue a página.', true);
+    return null;
   }
+
+  // Destruir mapa anterior se existir
+  if (locationMap) {
+    locationMap.remove();
+    locationMap = null;
+  }
+
+  // Criar novo mapa
+  const map = L.map('location-pick-map').setView([lat, lng], 15);
+  
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Adicionar marcador
+  const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+  
+  // Atualizar coordenadas quando o marcador for arrastado
+  marker.on('dragend', function(e) {
+    const pos = marker.getLatLng();
+    onLocationSelect(pos.lat, pos.lng);
+  });
+
+  // Atualizar coordenadas quando clicar no mapa
+  map.on('click', function(e) {
+    marker.setLatLng(e.latlng);
+    onLocationSelect(e.latlng.lat, e.latlng.lng);
+  });
+
+  locationMap = map;
+  return { map, marker };
+}
+
+// Atualizar display das coordenadas
+function updateCoordsDisplay(lat, lng) {
+  const latSpan = document.getElementById('selected-lat');
+  const lngSpan = document.getElementById('selected-lng');
+  if (latSpan) latSpan.textContent = lat.toFixed(6);
+  if (lngSpan) lngSpan.textContent = lng.toFixed(6);
 }
 
 // ============================================================
-//  MODAL
+//  MODAL COM MAPA PARA POSTOS
 // ============================================================
 window.openModal = function(tipo, dadosEditar = null) {
   modalTipo = tipo;
@@ -375,7 +386,7 @@ window.openModal = function(tipo, dadosEditar = null) {
         <div class="modal-form-group"><label class="modal-label">Perfil</label><select class="modal-select" id="m-role"><option value="user" ${dadosEditar?.role === 'user' ? 'selected' : ''}>Utilizador</option><option value="admin" ${dadosEditar?.role === 'admin' ? 'selected' : ''}>Administrador</option></select></div>
         <div class="modal-form-group"><label class="modal-label">Estado</label><select class="modal-select" id="m-status"><option value="active" ${dadosEditar?.status === 'active' ? 'selected' : ''}>Ativo</option><option value="inactive" ${dadosEditar?.status === 'inactive' ? 'selected' : ''}>Inativo</option><option value="pending" ${dadosEditar?.status === 'pending' ? 'selected' : ''}>Pendente</option></select></div>
       </div>`;
-    footer.style.display = isEditing ? 'flex' : 'none'; // Só editamos, criar tem de ser pelo registro
+    footer.style.display = isEditing ? 'flex' : 'none';
   } 
   else if (tipo === 'rota') {
     titulo.textContent = isEditing ? 'Editar Rota' : 'Nova Rota';
@@ -389,23 +400,60 @@ window.openModal = function(tipo, dadosEditar = null) {
     footer.style.display = 'flex';
   } 
   else if (tipo === 'posto') {
-    titulo.textContent = isEditing ? 'Editar Ponto' : 'Novo Ponto';
+    titulo.textContent = isEditing ? 'Editar Ponto Turístico' : 'Novo Ponto Turístico';
+    
+    // Definir coordenadas iniciais
+    const initialLat = dadosEditar?.latitude || DEFAULT_LAT;
+    const initialLng = dadosEditar?.longitude || DEFAULT_LNG;
+    currentLat = initialLat;
+    currentLng = initialLng;
+    
     corpo.innerHTML = `
-      <div class="modal-form-group"><label class="modal-label">Nome do Ponto</label><input class="modal-input" id="m-nome" type="text" value="${dadosEditar?.nome || ''}"></div>
-      <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="m-descricao">${dadosEditar?.descricao || ''}</textarea></div>
+      <div class="modal-form-group"><label class="modal-label">Nome do Ponto</label><input class="modal-input" id="m-nome" type="text" value="${dadosEditar?.nome || ''}" placeholder="Ex: Castelo de Sesimbra, Farol, etc."></div>
+      <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="m-descricao" placeholder="Descrição detalhada do ponto turístico...">${dadosEditar?.descricao || ''}</textarea></div>
       <div class="modal-form-group"><label class="modal-label">Categoria</label><select class="modal-select" id="m-categoria"><option value="">Sem categoria</option>${catOptions}</select></div>
-      <div class="modal-row">
-        <div class="modal-form-group"><label class="modal-label">Latitude</label><input class="modal-input" id="m-lat" type="number" step="0.0001" value="${dadosEditar?.latitude || ''}"></div>
-        <div class="modal-form-group"><label class="modal-label">Longitude</label><input class="modal-input" id="m-lng" type="number" step="0.0001" value="${dadosEditar?.longitude || ''}"></div>
+      
+      <div class="map-instruction">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>Clique no mapa ou arraste o marcador para selecionar a localização exata do ponto</span>
       </div>
-      <div class="modal-form-group"><label class="modal-label">URL da Foto</label><input class="modal-input" id="m-foto" type="url" value="${dadosEditar?.foto_url || ''}"></div>`;
+      
+      <div class="location-map-container">
+        <div id="location-pick-map" class="location-map"></div>
+      </div>
+      
+      <div class="location-coords-display">
+        <div class="coord-item">
+          <i class="fas fa-latitude"></i>
+          <span>Latitude:</span>
+          <span class="coord-value" id="selected-lat">${initialLat.toFixed(6)}</span>
+        </div>
+        <div class="coord-item">
+          <i class="fas fa-longitude-alt"></i>
+          <span>Longitude:</span>
+          <span class="coord-value" id="selected-lng">${initialLng.toFixed(6)}</span>
+        </div>
+      </div>
+      
+      <div class="modal-form-group"><label class="modal-label">URL da Foto (opcional)</label><input class="modal-input" id="m-foto" type="url" value="${dadosEditar?.foto_url || ''}" placeholder="https://exemplo.com/imagem.jpg"></div>
+    `;
+    
     footer.style.display = 'flex';
+    
+    // Inicializar o mapa após o modal ser aberto (delay para garantir que o DOM está pronto)
+    setTimeout(() => {
+      initLocationMap(initialLat, initialLng, (lat, lng) => {
+        currentLat = lat;
+        currentLng = lng;
+        updateCoordsDisplay(lat, lng);
+      });
+    }, 100);
   }
   else if (tipo === 'categoria') {
     titulo.textContent = 'Gerir Categorias';
     corpo.innerHTML = `
       <div class="modal-form-group" style="display:flex; gap:10px; align-items:flex-end;">
-        <div style="flex:1"><label class="modal-label">Nova Categoria</label><input class="modal-input" id="m-nova-cat" type="text" placeholder="Nome..."></div>
+        <div style="flex:1"><label class="modal-label">Nova Categoria</label><input class="modal-input" id="m-nova-cat" type="text" placeholder="Nome da categoria..."></div>
         <input class="modal-input" id="m-cor-cat" type="color" value="#979d23" style="width:50px; height:42px; padding:4px;">
         <button class="btn-primary" onclick="salvarNovaCategoria()" style="height:42px">Adicionar</button>
       </div>
@@ -417,16 +465,23 @@ window.openModal = function(tipo, dadosEditar = null) {
           </div>
         `).join('')}
       </div>`;
-    footer.style.display = 'none'; // Não precisa do botão guardar principal
+    footer.style.display = 'none';
   }
 
   overlay.classList.add('show');
 };
 
 window.closeModal = function() {
+  // Destruir o mapa se existir
+  if (locationMap) {
+    locationMap.remove();
+    locationMap = null;
+  }
   document.getElementById('modalOverlay')?.classList.remove('show');
   editandoId = null;
   modalTipo = null;
+  currentLat = null;
+  currentLng = null;
 };
 
 window.closeModalOutside = function(e) {
@@ -441,7 +496,7 @@ window.salvarNovaCategoria = async function() {
   if (error) { mostrarToast('Erro: ' + error.message, true); return; }
   mostrarToast('Categoria adicionada!');
   await carregarCategorias();
-  openModal('categoria'); // Refresca o modal
+  openModal('categoria');
 };
 
 window.saveModal = async function() {
@@ -482,11 +537,15 @@ window.saveModal = async function() {
   else if (modalTipo === 'posto') {
     const nome = document.getElementById('m-nome')?.value.trim();
     const descricao = document.getElementById('m-descricao')?.value.trim();
-    const lat = parseFloat(document.getElementById('m-lat')?.value);
-    const lng = parseFloat(document.getElementById('m-lng')?.value);
     const foto = document.getElementById('m-foto')?.value.trim();
     const categoria_id = document.getElementById('m-categoria')?.value;
-    if (!nome || isNaN(lat) || isNaN(lng)) { mostrarToast('Nome, Lat e Lng obrigatórios.', true); return; }
+    
+    // Usar as coordenadas do mapa (currentLat e currentLng)
+    const lat = currentLat;
+    const lng = currentLng;
+    
+    if (!nome) { mostrarToast('Nome obrigatório.', true); return; }
+    if (lat === null || lng === null) { mostrarToast('Selecione uma localização no mapa.', true); return; }
 
     let localId = editandoId;
     if (editandoId) {
@@ -509,8 +568,36 @@ window.saveModal = async function() {
     mostrarToast(editandoId ? 'Ponto atualizado.' : 'Ponto criado.');
     closeModal();
     await carregarPostos();
+    await atualizarEstatisticasDashboard();
   }
 };
+
+// ============================================================
+//  DASHBOARD STATS
+// ============================================================
+async function atualizarEstatisticasDashboard() {
+  const { count: uC } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+  const { count: rC } = await supabase.from('rotas').select('*', { count: 'exact', head: true });
+  const { count: pC } = await supabase.from('locais').select('*', { count: 'exact', head: true });
+  
+  document.getElementById('statUsers').textContent = uC ?? 0;
+  document.getElementById('statRotas').textContent = rC ?? 0;
+  document.getElementById('statPostos').textContent = pC ?? 0;
+  document.getElementById('statCats').textContent = todasCategorias.length;
+  document.querySelector('.nav-badge').textContent = uC ?? 0;
+
+  const { data: ultimos } = await supabase.from('profiles').select('full_name, email, created_at, status').order('created_at', { ascending: false }).limit(5);
+  const tbody = document.getElementById('dashLastUsers');
+  if (tbody && ultimos) {
+    const statusBadges = { active: 'active', inactive: 'inactive', pending: 'pending' };
+    const statusNomes = { active: 'Ativo', inactive: 'Inativo', pending: 'Pendente' };
+    tbody.innerHTML = ultimos.map(u => {
+      const nome = u.full_name || 'Sem nome';
+      const data = u.created_at ? new Date(u.created_at).toLocaleDateString('pt-PT') : '—';
+      return `<tr><td><div class="td-name">${nome}</div></td><td>${u.email || '—'}</td><td>${data}</td><td><span class="badge ${statusBadges[u.status]||'pending'}"><span class="badge-dot"></span>${statusNomes[u.status]||'Pendente'}</span></td></tr>`;
+    }).join('');
+  }
+}
 
 // ============================================================
 //  TOAST
@@ -525,3 +612,25 @@ function mostrarToast(msg, erro = false) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+// Exportar funções necessárias para o escopo global
+window.editarPosto = function(id) {
+  const p = todosPostos.find(x => x.id === id);
+  if (!p) return;
+  editandoId = id;
+  const catId = p.categorias_locais?.[0]?.categorias?.id || '';
+  const fotoUrl = p.fotos?.[0]?.url || '';
+  openModal('posto', { ...p, categoria_id: catId, foto_url: fotoUrl });
+};
+
+window.eliminarPosto = async function(id, nome) {
+  if (!confirm(`Eliminar o ponto "${nome}"?`)) return;
+  await supabase.from('fotos').delete().eq('locais_id', id);
+  await supabase.from('categorias_locais').delete().eq('local_id', id);
+  await supabase.from('segmentos_rota').delete().or(`local_origem_id.eq.${id},local_destino_id.eq.${id}`);
+  const { error } = await supabase.from('locais').delete().eq('id', id);
+  if (error) { mostrarToast('Erro: ' + error.message, true); return; }
+  mostrarToast(`Ponto eliminado.`);
+  await carregarPostos();
+  await atualizarEstatisticasDashboard();
+};
