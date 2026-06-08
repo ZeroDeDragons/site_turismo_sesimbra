@@ -345,6 +345,30 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
   overflow:hidden;
   transition:all var(--transition);
 }
+
+.route-point-list{
+  max-height:360px;
+  overflow-y:auto;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:white;
+}
+
+.route-point-item{
+  padding:14px 16px;
+  cursor:pointer;
+  border-bottom:1px solid #f3f4f6;
+  transition:background var(--transition), border-color var(--transition);
+}
+
+.route-point-item:last-child{border-bottom:none}
+
+.route-point-item:hover{background:#f8fafc}
+
+.route-point-item.selected{background:#eef5ea}
+
+.route-point-name{font-weight:700;color:var(--dark);margin-bottom:4px}
+.route-point-meta{font-size:12px;color:#6b7280}
 .route-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
 
 .route-img{

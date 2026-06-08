@@ -15,6 +15,10 @@ let todasCategorias = [];
 let modalTipo = null;
 let editandoId = null;
 let locationMap = null;
+let routeMap = null;
+let routePolyline = null;
+let routeMarkers = [];
+let selectedRoutePointIds = [];
 let currentLat = null;
 let currentLng = null;
 
@@ -125,6 +129,13 @@ window.eliminarCategoria = async function(id, nome) {
     mostrarToast('Categoria eliminada.');
     await carregarCategorias();
     await Promise.all([carregarRotas(), carregarPostos()]);
+};
+
+window.editarCategoria = function(id) {
+    const categoria = todasCategorias.find(c => c.id === id);
+    if (!categoria) return;
+    editandoId = id;
+    openModal('categoria', categoria);
 };
 
 // ============================================================
@@ -368,6 +379,108 @@ function setupLocationPicker(lat, lng, onLocationChange) {
     return true;
 }
 
+function getPostoById(id) {
+    return todosPostos.find(p => p.id === id);
+}
+
+function initRoutePreviewMap() {
+    if (typeof L === 'undefined') {
+        console.error('Leaflet não disponível');
+        return;
+    }
+    const container = document.getElementById('route-preview-map');
+    if (!container) return;
+    container.innerHTML = '';
+    routeMap = L.map(container).setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(routeMap);
+    setTimeout(() => routeMap.invalidateSize(), 100);
+}
+
+function renderRoutePointsList() {
+    const list = document.getElementById('route-point-list');
+    if (!list) return;
+    if (!todosPostos.length) {
+        list.innerHTML = '<div class="empty"><p>Nenhum ponto existente.</p></div>';
+        drawRoutePreview();
+        return;
+    }
+    list.innerHTML = todosPostos.map(p => {
+        const selected = selectedRoutePointIds.includes(p.id);
+        const cat = p.categorias_locais?.[0]?.categorias;
+        const cor = cat?.cor || '#979d23';
+        return `
+            <div class="route-point-item ${selected ? 'selected' : ''}" onclick="toggleRoutePoint(${p.id})" style="border-left:4px solid ${selected ? cor : '#e5e7eb'};">
+                <div class="route-point-name">${p.nome}</div>
+                <div class="route-point-meta">${cat?.nome ? cat.nome + ' · ' : ''}${p.latitude?.toFixed(6) || '?'} , ${p.longitude?.toFixed(6) || '?'}</div>
+            </div>`;
+    }).join('');
+    drawRoutePreview();
+}
+
+window.toggleRoutePoint = function(id) {
+    const index = selectedRoutePointIds.indexOf(id);
+    if (index === -1) selectedRoutePointIds.push(id);
+    else selectedRoutePointIds.splice(index, 1);
+    renderRoutePointsList();
+};
+
+function drawRoutePreview() {
+    if (!routeMap) return;
+    routeMarkers.forEach(marker => routeMap.removeLayer(marker));
+    routeMarkers = [];
+    if (routePolyline) {
+        routeMap.removeLayer(routePolyline);
+        routePolyline = null;
+    }
+
+    const latlngs = selectedRoutePointIds.map(id => {
+        const ponto = getPostoById(id);
+        return ponto ? [ponto.latitude, ponto.longitude] : null;
+    }).filter(Boolean);
+
+    if (!latlngs.length) {
+        if (todosPostos.length) {
+            routeMap.setView([todosPostos[0].latitude, todosPostos[0].longitude], 13);
+        }
+        return;
+    }
+
+    latlngs.forEach((latlng, index) => {
+        const marker = L.circleMarker(latlng, {
+            radius: 8,
+            color: '#ffffff',
+            fillColor: '#374151',
+            fillOpacity: 1,
+            weight: 2
+        }).addTo(routeMap);
+        routeMarkers.push(marker);
+        if (index === 0) marker.bindTooltip('Início', { permanent: true, direction: 'right' });
+        else if (index === latlngs.length - 1) marker.bindTooltip('Fim', { permanent: true, direction: 'right' });
+    });
+
+    if (latlngs.length > 1) {
+        routePolyline = L.polyline(latlngs, { color: document.getElementById('m-cor')?.value || '#979d23', weight: 4 }).addTo(routeMap);
+    }
+
+    const bounds = L.latLngBounds(latlngs);
+    routeMap.fitBounds(bounds.pad(0.2));
+}
+
+async function loadRoutePointSequenceFromRota(rotaId) {
+    selectedRoutePointIds = [];
+    if (!rotaId) return;
+    const { data, error } = await supabase.from('segmentos_rota')
+        .select('ordem_segmento, local_origem_id, local_destino_id')
+        .eq('rota_id', rotaId)
+        .order('ordem_segmento', { ascending: true });
+    if (error) { console.error(error); return; }
+    if (!data || !data.length) return;
+    selectedRoutePointIds = [data[0].local_origem_id];
+    data.forEach(segmento => selectedRoutePointIds.push(segmento.local_destino_id));
+}
+
 // ============================================================
 //  MODAL
 // ============================================================
@@ -396,15 +509,33 @@ window.openModal = function(tipo, dadosEditar = null) {
     }
     else if (tipo === 'rota') {
         titulo.textContent = isEditing ? 'Editar Rota' : 'Nova Rota';
+        selectedRoutePointIds = [];
         corpo.innerHTML = `
             <div class="modal-form-group"><label class="modal-label">Nome da Rota</label><input class="modal-input" id="m-nome" type="text" value="${dadosEditar?.nome || ''}"></div>
             <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="m-descricao">${dadosEditar?.descricao || ''}</textarea></div>
-            <div class="modal-row">
-                <div class="modal-form-group"><label class="modal-label">Categoria</label><select class="modal-select" id="m-categoria"><option value="">Sem categoria</option>${catOptions}</select></div>
-                <div class="modal-form-group"><label class="modal-label">Cor</label><input class="modal-input" id="m-cor" type="color" value="${dadosEditar?.cor || '#979d23'}" style="padding:4px; height:42px;"></div>
+            <div class="modal-row" style="grid-template-columns:1fr 1.2fr; gap:16px;">
+                <div>
+                    <div class="modal-form-group"><label class="modal-label">Categoria</label><select class="modal-select" id="m-categoria"><option value="">Sem categoria</option>${catOptions}</select></div>
+                    <div class="modal-form-group"><label class="modal-label">Cor</label><input class="modal-input" id="m-cor" type="color" value="${dadosEditar?.cor || '#979d23'}" style="padding:4px; height:42px;"></div>
+                    <div class="modal-form-group"><label class="modal-label">Pontos da Rota</label><div id="route-point-list" class="route-point-list"></div></div>
+                </div>
+                <div>
+                    <div class="modal-form-group"><label class="modal-label">Pré-visualizar Rota</label>
+                        <div class="location-map-container">
+                            <div id="route-preview-map" class="location-map" style="height:320px; width:100%; background:#ddd; border-radius:8px;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>`;
         footer.style.display = 'flex';
         overlay.classList.add('show');
+
+        setTimeout(async () => {
+            initRoutePreviewMap();
+            if (isEditing && dadosEditar?.id) await loadRoutePointSequenceFromRota(dadosEditar.id);
+            renderRoutePointsList();
+            document.getElementById('m-cor')?.addEventListener('input', drawRoutePreview);
+        }, 200);
     }
     else if (tipo === 'posto') {
         titulo.textContent = isEditing ? 'Editar Ponto Turístico' : 'Novo Ponto Turístico';
@@ -452,22 +583,34 @@ window.openModal = function(tipo, dadosEditar = null) {
         }, 200);
     }
     else if (tipo === 'categoria') {
-        titulo.textContent = 'Gerir Categorias';
-        corpo.innerHTML = `
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <input class="modal-input" id="m-nova-cat" type="text" placeholder="Nome da categoria..." style="flex:1">
-                <input class="modal-input" id="m-cor-cat" type="color" value="#979d23" style="width:60px">
-                <button class="btn-primary" onclick="salvarNovaCategoria()">+</button>
-            </div>
-            <div style="max-height:300px; overflow-y:auto;">
-                ${todasCategorias.map(c => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee">
-                        <div><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${c.cor || '#ccc'}; margin-right:10px;"></span> ${c.nome}</div>
-                        <button class="action-btn del" onclick="eliminarCategoria(${c.id}, '${c.nome.replace(/'/g, "\\'")}')">🗑️</button>
-                    </div>
-                `).join('')}
-            </div>`;
-        footer.style.display = 'none';
+        if (isEditing) {
+            titulo.textContent = 'Editar Categoria';
+            editandoId = dadosEditar.id;
+            corpo.innerHTML = `
+                <div class="modal-form-group"><label class="modal-label">Nome da Categoria</label><input class="modal-input" id="m-nome" type="text" value="${dadosEditar.nome || ''}"></div>
+                <div class="modal-form-group"><label class="modal-label">Cor</label><input class="modal-input" id="m-cor" type="color" value="${dadosEditar.cor || '#979d23'}" style="padding:4px; height:42px;"></div>`;
+            footer.style.display = 'flex';
+        } else {
+            titulo.textContent = 'Gerir Categorias';
+            corpo.innerHTML = `
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input class="modal-input" id="m-nova-cat" type="text" placeholder="Nome da categoria..." style="flex:1">
+                    <input class="modal-input" id="m-cor-cat" type="color" value="#979d23" style="width:60px">
+                    <button class="btn-primary" onclick="salvarNovaCategoria()">+</button>
+                </div>
+                <div style="max-height:300px; overflow-y:auto;">
+                    ${todasCategorias.map(c => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee">
+                            <div><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${c.cor || '#ccc'}; margin-right:10px;"></span> ${c.nome}</div>
+                            <div style="display:flex; gap:6px;">
+                                <button class="action-btn edit" onclick="editarCategoria(${c.id})">✏️</button>
+                                <button class="action-btn del" onclick="eliminarCategoria(${c.id}, '${c.nome.replace(/'/g, "\\'")}')">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+            footer.style.display = 'none';
+        }
         overlay.classList.add('show');
     }
 };
@@ -476,6 +619,13 @@ window.closeModal = function() {
     if (locationMap) {
         locationMap.remove();
         locationMap = null;
+    }
+    if (routeMap) {
+        routeMap.remove();
+        routeMap = null;
+        routePolyline = null;
+        routeMarkers = [];
+        selectedRoutePointIds = [];
     }
     document.getElementById('modalOverlay')?.classList.remove('show');
     editandoId = null;
@@ -524,15 +674,43 @@ window.saveModal = async function() {
         if (editandoId) {
             await supabase.from('rotas').update({ nome, descricao, cor }).eq('id', editandoId);
             await supabase.from('categorias_rotas').delete().eq('rota_id', editandoId);
+            await supabase.from('segmentos_rota').delete().eq('rota_id', editandoId);
         } else {
             const { data, error } = await supabase.from('rotas').insert([{ nome, descricao, cor }]).select().single();
             if (error) { mostrarToast('Erro: ' + error.message, true); return; }
             rotaId = data.id;
         }
+
         if (categoria_id && rotaId) await supabase.from('categorias_rotas').insert([{ rota_id: rotaId, categoria_id: categoria_id }]);
+
+        const segmentoRows = selectedRoutePointIds.reduce((acc, pontoId, index) => {
+            if (index === selectedRoutePointIds.length - 1) return acc;
+            acc.push({
+                rota_id: rotaId,
+                local_origem_id: pontoId,
+                local_destino_id: selectedRoutePointIds[index + 1],
+                ordem_segmento: index + 1
+            });
+            return acc;
+        }, []);
+
+        if (segmentoRows.length) await supabase.from('segmentos_rota').insert(segmentoRows);
+
         mostrarToast(editandoId ? 'Rota atualizada.' : 'Rota criada.');
         closeModal();
         await carregarRotas();
+    }
+    else if (modalTipo === 'categoria') {
+        const nome = document.getElementById('m-nome')?.value.trim();
+        const cor = document.getElementById('m-cor')?.value;
+        if (!nome) { mostrarToast('Nome obrigatório.', true); return; }
+        if (!editandoId) { mostrarToast('Selecione uma categoria para editar.', true); return; }
+        const { error } = await supabase.from('categorias').update({ nome, cor }).eq('id', editandoId);
+        if (error) { mostrarToast('Erro: ' + error.message, true); return; }
+        mostrarToast('Categoria atualizada.');
+        closeModal();
+        await carregarCategorias();
+        await Promise.all([carregarRotas(), carregarPostos(), atualizarEstatisticasDashboard()]);
     }
     else if (modalTipo === 'posto') {
         const nome = document.getElementById('m-nome')?.value.trim();
