@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Página de Administração</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+<link
+    href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;800&family=Poppins:wght@500;700;800&display=swap"
+    rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+<link rel="icon" type="image/png" href="Imagens/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="src/paginaAdmin.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="Imagens/logo.png">
@@ -150,11 +159,9 @@
         <div style="padding:20px 22px"><div class="posto-grid" id="postoGrid"></div></div>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- MODAL - substitua a parte do modal existente por esta versão -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal modal-large">
     <div class="modal-header">
@@ -176,5 +183,9 @@
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg">Guardado com sucesso.</span></div>
 
 <script type="module" src="src/paginaAdmin.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 </body>
 </html>
