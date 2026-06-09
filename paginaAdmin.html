@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Página de Administração</title>
+<title>Página de Administração | Castelo Sesimbra</title>
 <link href="src/paginaAdmin.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="Imagens/logo.png">
 
@@ -18,7 +18,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-<!-- ... resto do HTML permanece igual ... -->
 
 <!-- SIDEBAR -->
 <nav class="sidebar">
@@ -163,6 +162,7 @@
   </div>
 </div>
 
+<!-- MODAL PARA CATEGORIAS E PONTOS -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal modal-large">
     <div class="modal-header">
@@ -176,6 +176,71 @@
     <div class="modal-footer" id="modalFooter">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-primary" onclick="saveModal()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARA ROTAS COM MAPA -->
+<div class="modal-overlay" id="modalRotaOverlay" onclick="closeModalRotaOutside(event)">
+  <div class="modal modal-route">
+    <div class="modal-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="modal-title" id="modalRotaTitle">Nova Rota</span>
+      <button class="modal-close" onclick="closeModalRota()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalRotaBody">
+      <div class="modal-two-columns">
+        <div class="modal-col-left">
+          <div class="modal-form-group">
+            <label class="modal-label">Nome da rota</label>
+            <input type="text" class="modal-input" id="rotaNome" placeholder="Ex: Rota Histórica de Sesimbra">
+          </div>
+          <div class="modal-form-group">
+            <label class="modal-label">Descrição</label>
+            <textarea class="modal-textarea" id="rotaDescricao" rows="3" placeholder="Descrição da rota..."></textarea>
+          </div>
+          <div class="modal-form-group">
+            <label class="modal-label">Cor da rota no mapa</label>
+            <input type="color" class="modal-input" id="rotaCor" style="height:42px; width:100%" value="#979d23">
+          </div>
+          <div class="modal-form-group">
+            <label class="modal-label">Categorias</label>
+            <div id="rotaCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          </div>
+          <div class="modal-form-group">
+            <label class="modal-label">Pontos da Rota (arraste para reordenar)</label>
+            <div id="rotaPontosList" class="route-point-list"></div>
+            <div class="route-points-actions">
+              <button type="button" class="btn-secondary" onclick="showAddPontoToRotaModal()">
+                <i class="fas fa-plus"></i> Adicionar Ponto
+              </button>
+              <button type="button" class="btn-secondary" onclick="clearAllPontos()">
+                <i class="fas fa-trash"></i> Limpar todos
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-col-right">
+          <div class="modal-form-group">
+            <label class="modal-label">Mapa Interativo</label>
+            <div class="map-instruction">
+              <i class="fas fa-info-circle"></i> Clique nos pontos do mapa para adicionar à rota
+            </div>
+            <div id="rotaMapContainer" class="route-map-container">
+              <div id="routeMap" class="route-map"></div>
+            </div>
+            <div class="route-stats" id="routeStats">
+              Selecione pontos no mapa para criar a rota
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModalRota()">Cancelar</button>
+      <button class="btn-primary" onclick="saveRotaFromModal()">Guardar Rota</button>
     </div>
   </div>
 </div>
