@@ -12,15 +12,13 @@ let locationMap = null;
 let locationMarker = null;
 let currentLat = null;
 let currentLng = null;
-let currentEditLocalId = null;
-// Constantes para o mapa de Sesimbra
-const SESIMBRA_CENTER = { lat: 38.4446, lng: -9.1016 };  // Castelo de Sesimbra
-const SESIMBRA_BOUNDS = {
-    north: 38.48,
-    south: 38.42,
-    east: -9.07,
-    west: -9.13
-};
+
+// Variáveis para o mapa de rotas
+let routeMap = null;
+let routeMarkers = [];
+let selectedPontosRota = [];
+let allLocaisForMap = [];
+let currentRoutePolyline = null;
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -40,7 +38,6 @@ async function checkAuth() {
         return;
     }
     
-    // Verificar se é admin
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -65,19 +62,16 @@ async function logout() {
 window.showSection = function(section, element) {
     currentSection = section;
     
-    // Atualizar active na sidebar
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
     if (element) element.classList.add('active');
     
-    // Mostrar secção correta
     document.querySelectorAll('.section').forEach(sec => {
         sec.classList.remove('active');
     });
     document.getElementById(`sec-${section}`).classList.add('active');
     
-    // Atualizar título
     const titles = {
         dashboard: 'Painel de Administração',
         utilizadores: 'Gestão de Utilizadores',
@@ -86,7 +80,6 @@ window.showSection = function(section, element) {
     };
     document.getElementById('topbarTitle').textContent = titles[section] || 'Administração';
     
-    // Recarregar dados conforme secção
     if (section === 'utilizadores') {
         loadUsers();
     } else if (section === 'rotas') {
@@ -123,7 +116,8 @@ async function updateDashboardCounts() {
         document.getElementById('statPostos').textContent = locaisCount || 0;
         document.getElementById('statCats').textContent = catsCount || 0;
         
-        document.querySelector('.nav-item[onclick*="utilizadores"] .nav-badge').textContent = usersCount || 0;
+        const badge = document.querySelector('.nav-item[onclick*="utilizadores"] .nav-badge');
+        if (badge) badge.textContent = usersCount || 0;
     } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
     }
@@ -161,11 +155,10 @@ async function loadLastUsers() {
 // ==================== UTILIZADORES ====================
 async function loadUsers() {
     try {
-        let query = supabase
+        const { data, error } = await supabase
             .from('profiles')
-            .select('id, email, full_name, role, status, created_at');
-        
-        const { data, error } = await query.order('created_at', { ascending: false });
+            .select('id, email, full_name, role, status, created_at')
+            .order('created_at', { ascending: false });
         
         if (error) throw error;
         
@@ -306,7 +299,6 @@ async function loadCategorias() {
         
         categoriasList = data || [];
         
-        // Atualizar filtros
         const rotaCatFilter = document.getElementById('rotaCatFilter');
         const postoCatFilter = document.getElementById('postoCatFilter');
         
@@ -380,7 +372,7 @@ window.editCategoria = async function(id) {
 };
 
 window.deleteCategoria = async function(id) {
-    if (!confirm('Tem certeza que deseja eliminar esta categoria? Os pontos e rotas associados perderão esta categoria.')) return;
+    if (!confirm('Tem certeza que deseja eliminar esta categoria?')) return;
     
     const { error } = await supabase
         .from('categorias')
@@ -398,7 +390,7 @@ window.deleteCategoria = async function(id) {
     await loadRotas();
 };
 
-// ==================== PONTOS TURÍSTICOS (LOCAIS) ====================
+// ==================== PONTOS TURÍSTICOS ====================
 async function loadLocais() {
     try {
         const { data, error } = await supabase
@@ -409,9 +401,9 @@ async function loadLocais() {
         if (error) throw error;
         
         locaisList = data || [];
+        allLocaisForMap = [...locaisList];
         document.getElementById('postoCount').textContent = locaisList.length;
         
-        // Carregar categorias para cada local
         for (let local of locaisList) {
             const { data: cats } = await supabase
                 .from('categorias_locais')
@@ -486,9 +478,8 @@ function renderPostosGrid(locais) {
 window.openModalPosto = function() {
     currentEditType = 'posto';
     currentEditId = null;
-    currentEditLocalId = null;
-    currentLat = null;
-    currentLng = null;
+    currentLat = 38.4446;
+    currentLng = -9.1016;
     
     const modalBody = document.getElementById('modalBody');
     modalBody.innerHTML = `
@@ -513,13 +504,12 @@ window.openModalPosto = function() {
                 <div id="locationPickerMap" class="location-map"></div>
             </div>
             <div class="location-coords-display">
-                <div class="coord-item"><i class="fas fa-map-pin"></i> <span id="coordLatDisplay">---</span></div>
-                <div class="coord-item"><i class="fas fa-map-pin"></i> <span id="coordLngDisplay">---</span></div>
+                <div class="coord-item"><i class="fas fa-map-pin"></i> <span id="coordLatDisplay">38.4446</span></div>
+                <div class="coord-item"><i class="fas fa-map-pin"></i> <span id="coordLngDisplay">-9.1016</span></div>
             </div>
         </div>
     `;
     
-    // Carregar checkboxes de categorias
     setTimeout(() => {
         const container = document.getElementById('localCategoriasList');
         if (container) {
@@ -530,7 +520,6 @@ window.openModalPosto = function() {
                 </label>
             `).join('');
         }
-        
         initLocationPickerMap();
     }, 100);
     
@@ -547,7 +536,6 @@ window.editLocal = async function(id) {
     currentLat = local.latitude;
     currentLng = local.longitude;
     
-    // Carregar categorias associadas
     const { data: localCats } = await supabase
         .from('categorias_locais')
         .select('categoria_id')
@@ -594,7 +582,6 @@ window.editLocal = async function(id) {
                 </label>
             `).join('');
         }
-        
         initLocationPickerMap(local.latitude, local.longitude);
     }, 100);
     
@@ -605,10 +592,11 @@ window.editLocal = async function(id) {
 window.deleteLocal = async function(id) {
     if (!confirm('Tem certeza que deseja eliminar este ponto turístico?')) return;
     
-    const { error } = await supabase
-        .from('locais')
-        .delete()
-        .eq('id', id);
+    await supabase.from('categorias_locais').delete().eq('local_id', id);
+    await supabase.from('fotos').delete().eq('locais_id', id);
+    await supabase.from('segmentos_rota').delete().or(`local_origem_id.eq.${id},local_destino_id.eq.${id}`);
+    
+    const { error } = await supabase.from('locais').delete().eq('id', id);
     
     if (error) {
         showToast('Erro ao eliminar ponto', 'error');
@@ -621,76 +609,41 @@ window.deleteLocal = async function(id) {
 };
 
 function initLocationPickerMap(lat = 38.4446, lng = -9.1016) {
-    // Coordenadas de Sesimbra (Castelo de Sesimbra)
-    const SESIMBRA_CENTER = [38.4446, -9.1016];
-    const latNum = lat || SESIMBRA_CENTER[0];
-    const lngNum = lng || SESIMBRA_CENTER[1];
-    
-    // Verificar se o container do mapa existe
     const mapContainer = document.getElementById('locationPickerMap');
-    if (!mapContainer) {
-        console.error('Container do mapa não encontrado');
-        return;
-    }
+    if (!mapContainer) return;
     
-    // Se o mapa já existe, remove-o
     if (locationMap) {
         locationMap.remove();
         locationMap = null;
-        locationMarker = null;
     }
     
-    try {
-        // Criar o mapa
-        locationMap = L.map('locationPickerMap').setView([latNum, lngNum], 15);
-        
-        // Adicionar tile layer (mapa base)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 19,
-            minZoom: 12
-        }).addTo(locationMap);
-        
-        // Adicionar marcador arrastável
-        locationMarker = L.marker([latNum, lngNum], { draggable: true }).addTo(locationMap);
-        
-        // Atualizar coordenadas quando o marcador é arrastado
-        locationMarker.on('dragend', function(e) {
-            const pos = e.target.getLatLng();
-            currentLat = pos.lat;
-            currentLng = pos.lng;
-            const latDisplay = document.getElementById('coordLatDisplay');
-            const lngDisplay = document.getElementById('coordLngDisplay');
-            if (latDisplay) latDisplay.textContent = pos.lat.toFixed(6);
-            if (lngDisplay) lngDisplay.textContent = pos.lng.toFixed(6);
-        });
-        
-        // Atualizar coordenadas quando o mapa é clicado
-        locationMap.on('click', function(e) {
-            currentLat = e.latlng.lat;
-            currentLng = e.latlng.lng;
-            if (locationMarker) {
-                locationMarker.setLatLng(e.latlng);
-            }
-            const latDisplay = document.getElementById('coordLatDisplay');
-            const lngDisplay = document.getElementById('coordLngDisplay');
-            if (latDisplay) latDisplay.textContent = e.latlng.lat.toFixed(6);
-            if (lngDisplay) lngDisplay.textContent = e.latlng.lng.toFixed(6);
-        });
-        
-        // Forçar o redimensionamento do mapa após um pequeno delay
-        setTimeout(() => {
-            if (locationMap) {
-                locationMap.invalidateSize();
-            }
-        }, 200);
-        
-        console.log('Mapa inicializado com sucesso em:', latNum, lngNum);
-        
-    } catch (error) {
-        console.error('Erro ao inicializar o mapa:', error);
-    }
+    locationMap = L.map('locationPickerMap').setView([lat, lng], 15);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(locationMap);
+    
+    locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+    
+    locationMarker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        currentLat = pos.lat;
+        currentLng = pos.lng;
+        document.getElementById('coordLatDisplay').textContent = pos.lat.toFixed(6);
+        document.getElementById('coordLngDisplay').textContent = pos.lng.toFixed(6);
+    });
+    
+    locationMap.on('click', function(e) {
+        currentLat = e.latlng.lat;
+        currentLng = e.latlng.lng;
+        locationMarker.setLatLng(e.latlng);
+        document.getElementById('coordLatDisplay').textContent = e.latlng.lat.toFixed(6);
+        document.getElementById('coordLngDisplay').textContent = e.latlng.lng.toFixed(6);
+    });
+    
+    setTimeout(() => locationMap.invalidateSize(), 200);
 }
 
 // ==================== ROTAS ====================
@@ -706,7 +659,6 @@ async function loadRotas() {
         rotasList = data || [];
         document.getElementById('rotaCount').textContent = rotasList.length;
         
-        // Carregar categorias e segmentos para cada rota
         for (let rota of rotasList) {
             const { data: cats } = await supabase
                 .from('categorias_rotas')
@@ -779,7 +731,7 @@ function renderRotasGrid(rotas) {
                     <div class="route-desc">${rota.descricao ? rota.descricao.substring(0, 80) + (rota.descricao.length > 80 ? '...' : '') : 'Sem descrição'}</div>
                     <div class="route-footer">
                         <div class="route-actions">
-                            <button class="action-btn edit" onclick="editRota(${rota.id})" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn edit" onclick="openModalRota(${rota.id})" title="Editar"><i class="fas fa-edit"></i></button>
                             <button class="action-btn del" onclick="deleteRota(${rota.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -789,36 +741,236 @@ function renderRotasGrid(rotas) {
     }).join('');
 }
 
-window.openModalRota = function() {
-    currentEditType = 'rota';
-    currentEditId = null;
+function initRouteMap() {
+    const mapContainer = document.getElementById('routeMap');
+    if (!mapContainer) return;
     
-    const modalBody = document.getElementById('modalBody');
-    modalBody.innerHTML = `
-        <div class="modal-form-group">
-            <label class="modal-label">Nome da rota</label>
-            <input type="text" class="modal-input" id="rotaNome" placeholder="Ex: Rota Histórica de Sesimbra">
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Descrição</label>
-            <textarea class="modal-textarea" id="rotaDescricao" placeholder="Descrição da rota..."></textarea>
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Categorias</label>
-            <div id="rotaCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Pontos da Rota (ordem de visita)</label>
-            <div id="rotaPontosList" class="route-point-list"></div>
-            <button type="button" class="btn-primary" style="margin-top:12px;width:100%" onclick="showAddPontoToRota()">
-                <i class="fas fa-plus"></i> Adicionar Ponto
-            </button>
-        </div>
-    `;
+    if (routeMap) {
+        routeMap.remove();
+        routeMap = null;
+    }
+    
+    routeMap = L.map('routeMap').setView([38.4446, -9.1016], 14);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(routeMap);
+    
+    loadAllPontosToMap();
     
     setTimeout(() => {
+        if (routeMap) routeMap.invalidateSize();
+    }, 200);
+}
+
+async function loadAllPontosToMap() {
+    try {
+        routeMarkers.forEach(marker => {
+            if (routeMap) marker.removeFrom(routeMap);
+        });
+        routeMarkers = [];
+        
+        allLocaisForMap.forEach(local => {
+            const isSelected = selectedPontosRota.some(p => p.id === local.id);
+            
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background:${isSelected ? '#979d23' : 'white'}; color:${isSelected ? 'white' : '#979d23'}; border:2px solid #979d23; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; cursor:pointer; font-size:14px">
+                        ${isSelected ? '✓' : (local.simbolo || '📍')}
+                       </div>`,
+                iconSize: [30, 30],
+                popupAnchor: [0, -15]
+            });
+            
+            const marker = L.marker([local.latitude, local.longitude], { icon })
+                .addTo(routeMap)
+                .bindPopup(`
+                    <div style="padding:8px">
+                        <strong>${escapeHtml(local.nome)}</strong><br>
+                        <small>${local.descricao ? local.descricao.substring(0, 100) : 'Sem descrição'}</small><br>
+                        <button onclick="togglePontoOnRoute(${local.id})" style="margin-top:8px; padding:4px 12px; background:#979d23; color:white; border:none; border-radius:6px; cursor:pointer">
+                            ${isSelected ? 'Remover da rota' : 'Adicionar à rota'}
+                        </button>
+                    </div>
+                `);
+            
+            marker.localId = local.id;
+            routeMarkers.push(marker);
+        });
+        
+        drawRouteLine();
+    } catch (error) {
+        console.error('Erro ao carregar pontos para o mapa:', error);
+    }
+}
+
+function drawRouteLine() {
+    if (currentRoutePolyline && routeMap) {
+        routeMap.removeLayer(currentRoutePolyline);
+    }
+    
+    if (selectedPontosRota.length < 2) return;
+    
+    const coordinates = selectedPontosRota.map(ponto => [ponto.latitude, ponto.longitude]);
+    const cor = document.getElementById('rotaCor')?.value || '#979d23';
+    
+    currentRoutePolyline = L.polyline(coordinates, {
+        color: cor,
+        weight: 4,
+        opacity: 0.8,
+        lineJoin: 'round'
+    }).addTo(routeMap);
+    
+    if (coordinates.length > 0) {
+        const bounds = L.latLngBounds(coordinates);
+        routeMap.fitBounds(bounds.pad(0.2));
+    }
+    
+    updateRouteStats();
+}
+
+function updateRouteStats() {
+    const statsEl = document.getElementById('routeStats');
+    if (!statsEl) return;
+    
+    const totalPontos = selectedPontosRota.length;
+    let distanciaTotal = 0;
+    
+    for (let i = 0; i < selectedPontosRota.length - 1; i++) {
+        const p1 = selectedPontosRota[i];
+        const p2 = selectedPontosRota[i + 1];
+        const dist = calculateDistance(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
+        distanciaTotal += dist;
+    }
+    
+    statsEl.innerHTML = `
+        <i class="fas fa-route"></i> 
+        ${totalPontos} ${totalPontos === 1 ? 'ponto' : 'pontos'} | 
+        ${distanciaTotal > 0 ? distanciaTotal.toFixed(2) + ' km' : '---'} de extensão
+        ${totalPontos >= 2 ? ' | Rota traçada no mapa' : ' | Adicione pelo menos 2 pontos'}
+    `;
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+window.togglePontoOnRoute = function(localId) {
+    const ponto = allLocaisForMap.find(l => l.id === localId);
+    if (!ponto) return;
+    
+    const index = selectedPontosRota.findIndex(p => p.id === localId);
+    
+    if (index === -1) {
+        selectedPontosRota.push(ponto);
+        showToast(`"${ponto.nome}" adicionado à rota`);
+    } else {
+        selectedPontosRota.splice(index, 1);
+        showToast(`"${ponto.nome}" removido da rota`);
+    }
+    
+    renderPontosRotaListUI();
+    loadAllPontosToMap();
+};
+
+window.removePontoFromRoute = function(index) {
+    const pontoRemovido = selectedPontosRota[index];
+    selectedPontosRota.splice(index, 1);
+    showToast(`"${pontoRemovido.nome}" removido da rota`);
+    renderPontosRotaListUI();
+    loadAllPontosToMap();
+};
+
+window.movePontoUp = function(index) {
+    if (index > 0) {
+        [selectedPontosRota[index - 1], selectedPontosRota[index]] = 
+        [selectedPontosRota[index], selectedPontosRota[index - 1]];
+        renderPontosRotaListUI();
+        loadAllPontosToMap();
+    }
+};
+
+window.movePontoDown = function(index) {
+    if (index < selectedPontosRota.length - 1) {
+        [selectedPontosRota[index], selectedPontosRota[index + 1]] = 
+        [selectedPontosRota[index + 1], selectedPontosRota[index]];
+        renderPontosRotaListUI();
+        loadAllPontosToMap();
+    }
+};
+
+function renderPontosRotaListUI() {
+    const container = document.getElementById('rotaPontosList');
+    if (!container) return;
+    
+    if (selectedPontosRota.length === 0) {
+        container.innerHTML = '<div class="empty" style="padding:20px"><p>Nenhum ponto adicionado. Clique nos pontos do mapa para adicionar à rota.</p></div>';
+        return;
+    }
+    
+    container.innerHTML = selectedPontosRota.map((ponto, idx) => `
+        <div class="route-point-item">
+            <div style="display:flex; align-items:center; flex:1">
+                <span class="route-point-number">${idx + 1}</span>
+                <span class="route-point-name">${escapeHtml(ponto.nome)}</span>
+                <small style="color:#9ca3af; margin-left:8px">📍 ${ponto.latitude.toFixed(4)}, ${ponto.longitude.toFixed(4)}</small>
+            </div>
+            <div style="display:flex; gap:4px">
+                <button class="action-btn edit" onclick="movePontoUp(${idx})" title="Subir" ${idx === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="action-btn edit" onclick="movePontoDown(${idx})" title="Descer" ${idx === selectedPontosRota.length - 1 ? 'disabled' : ''}>
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button class="action-btn del" onclick="removePontoFromRoute(${idx})" title="Remover">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.clearAllPontos = function() {
+    if (confirm('Tem certeza que deseja remover todos os pontos da rota?')) {
+        selectedPontosRota = [];
+        renderPontosRotaListUI();
+        loadAllPontosToMap();
+        showToast('Todos os pontos foram removidos');
+    }
+};
+
+window.showAddPontoToRotaModal = function() {
+    showToast('Clique diretamente nos pontos do mapa para adicionar à rota');
+};
+
+window.openModalRota = function(rotaId = null) {
+    currentEditType = 'rota';
+    currentEditId = rotaId;
+    selectedPontosRota = [];
+    
+    const modal = document.getElementById('modalRotaOverlay');
+    const title = document.getElementById('modalRotaTitle');
+    
+    if (rotaId) {
+        title.innerHTML = '<i class="fas fa-edit"></i> Editar Rota';
+        loadRotaData(rotaId);
+    } else {
+        title.innerHTML = '<i class="fas fa-plus-circle"></i> Nova Rota';
+        document.getElementById('rotaNome').value = '';
+        document.getElementById('rotaDescricao').value = '';
+        document.getElementById('rotaCor').value = '#979d23';
+        
         const container = document.getElementById('rotaCategoriasList');
-        if (container) {
+        if (container && categoriasList) {
             container.innerHTML = categoriasList.map(cat => `
                 <label style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#f3f4f6;border-radius:20px">
                     <input type="checkbox" value="${cat.id}"> 
@@ -826,74 +978,33 @@ window.openModalRota = function() {
                 </label>
             `).join('');
         }
-        
-        window.selectedPontosRota = [];
-        renderPontosRotaList();
-    }, 100);
-    
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Nova Rota';
-    document.getElementById('modalOverlay').classList.add('show');
-};
-
-window.editRota = async function(id) {
-    const rota = rotasList.find(r => r.id === id);
-    if (!rota) return;
-    
-    currentEditType = 'rota';
-    currentEditId = id;
-    
-    // Carregar categorias associadas
-    const { data: rotaCats } = await supabase
-        .from('categorias_rotas')
-        .select('categoria_id')
-        .eq('rota_id', id);
-    
-    const associatedCatIds = (rotaCats || []).map(rc => rc.categoria_id);
-    
-    // Carregar segmentos
-    const { data: segs } = await supabase
-        .from('segmentos_rota')
-        .select('*, local_origem_id, local_destino_id, ordem_segmento')
-        .eq('rota_id', id)
-        .order('ordem_segmento');
-    
-    const pontosRota = [];
-    if (segs && segs.length > 0) {
-        const primeiroLocal = locaisList.find(l => l.id === segs[0].local_origem_id);
-        if (primeiroLocal) pontosRota.push(primeiroLocal);
-        
-        for (const seg of segs) {
-            const localDestino = locaisList.find(l => l.id === seg.local_destino_id);
-            if (localDestino) pontosRota.push(localDestino);
-        }
     }
     
-    const modalBody = document.getElementById('modalBody');
-    modalBody.innerHTML = `
-        <div class="modal-form-group">
-            <label class="modal-label">Nome da rota</label>
-            <input type="text" class="modal-input" id="rotaNome" value="${escapeHtml(rota.nome)}">
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Descrição</label>
-            <textarea class="modal-textarea" id="rotaDescricao">${escapeHtml(rota.descricao || '')}</textarea>
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Categorias</label>
-            <div id="rotaCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Pontos da Rota (ordem de visita)</label>
-            <div id="rotaPontosList" class="route-point-list"></div>
-            <button type="button" class="btn-primary" style="margin-top:12px;width:100%" onclick="showAddPontoToRota()">
-                <i class="fas fa-plus"></i> Adicionar Ponto
-            </button>
-        </div>
-    `;
+    modal.classList.add('show');
     
     setTimeout(() => {
+        initRouteMap();
+    }, 100);
+};
+
+async function loadRotaData(rotaId) {
+    try {
+        const rota = rotasList.find(r => r.id === rotaId);
+        if (!rota) return;
+        
+        document.getElementById('rotaNome').value = rota.nome;
+        document.getElementById('rotaDescricao').value = rota.descricao || '';
+        document.getElementById('rotaCor').value = rota.cor || '#979d23';
+        
+        const { data: rotaCats } = await supabase
+            .from('categorias_rotas')
+            .select('categoria_id')
+            .eq('rota_id', rotaId);
+        
+        const associatedCatIds = (rotaCats || []).map(rc => rc.categoria_id);
+        
         const container = document.getElementById('rotaCategoriasList');
-        if (container) {
+        if (container && categoriasList) {
             container.innerHTML = categoriasList.map(cat => `
                 <label style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#f3f4f6;border-radius:20px">
                     <input type="checkbox" value="${cat.id}" ${associatedCatIds.includes(cat.id) ? 'checked' : ''}> 
@@ -902,106 +1013,118 @@ window.editRota = async function(id) {
             `).join('');
         }
         
-        window.selectedPontosRota = pontosRota;
-        renderPontosRotaList();
-    }, 100);
-    
-    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Rota';
-    document.getElementById('modalOverlay').classList.add('show');
-};
-
-window.showAddPontoToRota = function() {
-    const availableLocais = locaisList.filter(local => 
-        !window.selectedPontosRota.some(p => p.id === local.id)
-    );
-    
-    if (availableLocais.length === 0) {
-        showToast('Não há mais pontos disponíveis para adicionar', 'warning');
-        return;
+        const { data: segs } = await supabase
+            .from('segmentos_rota')
+            .select('*, local_origem_id, local_destino_id')
+            .eq('rota_id', rotaId)
+            .order('ordem_segmento');
+        
+        const pontosRota = [];
+        if (segs && segs.length > 0) {
+            const primeiroLocal = allLocaisForMap.find(l => l.id === segs[0].local_origem_id);
+            if (primeiroLocal) pontosRota.push(primeiroLocal);
+            
+            for (const seg of segs) {
+                const localDestino = allLocaisForMap.find(l => l.id === seg.local_destino_id);
+                if (localDestino) pontosRota.push(localDestino);
+            }
+        }
+        
+        selectedPontosRota = pontosRota;
+        renderPontosRotaListUI();
+        
+    } catch (error) {
+        console.error('Erro ao carregar dados da rota:', error);
     }
-    
-    const modalBody = document.getElementById('modalBody');
-    const originalContent = modalBody.innerHTML;
-    
-    modalBody.innerHTML = `
-        <div style="margin-bottom:16px">
-            <button class="btn-cancel" onclick="cancelAddPontoToRota()">
-                <i class="fas fa-arrow-left"></i> Voltar
-            </button>
-        </div>
-        <div class="modal-form-group">
-            <label class="modal-label">Selecionar ponto para adicionar</label>
-            <div id="addPontoList" style="max-height:400px;overflow-y:auto">
-                ${availableLocais.map(local => `
-                    <div class="route-point-item" onclick="addPontoToRota(${local.id})">
-                        <div class="route-point-name">${escapeHtml(local.nome)}</div>
-                        <div class="route-point-meta">📍 ${local.latitude.toFixed(4)}, ${local.longitude.toFixed(4)}</div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-    
-    window.modalOriginalContent = originalContent;
-};
-
-window.cancelAddPontoToRota = function() {
-    const modalBody = document.getElementById('modalBody');
-    if (window.modalOriginalContent) {
-        modalBody.innerHTML = window.modalOriginalContent;
-        // Re-renderizar a lista de pontos
-        renderPontosRotaList();
-    }
-};
-
-window.addPontoToRota = function(localId) {
-    const local = locaisList.find(l => l.id === localId);
-    if (local && !window.selectedPontosRota.some(p => p.id === localId)) {
-        window.selectedPontosRota.push(local);
-        cancelAddPontoToRota();
-        renderPontosRotaList();
-    }
-};
-
-window.removePontoFromRota = function(index) {
-    window.selectedPontosRota.splice(index, 1);
-    renderPontosRotaList();
-};
-
-function renderPontosRotaList() {
-    const container = document.getElementById('rotaPontosList');
-    if (!container) return;
-    
-    if (!window.selectedPontosRota || window.selectedPontosRota.length === 0) {
-        container.innerHTML = '<div class="empty" style="padding:20px"><p>Nenhum ponto adicionado. Clique em "Adicionar Ponto" para começar.</p></div>';
-        return;
-    }
-    
-    container.innerHTML = window.selectedPontosRota.map((ponto, idx) => `
-        <div class="route-point-item">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                    <div class="route-point-name">
-                        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--primary);color:white;border-radius:12px;font-size:12px;margin-right:10px">${idx + 1}</span>
-                        ${escapeHtml(ponto.nome)}
-                    </div>
-                    <div class="route-point-meta">📍 ${ponto.latitude.toFixed(4)}, ${ponto.longitude.toFixed(4)}</div>
-                </div>
-                <button class="action-btn del" onclick="removePontoFromRota(${idx})" title="Remover">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
 }
+
+window.saveRotaFromModal = async function() {
+    const nome = document.getElementById('rotaNome')?.value.trim();
+    if (!nome) {
+        showToast('Nome da rota é obrigatório', 'warning');
+        return;
+    }
+    
+    if (selectedPontosRota.length < 2) {
+        showToast('A rota deve ter pelo menos 2 pontos', 'warning');
+        return;
+    }
+    
+    const data = {
+        nome: nome,
+        descricao: document.getElementById('rotaDescricao')?.value || null,
+        cor: document.getElementById('rotaCor')?.value || '#979d23'
+    };
+    
+    let rotaId = currentEditId;
+    let result;
+    
+    if (currentEditId) {
+        result = await supabase
+            .from('rotas')
+            .update(data)
+            .eq('id', currentEditId);
+    } else {
+        result = await supabase
+            .from('rotas')
+            .insert([data])
+            .select();
+        
+        if (result.data && result.data[0]) {
+            rotaId = result.data[0].id;
+        }
+    }
+    
+    if (result.error) {
+        showToast('Erro ao guardar rota', 'error');
+        return;
+    }
+    
+    if (rotaId) {
+        await supabase.from('categorias_rotas').delete().eq('rota_id', rotaId);
+        
+        const selectedCats = [];
+        document.querySelectorAll('#rotaCategoriasList input:checked').forEach(cb => {
+            selectedCats.push({
+                rota_id: rotaId,
+                categoria_id: parseInt(cb.value)
+            });
+        });
+        
+        if (selectedCats.length > 0) {
+            await supabase.from('categorias_rotas').insert(selectedCats);
+        }
+        
+        await supabase.from('segmentos_rota').delete().eq('rota_id', rotaId);
+        
+        const segmentos = [];
+        for (let i = 0; i < selectedPontosRota.length - 1; i++) {
+            segmentos.push({
+                rota_id: rotaId,
+                local_origem_id: selectedPontosRota[i].id,
+                local_destino_id: selectedPontosRota[i + 1].id,
+                ordem_segmento: i + 1
+            });
+        }
+        
+        if (segmentos.length > 0) {
+            await supabase.from('segmentos_rota').insert(segmentos);
+        }
+    }
+    
+    showToast(`Rota ${currentEditId ? 'atualizada' : 'criada'} com sucesso`);
+    closeModalRota();
+    await loadRotas();
+    updateDashboardCounts();
+};
 
 window.deleteRota = async function(id) {
     if (!confirm('Tem certeza que deseja eliminar esta rota?')) return;
     
-    const { error } = await supabase
-        .from('rotas')
-        .delete()
-        .eq('id', id);
+    await supabase.from('segmentos_rota').delete().eq('rota_id', id);
+    await supabase.from('categorias_rotas').delete().eq('rota_id', id);
+    
+    const { error } = await supabase.from('rotas').delete().eq('id', id);
     
     if (error) {
         showToast('Erro ao eliminar rota', 'error');
@@ -1013,14 +1136,31 @@ window.deleteRota = async function(id) {
     updateDashboardCounts();
 };
 
+window.closeModalRota = function() {
+    const modal = document.getElementById('modalRotaOverlay');
+    modal.classList.remove('show');
+    currentEditId = null;
+    currentEditType = null;
+    selectedPontosRota = [];
+    
+    if (routeMap) {
+        routeMap.remove();
+        routeMap = null;
+    }
+};
+
+window.closeModalRotaOutside = function(event) {
+    if (event.target === document.getElementById('modalRotaOverlay')) {
+        closeModalRota();
+    }
+};
+
 // ==================== MODAL SAVE ====================
 window.saveModal = async function() {
     if (currentEditType === 'categoria') {
         await saveCategoria();
     } else if (currentEditType === 'posto') {
         await saveLocal();
-    } else if (currentEditType === 'rota') {
-        await saveRota();
     } else if (currentEditType === 'user') {
         await saveUser();
     }
@@ -1041,14 +1181,9 @@ async function saveCategoria() {
     
     let result;
     if (currentEditId) {
-        result = await supabase
-            .from('categorias')
-            .update(data)
-            .eq('id', currentEditId);
+        result = await supabase.from('categorias').update(data).eq('id', currentEditId);
     } else {
-        result = await supabase
-            .from('categorias')
-            .insert([data]);
+        result = await supabase.from('categorias').insert([data]);
     }
     
     if (result.error) {
@@ -1080,28 +1215,17 @@ async function saveLocal() {
         nome: nome,
         descricao: document.getElementById('localDescricao')?.value || null,
         latitude: currentLat,
-        longitude: currentLng,
-        cor: null,
-        simbolo: null
+        longitude: currentLng
     };
     
     let localId = currentEditId;
     let result;
     
     if (currentEditId) {
-        result = await supabase
-            .from('locais')
-            .update(data)
-            .eq('id', currentEditId);
+        result = await supabase.from('locais').update(data).eq('id', currentEditId);
     } else {
-        result = await supabase
-            .from('locais')
-            .insert([data])
-            .select();
-        
-        if (result.data && result.data[0]) {
-            localId = result.data[0].id;
-        }
+        result = await supabase.from('locais').insert([data]).select();
+        if (result.data && result.data[0]) localId = result.data[0].id;
     }
     
     if (result.error) {
@@ -1109,125 +1233,22 @@ async function saveLocal() {
         return;
     }
     
-    // Guardar categorias
     if (localId) {
-        // Remover categorias existentes
-        await supabase
-            .from('categorias_locais')
-            .delete()
-            .eq('local_id', localId);
+        await supabase.from('categorias_locais').delete().eq('local_id', localId);
         
-        // Adicionar novas categorias
         const selectedCats = [];
         document.querySelectorAll('#localCategoriasList input:checked').forEach(cb => {
-            selectedCats.push({
-                local_id: localId,
-                categoria_id: parseInt(cb.value)
-            });
+            selectedCats.push({ local_id: localId, categoria_id: parseInt(cb.value) });
         });
         
         if (selectedCats.length > 0) {
-            await supabase
-                .from('categorias_locais')
-                .insert(selectedCats);
+            await supabase.from('categorias_locais').insert(selectedCats);
         }
     }
     
     showToast(`Ponto ${currentEditId ? 'atualizado' : 'criado'} com sucesso`);
     closeModal();
     await loadLocais();
-    updateDashboardCounts();
-}
-
-async function saveRota() {
-    const nome = document.getElementById('rotaNome')?.value.trim();
-    if (!nome) {
-        showToast('Nome da rota é obrigatório', 'warning');
-        return;
-    }
-    
-    if (!window.selectedPontosRota || window.selectedPontosRota.length < 2) {
-        showToast('A rota deve ter pelo menos 2 pontos', 'warning');
-        return;
-    }
-    
-    const data = {
-        nome: nome,
-        descricao: document.getElementById('rotaDescricao')?.value || null,
-        cor: null
-    };
-    
-    let rotaId = currentEditId;
-    let result;
-    
-    if (currentEditId) {
-        result = await supabase
-            .from('rotas')
-            .update(data)
-            .eq('id', currentEditId);
-    } else {
-        result = await supabase
-            .from('rotas')
-            .insert([data])
-            .select();
-        
-        if (result.data && result.data[0]) {
-            rotaId = result.data[0].id;
-        }
-    }
-    
-    if (result.error) {
-        showToast('Erro ao guardar rota', 'error');
-        return;
-    }
-    
-    // Guardar categorias
-    if (rotaId) {
-        await supabase
-            .from('categorias_rotas')
-            .delete()
-            .eq('rota_id', rotaId);
-        
-        const selectedCats = [];
-        document.querySelectorAll('#rotaCategoriasList input:checked').forEach(cb => {
-            selectedCats.push({
-                rota_id: rotaId,
-                categoria_id: parseInt(cb.value)
-            });
-        });
-        
-        if (selectedCats.length > 0) {
-            await supabase
-                .from('categorias_rotas')
-                .insert(selectedCats);
-        }
-        
-        // Guardar segmentos
-        await supabase
-            .from('segmentos_rota')
-            .delete()
-            .eq('rota_id', rotaId);
-        
-        const segmentos = [];
-        for (let i = 0; i < window.selectedPontosRota.length - 1; i++) {
-            segmentos.push({
-                rota_id: rotaId,
-                local_origem_id: window.selectedPontosRota[i].id,
-                local_destino_id: window.selectedPontosRota[i + 1].id,
-                ordem_segmento: i + 1
-            });
-        }
-        
-        if (segmentos.length > 0) {
-            await supabase
-                .from('segmentos_rota')
-                .insert(segmentos);
-        }
-    }
-    
-    showToast(`Rota ${currentEditId ? 'atualizada' : 'criada'} com sucesso`);
-    closeModal();
-    await loadRotas();
     updateDashboardCounts();
 }
 
@@ -1238,11 +1259,7 @@ async function saveUser() {
     
     const { error } = await supabase
         .from('profiles')
-        .update({
-            full_name: fullName || null,
-            role: role,
-            status: status
-        })
+        .update({ full_name: fullName || null, role: role, status: status })
         .eq('id', currentEditId);
     
     if (error) {
@@ -1291,11 +1308,7 @@ function formatDate(dateStr) {
 }
 
 function getStatusText(status) {
-    const statusMap = {
-        active: 'Ativo',
-        inactive: 'Inativo',
-        pending: 'Pendente'
-    };
+    const statusMap = { active: 'Ativo', inactive: 'Inativo', pending: 'Pendente' };
     return statusMap[status] || status;
 }
 
@@ -1320,7 +1333,5 @@ function showToast(message, type = 'success') {
     toastMsg.textContent = message;
     toast.classList.add('show');
     
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
+    setTimeout(() => toast.classList.remove('show'), 3000);
 }
