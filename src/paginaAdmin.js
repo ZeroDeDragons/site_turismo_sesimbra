@@ -13,6 +13,14 @@ let locationMarker = null;
 let currentLat = null;
 let currentLng = null;
 let currentEditLocalId = null;
+// Constantes para o mapa de Sesimbra
+const SESIMBRA_CENTER = { lat: 38.4446, lng: -9.1016 };  // Castelo de Sesimbra
+const SESIMBRA_BOUNDS = {
+    north: 38.48,
+    south: 38.42,
+    east: -9.07,
+    west: -9.13
+};
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
