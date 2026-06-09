@@ -613,37 +613,76 @@ window.deleteLocal = async function(id) {
 };
 
 function initLocationPickerMap(lat = 38.4446, lng = -9.1016) {
-    if (locationMap) {
-        locationMap.remove();
+    // Coordenadas de Sesimbra (Castelo de Sesimbra)
+    const SESIMBRA_CENTER = [38.4446, -9.1016];
+    const latNum = lat || SESIMBRA_CENTER[0];
+    const lngNum = lng || SESIMBRA_CENTER[1];
+    
+    // Verificar se o container do mapa existe
+    const mapContainer = document.getElementById('locationPickerMap');
+    if (!mapContainer) {
+        console.error('Container do mapa não encontrado');
+        return;
     }
     
-    locationMap = L.map('locationPickerMap').setView([lat, lng], 15);
+    // Se o mapa já existe, remove-o
+    if (locationMap) {
+        locationMap.remove();
+        locationMap = null;
+        locationMarker = null;
+    }
     
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB'
-    }).addTo(locationMap);
-    
-    locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
-    
-    locationMarker.on('dragend', function(e) {
-        const pos = e.target.getLatLng();
-        currentLat = pos.lat;
-        currentLng = pos.lng;
-        document.getElementById('coordLatDisplay').textContent = pos.lat.toFixed(6);
-        document.getElementById('coordLngDisplay').textContent = pos.lng.toFixed(6);
-    });
-    
-    locationMap.on('click', function(e) {
-        currentLat = e.latlng.lat;
-        currentLng = e.latlng.lng;
-        locationMarker.setLatLng(e.latlng);
-        document.getElementById('coordLatDisplay').textContent = e.latlng.lat.toFixed(6);
-        document.getElementById('coordLngDisplay').textContent = e.latlng.lng.toFixed(6);
-    });
-    
-    setTimeout(() => {
-        locationMap.invalidateSize();
-    }, 200);
+    try {
+        // Criar o mapa
+        locationMap = L.map('locationPickerMap').setView([latNum, lngNum], 15);
+        
+        // Adicionar tile layer (mapa base)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19,
+            minZoom: 12
+        }).addTo(locationMap);
+        
+        // Adicionar marcador arrastável
+        locationMarker = L.marker([latNum, lngNum], { draggable: true }).addTo(locationMap);
+        
+        // Atualizar coordenadas quando o marcador é arrastado
+        locationMarker.on('dragend', function(e) {
+            const pos = e.target.getLatLng();
+            currentLat = pos.lat;
+            currentLng = pos.lng;
+            const latDisplay = document.getElementById('coordLatDisplay');
+            const lngDisplay = document.getElementById('coordLngDisplay');
+            if (latDisplay) latDisplay.textContent = pos.lat.toFixed(6);
+            if (lngDisplay) lngDisplay.textContent = pos.lng.toFixed(6);
+        });
+        
+        // Atualizar coordenadas quando o mapa é clicado
+        locationMap.on('click', function(e) {
+            currentLat = e.latlng.lat;
+            currentLng = e.latlng.lng;
+            if (locationMarker) {
+                locationMarker.setLatLng(e.latlng);
+            }
+            const latDisplay = document.getElementById('coordLatDisplay');
+            const lngDisplay = document.getElementById('coordLngDisplay');
+            if (latDisplay) latDisplay.textContent = e.latlng.lat.toFixed(6);
+            if (lngDisplay) lngDisplay.textContent = e.latlng.lng.toFixed(6);
+        });
+        
+        // Forçar o redimensionamento do mapa após um pequeno delay
+        setTimeout(() => {
+            if (locationMap) {
+                locationMap.invalidateSize();
+            }
+        }, 200);
+        
+        console.log('Mapa inicializado com sucesso em:', latNum, lngNum);
+        
+    } catch (error) {
+        console.error('Erro ao inicializar o mapa:', error);
+    }
 }
 
 // ==================== ROTAS ====================
