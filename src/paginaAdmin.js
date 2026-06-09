@@ -535,7 +535,9 @@ window.openModal = function(tipo, dadosEditar = null) {
             if (isEditing && dadosEditar?.id) await loadRoutePointSequenceFromRota(dadosEditar.id);
             renderRoutePointsList();
             document.getElementById('m-cor')?.addEventListener('input', drawRoutePreview);
-        }, 200);
+            // Garantir que o mapa recalcula o tamanho após a animação do modal terminar
+            setTimeout(() => routeMap?.invalidateSize(), 150);
+        }, 320);
     }
     else if (tipo === 'posto') {
         titulo.textContent = isEditing ? 'Editar Ponto Turístico' : 'Novo Ponto Turístico';
@@ -569,7 +571,7 @@ window.openModal = function(tipo, dadosEditar = null) {
         footer.style.display = 'flex';
         overlay.classList.add('show');
 
-        // Inicializar o mapa após o modal estar visível
+        // Inicializar o mapa após o modal estar visível e a animação CSS terminar (250ms)
         setTimeout(() => {
             const mapContainer = document.getElementById('location-pick-map');
             if (mapContainer) {
@@ -580,7 +582,7 @@ window.openModal = function(tipo, dadosEditar = null) {
                     document.getElementById('selected-lng').textContent = lng.toFixed(6);
                 });
             }
-        }, 200);
+        }, 320);
     }
     else if (tipo === 'categoria') {
         if (isEditing) {
