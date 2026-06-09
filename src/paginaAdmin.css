@@ -645,3 +645,11 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
   display: flex;
   gap: 8px;
 }
+
+.location-map {
+    height: 300px;
+    width: 100%;
+    background: #f0f0f0;
+    border-radius: 12px;
+    z-index: 1;
+}
