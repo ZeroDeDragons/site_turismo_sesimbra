@@ -114,7 +114,7 @@ if (typeof window !== 'undefined') {
 // ==================== DASHBOARD ====================
 async function updateDashboardCounts() {
     try {
-        const { count: usersCount } = await supabase.from('perfis').select('*', { count: 'exact', head: true });
+        const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
         const { count: rotasCount } = await supabase.from('rotas').select('*', { count: 'exact', head: true });
         const { count: locaisCount } = await supabase.from('locais').select('*', { count: 'exact', head: true });
         const { count: catsCount } = await supabase.from('categorias').select('*', { count: 'exact', head: true });
@@ -138,7 +138,7 @@ async function updateDashboardCounts() {
 
 async function loadLastUsers() {
     try {
-        const { data, error } = await supabase.from('perfis').select('nome_completo, email, criado_em, status, role').order('criado_em', { ascending: false }).limit(5);
+        const { data, error } = await supabase.from('profiles').select('nome_completo, email, criado_em, status, role').order('criado_em', { ascending: false }).limit(5);
         if (error) throw error;
         const tbody = document.getElementById('dashLastUsers');
         if (!tbody) return;
@@ -162,7 +162,7 @@ async function loadLastUsers() {
 // ==================== UTILIZADORES ====================
 async function loadUsers() {
     try {
-        const { data, error } = await supabase.from('perfis').select('id, email, nome_completo, role, status, criado_em').order('criado_em', { ascending: false });
+        const { data, error } = await supabase.from('profiles').select('id, email, nome_completo, role, status, criado_em').order('criado_em', { ascending: false });
         if (error) throw error;
         window.allUsers = data || [];
         const userCountSpan = document.getElementById('userCount');
