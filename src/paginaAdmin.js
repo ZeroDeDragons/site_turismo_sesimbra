@@ -20,6 +20,10 @@ let selectedPontosRota = [];
 let allLocaisForMap = [];
 let currentRouteLayerGroup = null;
 
+// Variáveis para armazenamento das métricas da rota ativa
+let currentRouteDistance = 0;
+let currentRouteDuration = 0;
+
 const ROUTING_API = 'https://router.project-osrm.org/route/v1/driving/';
 
 // ==================== INICIALIZAÇÃO ====================
@@ -118,7 +122,7 @@ async function loadLastUsers() {
         const tbody = document.getElementById('dashLastUsers');
         if (!tbody) return;
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhum utilizador registado</td>' + '</tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhum utilizador registado</td></tr>';
             return;
         }
         tbody.innerHTML = data.map(user => `
@@ -133,10 +137,10 @@ async function loadLastUsers() {
         console.error('Erro ao carregar últimos utilizadores:', error); 
     }
 }
+
 // ==================== INTEGRAÇÃO CARRIS METROPOLITANA ====================
 async function getCarrisMetropolitanaData(lat, lng) {
     try {
-        // 1. Procurar paragens num raio de 500 metros usando a API da Carris Metropolitana
         const stopsResponse = await fetch(`https://api.carrismetropolitana.pt/stops?lat=${lat}&lon=${lng}&radius=500`);
         const stops = await stopsResponse.json();
         
@@ -144,14 +148,11 @@ async function getCarrisMetropolitanaData(lat, lng) {
             return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana próxima.";
         }
         
-        // Pegamos na paragem mais próxima detetada
         const closestStop = stops[0]; 
         
-        // 2. Procurar as próximas circulações (horários) para essa paragem específica
         const realTimeResponse = await fetch(`https://api.carrismetropolitana.pt/stops/${closestStop.id}/realtime`);
         const realTimeData = await realTimeResponse.json();
         
-        // Filtrar e agrupar as linhas únicas que passam nesta paragem
         const linhasDisponiveis = [...new Set(closestStop.lines)];
         const autocarrosStr = linhasDisponiveis.length > 0 ? linhasDisponiveis.join(', ') : 'Informação indisponível';
         
@@ -159,11 +160,9 @@ async function getCarrisMetropolitanaData(lat, lng) {
         let tempoEstimadoStr = "N/A";
         
         if (realTimeData && realTimeData.length > 0) {
-            // Ordenar por tempo de chegada mais próximo
             realTimeData.sort((a, b) => a.estimated_arrival_unix - b.estimated_arrival_unix);
             const proximoAutocarro = realTimeData[0];
             
-            // Calcular quantos minutos faltam
             const agoraUnix = Math.floor(Date.now() / 1000);
             const minutosFaltam = Math.round((proximoAutocarro.estimated_arrival_unix - agoraUnix) / 60);
             
@@ -218,11 +217,11 @@ function renderUserTable(users) {
     const tbody = document.getElementById('userTable');
     if (!tbody) return;
     if (!users || users.length === 0) { 
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum utilizador encontrado</td>' + '</tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum utilizador encontrado</td></tr>';
         return; 
     }
     tbody.innerHTML = users.map(user => `
-        <table>
+        <tr>
             <td><div class="td-name"><div class="td-avatar ${user.role === 'admin' ? 'green' : ''}">${getInitials(user.full_name || user.email)}</div><div><div class="td-main">${escapeHtml(user.full_name || 'Sem nome')}</div><div class="td-sub">ID: ${user.id.slice(0,8)}...</div></div></div></td>
             <td>${escapeHtml(user.email || '-')}</td>
             <td><span class="badge ${user.role === 'admin' ? 'admin' : 'user'}">${user.role === 'admin' ? 'Administrador' : 'Utilizador'}</span></td>
@@ -293,7 +292,7 @@ function renderCategoriasTable() {
     const tbody = document.getElementById('categoriasTableBody');
     if (!tbody) return;
     if (categoriasList.length === 0) { 
-        tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhuma categoria registada.</td>' + '</tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhuma categoria registada.</td></tr>';
         return; 
     }
     tbody.innerHTML = categoriasList.map(cat => `
@@ -677,11 +676,49 @@ async function loadAllPontosToMap() {
         marker.localId = local.id;
         routeMarkers.push(marker);
     });
-    await drawRouteOnMap();
+    await window.drawRouteOnMap();
 }
 
-async function drawRouteOnMap() {
-    // CORREÇÃO: Verifica e remove a camada diretamente do objeto do mapa
+// CORREÇÃO: Função exportada globalmente para o objeto window para evitar erros de compilação
+window.getRouteFromOSRM = async function(pontos) {
+    if (pontos.length < 2) return null;
+    try {
+        const coordinates = pontos.map(p => `${p.longitude},${p.latitude}`).join(';');
+        const url = `${ROUTING_API}${coordinates}?overview=full&geometries=geojson&steps=true`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.code === 'Ok' && data.routes && data.routes[0]) {
+            return {
+                geometry: data.routes[0].geometry,
+                distance: data.routes[0].distance / 1000,
+                duration: data.routes[0].duration / 60,
+                legs: data.routes[0].legs
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error('Erro ao obter rota do OSRM:', error);
+        return null;
+    }
+};
+
+// CORREÇÃO: Função exportada globalmente para atualização das estatísticas
+window.updateRouteStats = function(fallback = false) {
+    const statsEl = document.getElementById('routeStats');
+    if (!statsEl) return;
+    const totalPontos = selectedPontosRota.length;
+    if (fallback || currentRouteDistance === 0) {
+        statsEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${totalPontos} ${totalPontos === 1 ? 'ponto' : 'pontos'} | Distância: calculando... | ⚠️ Rota em linha reta (não segue estradas)`;
+    } else {
+        const horas = Math.floor(currentRouteDuration / 60);
+        const minutos = Math.floor(currentRouteDuration % 60);
+        const tempoStr = horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`;
+        statsEl.innerHTML = `<i class="fas fa-route"></i> ${totalPontos} ${totalPontos === 1 ? 'ponto' : 'pontos'} | <i class="fas fa-road"></i> ${currentRouteDistance.toFixed(1)} km | <i class="fas fa-clock"></i> ${tempoStr} | 🚗 Rota por estradas reais`;
+    }
+};
+
+// CORREÇÃO: Função de desenho exposta no window e configurada com eventos interativos nativos (Hover + Clique)
+window.drawRouteOnMap = async function() {
     if (routeMap && routeMap.currentRouteLayer) {
         routeMap.removeLayer(routeMap.currentRouteLayer);
         routeMap.currentRouteLayer = null;
@@ -689,13 +726,11 @@ async function drawRouteOnMap() {
     
     if (selectedPontosRota.length < 2) return;
     
-    // Mostrar loading
     const statsEl = document.getElementById('routeStats');
     if (statsEl) statsEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular rota pelas estradas...';
     
     try {
-        const route = await getRouteFromOSRM(selectedPontosRota);
-        
+        const route = await window.getRouteFromOSRM(selectedPontosRota);
         const rotaCor = document.getElementById('rotaCor')?.value || '#979d23';
         const estiloLinha = { color: rotaCor, weight: 6, opacity: 0.8, lineJoin: 'round', cursor: 'pointer' };
         
@@ -703,36 +738,29 @@ async function drawRouteOnMap() {
         
         if (route && route.geometry) {
             novaCamada = L.geoJSON(route.geometry, { style: estiloLinha }).addTo(routeMap);
-            
             currentRouteDistance = route.distance;
             currentRouteDuration = route.duration;
             
             const bounds = novaCamada.getBounds();
             if (bounds.isValid()) routeMap.fitBounds(bounds.pad(0.1));
             
-            updateRouteStats();
+            window.updateRouteStats();
         } else {
-            // Fallback: linha reta se o routing falhar
             const coordinates = selectedPontosRota.map(p => [p.latitude, p.longitude]);
             novaCamada = L.polyline(coordinates, { ...estiloLinha, dashArray: '10, 10' }).addTo(routeMap);
             currentRouteDistance = 0;
             currentRouteDuration = 0;
-            updateRouteStats(true);
+            window.updateRouteStats(true);
         }
         
-        // CORREÇÃO: Guarda a referência da nova camada dentro do routeMap
         if (routeMap && novaCamada) {
             routeMap.currentRouteLayer = novaCamada;
-            
-            // Vincular o popup inicial
             routeMap.currentRouteLayer.bindPopup("A carregar dados dos transportes...");
             
-            // Evento de Clique para Carris Metropolitana
             routeMap.currentRouteLayer.on('click', async function(e) {
                 const pontoOrigem = selectedPontosRota[0];
-                
                 let popupConteudo = `
-                    <div style="font-family: sans-serif; min-width: 200px;">
+                    <div style="font-family: sans-serif; min-width: 220px;">
                         <strong style="color: #979d23; font-size: 14px;">Informação do Trajeto</strong><br>
                         🛣️ <b>Distância Total:</b> ${currentRouteDistance > 0 ? currentRouteDistance.toFixed(1) + ' km' : 'N/A'}<br>
                         🚗 <b>Tempo de Carro:</b> ${currentRouteDuration > 0 ? Math.round(currentRouteDuration) + ' min' : 'N/A'}
@@ -741,12 +769,10 @@ async function drawRouteOnMap() {
                 routeMap.currentRouteLayer.setPopupContent(popupConteudo + "<br>⏳ A procurar autocarros da Carris Metropolitana...</div>");
                 
                 const dadosCarris = await getCarrisMetropolitanaData(pontoOrigem.latitude, pontoOrigem.longitude);
-                
                 popupConteudo += dadosCarris + "</div>";
                 routeMap.currentRouteLayer.setPopupContent(popupConteudo);
             });
             
-            // Eventos Hover
             routeMap.currentRouteLayer.on('mouseover', function(e) {
                 this.setStyle({ weight: 9, opacity: 1.0 });
             });
@@ -755,7 +781,6 @@ async function drawRouteOnMap() {
                 this.setStyle({ weight: 6, opacity: 0.8 });
             });
         }
-        
     } catch (error) {
         console.error('Erro ao desenhar rota:', error);
         const rotaCor = document.getElementById('rotaCor')?.value || '#979d23';
@@ -763,9 +788,9 @@ async function drawRouteOnMap() {
         if (routeMap) {
             routeMap.currentRouteLayer = L.polyline(coordinates, { color: rotaCor, weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(routeMap);
         }
-        updateRouteStats(true);
+        window.updateRouteStats(true);
     }
-}
+};
 
 window.togglePontoOnRoute = async function(localId) {
     const ponto = allLocaisForMap.find(l => l.id === localId);
@@ -890,12 +915,11 @@ window.deleteRota = async function(id) {
 
 window.closeModalRota = function() {
     const modal = document.getElementById('modalRotaOverlay');
-    modal.classList.remove('show');
+    if (modal) modal.classList.remove('show');
     currentEditId = null;
     currentEditType = null;
     selectedPontosRota = [];
     
-    // CORREÇÃO: Limpa a camada de dentro do mapa antes de destruí-lo
     if (routeMap) {
         if (routeMap.currentRouteLayer) {
             routeMap.removeLayer(routeMap.currentRouteLayer);
