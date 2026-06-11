@@ -7,38 +7,33 @@
 <link href="src/paginaAdmin.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="Imagens/logo.png">
 
-<!-- Leaflet CSS e JS para o mapa -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- Font Awesome para ícones -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <nav class="sidebar">
   <a href="./index.html" class="sidebar-logo">Castelo<span>Sesimbra</span></a>
   <div class="sidebar-section">Principal</div>
   <a class="nav-item active" onclick="showSection('dashboard',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    Painel
+    <i class="fas fa-chart-pie" style="margin-right: 8px;"></i> Painel
   </a>
   <div class="sidebar-section">Gestão</div>
   <a class="nav-item" onclick="showSection('utilizadores',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Utilizadores <span class="nav-badge">0</span>
+    <i class="fas fa-users" style="margin-right: 8px;"></i> Utilizadores <span class="nav-badge">0</span>
   </a>
   <a class="nav-item" onclick="showSection('rotas',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-    Rotas
+    <i class="fas fa-route" style="margin-right: 8px;"></i> Rotas
   </a>
   <a class="nav-item" onclick="showSection('postos',this)">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-    Pontos
+    <i class="fas fa-map-marker-alt" style="margin-right: 8px;"></i> Pontos
+  </a>
+  <a class="nav-item" onclick="showSection('categorias',this)">
+    <i class="fas fa-tags" style="margin-right: 8px;"></i> Categorias
   </a>
   <div class="sidebar-bottom">
     <div class="user-card">
@@ -51,39 +46,37 @@
   </div>
 </nav>
 
-<!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <span class="topbar-title" id="topbarTitle">Painel de Administração</span>
     <div class="topbar-right">
       <div class="btn-icon" title="Sair" id="btnSair">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <i class="fas fa-sign-out-alt"></i>
       </div>
     </div>
   </div>
 
   <div class="content">
 
-    <!-- DASHBOARD -->
     <div class="section active" id="sec-dashboard">
       <div class="stat-grid">
         <div class="stat-card c1">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
           <div class="stat-label">Utilizadores</div>
           <div class="stat-value" id="statUsers">0</div>
         </div>
         <div class="stat-card c2">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
+          <div class="stat-icon"><i class="fas fa-route"></i></div>
           <div class="stat-label">Rotas</div>
           <div class="stat-value" id="statRotas">0</div>
         </div>
         <div class="stat-card c3">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
           <div class="stat-label">Pontos</div>
           <div class="stat-value" id="statPostos">0</div>
         </div>
         <div class="stat-card c4">
-          <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="stat-icon"><i class="fas fa-tags"></i></div>
           <div class="stat-label">Categorias</div>
           <div class="stat-value" id="statCats">0</div>
         </div>
@@ -94,7 +87,6 @@
       </div>
     </div>
 
-    <!-- UTILIZADORES -->
     <div class="section" id="sec-utilizadores">
       <div class="card">
         <div class="card-header">
@@ -103,8 +95,8 @@
         </div>
         <div class="filter-bar">
           <div class="search-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="search-input" id="userSearch" placeholder="Pesquisar utilizador…" oninput="filterUsers()">
+            <i class="fas fa-search" style="position: absolute; left: 10px; top: 12px; color: #9ca3af;"></i>
+            <input class="search-input" id="userSearch" placeholder="Pesquisar utilizador…" oninput="filterUsers()" style="padding-left: 30px;">
           </div>
           <select class="filter-select" id="userRoleFilter" onchange="filterUsers()">
             <option value="">Todos os perfis</option><option value="admin">Administrador</option><option value="user">Utilizador</option>
@@ -117,21 +109,19 @@
       </div>
     </div>
 
-    <!-- ROTAS -->
     <div class="section" id="sec-rotas">
       <div class="card">
         <div class="card-header">
           <div class="card-title">Rotas Turísticas</div>
           <span class="card-count" id="rotaCount">0</span>
           <div class="card-actions">
-            <button class="btn-icon" title="Gerir Categorias" onclick="openModal('categoria')" style="width:auto; padding:0 10px; font-size:12px; font-weight:700">⚙️ Categorias</button>
-            <button class="btn-primary" onclick="openModal('rota')">+ Nova Rota</button>
+            <button class="btn-primary" onclick="openModalRota()">+ Nova Rota</button>
           </div>
         </div>
         <div class="filter-bar">
           <div class="search-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="search-input" id="rotaSearch" placeholder="Pesquisar rota…" oninput="filterRotas()">
+            <i class="fas fa-search" style="position: absolute; left: 10px; top: 12px; color: #9ca3af;"></i>
+            <input class="search-input" id="rotaSearch" placeholder="Pesquisar rota…" oninput="filterRotas()" style="padding-left: 30px;">
           </div>
           <select class="filter-select" id="rotaCatFilter" onchange="filterRotas()"><option value="">Todas as categorias</option></select>
         </div>
@@ -139,7 +129,6 @@
       </div>
     </div>
 
-    <!-- PONTOS -->
     <div class="section" id="sec-postos">
       <div class="card">
         <div class="card-header">
@@ -151,26 +140,44 @@
         </div>
         <div class="filter-bar">
           <div class="search-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="search-input" id="postoSearch" placeholder="Pesquisar ponto..." oninput="filterPostos()">
+            <i class="fas fa-search" style="position: absolute; left: 10px; top: 12px; color: #9ca3af;"></i>
+            <input class="search-input" id="postoSearch" placeholder="Pesquisar ponto..." oninput="filterPostos()" style="padding-left: 30px;">
           </div>
           <select class="filter-select" id="postoCatFilter" onchange="filterPostos()"><option value="">Todas as categorias</option></select>
         </div>
         <div style="padding:20px 22px"><div class="posto-grid" id="postoGrid"></div></div>
       </div>
     </div>
+
+    <div class="section" id="sec-categorias">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Gestão de Categorias</div>
+          <div class="card-actions">
+            <button class="btn-primary" onclick="openModal('categoria')">+ Nova Categoria</button>
+          </div>
+        </div>
+        <div style="padding:20px 22px">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Símbolo</th><th>Nome</th><th>Cor</th><th>Ações</th></tr>
+              </thead>
+              <tbody id="categoriasTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- MODAL PARA CATEGORIAS E PONTOS -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal modal-large">
     <div class="modal-header">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span class="modal-title" id="modalTitle">Adicionar</span>
-      <button class="modal-close" onclick="closeModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-footer" id="modalFooter">
@@ -180,19 +187,15 @@
   </div>
 </div>
 
-<!-- MODAL PARA ROTAS COM MAPA -->
 <div class="modal-overlay" id="modalRotaOverlay" onclick="closeModalRotaOutside(event)">
-  <div class="modal modal-route">
+  <div class="modal modal-route" style="max-width: 95%; width: 1300px;">
     <div class="modal-header">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       <span class="modal-title" id="modalRotaTitle">Nova Rota</span>
-      <button class="modal-close" onclick="closeModalRota()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <button class="modal-close" onclick="closeModalRota()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body" id="modalRotaBody">
       <div class="modal-two-columns">
-        <div class="modal-col-left">
+        <div class="modal-col-left" style="max-height: 70vh; overflow-y: auto;">
           <div class="modal-form-group">
             <label class="modal-label">Nome da rota</label>
             <input type="text" class="modal-input" id="rotaNome" placeholder="Ex: Rota Histórica de Sesimbra">
@@ -206,33 +209,23 @@
             <input type="color" class="modal-input" id="rotaCor" style="height:42px; width:100%" value="#979d23">
           </div>
           <div class="modal-form-group">
-            <label class="modal-label">Categorias</label>
+            <label class="modal-label">Categorias da Rota</label>
             <div id="rotaCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
           </div>
           <div class="modal-form-group">
-            <label class="modal-label">Pontos da Rota (arraste para reordenar)</label>
+            <label class="modal-label">Pontos da Rota Selecionados</label>
             <div id="rotaPontosList" class="route-point-list"></div>
-            <div class="route-points-actions">
-              <button type="button" class="btn-secondary" onclick="showAddPontoToRotaModal()">
-                <i class="fas fa-plus"></i> Adicionar Ponto
-              </button>
-              <button type="button" class="btn-secondary" onclick="clearAllPontos()">
-                <i class="fas fa-trash"></i> Limpar todos
-              </button>
+            <div class="route-points-actions" style="margin-top: 10px;">
+              <button type="button" class="btn-secondary" onclick="clearAllPontos()"><i class="fas fa-trash"></i> Limpar todos</button>
             </div>
           </div>
         </div>
         <div class="modal-col-right">
           <div class="modal-form-group">
-            <label class="modal-label">Mapa Interativo</label>
-            <div class="map-instruction">
-              <i class="fas fa-info-circle"></i> Clique nos pontos do mapa para adicionar à rota
-            </div>
-            <div class="route-stats" id="routeStats">
-              Selecione pontos no mapa para criar a rota
-            </div>
-            <div id="rotaMapContainer" class="route-map-container">
-              <div id="routeMap" class="route-map"></div>
+            <label class="modal-label">Mapa Interativo (Defina a ordem clicando nos marcadores)</label>
+            <div class="route-stats" id="routeStats">Selecione pontos no mapa para criar a rota</div>
+            <div id="rotaMapContainer" class="route-map-container" style="height: 450px; position: relative;">
+              <div id="routeMap" class="route-map" style="height: 100%;"></div>
             </div>
           </div>
         </div>
@@ -245,7 +238,6 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg">Guardado com sucesso.</span></div>
 
 <script type="module" src="src/paginaAdmin.js"></script>
