@@ -154,11 +154,29 @@ function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
+// Cache de linhas (id -> {short_name, long_name, color}) para não pedir repetidamente
+let cacheLinhasCarris = null;
+
+async function getLinhasCarris() {
+    if (cacheLinhasCarris) return cacheLinhasCarris;
+    try {
+        const response = await fetch('https://api.carrismetropolitana.pt/v2/lines');
+        const linhas = await response.json();
+        cacheLinhasCarris = {};
+        if (Array.isArray(linhas)) {
+            linhas.forEach(l => {
+                cacheLinhasCarris[l.id] = { short_name: l.short_name, long_name: l.long_name, color: l.color };
+            });
+        }
+        return cacheLinhasCarris;
+    } catch (error) {
+        console.error('Erro ao buscar linhas da Carris:', error);
+        return {};
+    }
+}
+
 async function getCarrisMetropolitanaData(lat, lng) {
     try {
-        // A API v2 devolve TODAS as paragens com lat/lon próprios; não aceita filtro
-        // por raio diretamente, por isso pedimos todas e filtramos localmente pela
-        // distância real ao ponto (lat, lng) que recebemos.
         const response = await fetch('https://api.carrismetropolitana.pt/v2/stops');
         if (!response.ok) throw new Error('Falha ao obter paragens');
         const todasParagens = await response.json();
@@ -167,45 +185,65 @@ async function getCarrisMetropolitanaData(lat, lng) {
             return "<br>🚌 <b>Autocarros:</b> Sem dados de paragens disponíveis de momento.";
         }
 
-        // Calcula a distância real (em metros) de cada paragem ao ponto e filtra
-        // apenas as que estão dentro de um raio razoável (300 metros a pé)
-        const RAIO_MAX_METROS = 300;
-        const paragensProximas = todasParagens
+        // Calcula a distância real (em metros) de cada paragem ao ponto e
+        // escolhe APENAS a mais próxima dentro de um raio razoável a pé
+        const RAIO_MAX_METROS = 400;
+        const paragensComDistancia = todasParagens
             .map(p => ({
                 ...p,
                 distancia: calcularDistanciaMetros(lat, lng, p.lat, p.lon)
             }))
             .filter(p => p.distancia <= RAIO_MAX_METROS)
-            .sort((a, b) => a.distancia - b.distancia)
-            .slice(0, 3); // no máximo as 3 paragens mais próximas
+            .sort((a, b) => a.distancia - b.distancia);
 
-        if (paragensProximas.length === 0) {
-            return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana num raio de 300m.";
+        if (paragensComDistancia.length === 0) {
+            return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana num raio de 400m.";
         }
 
-        // Para cada paragem próxima, listamos o nome, a distância e as linhas que
-        // passam por ela (a propriedade "lines" da v2 já vem com os route_id)
-        const paragensHtml = paragensProximas.map(p => {
-            const linhas = Array.isArray(p.lines) && p.lines.length > 0
-                ? [...new Set(p.lines)].join(', ')
-                : 'sem linhas associadas';
-            return `
-                <div style="margin-top:4px; padding-top:4px; border-top:1px dashed #e5e7eb;">
-                    <b>${escapeHtml(p.name || p.id)}</b> (${Math.round(p.distancia)}m)<br>
-                    🚌 Linhas: ${escapeHtml(linhas)}
-                </div>
-            `;
-        }).join('');
+        const paragem = paragensComDistancia[0];
+
+        // O campo correto na API v2 é "line_ids", não "lines"
+        const lineIds = Array.isArray(paragem.line_ids) ? [...new Set(paragem.line_ids)] : [];
+        const linhasInfo = await getLinhasCarris();
+        const linhasStr = lineIds.length > 0
+            ? lineIds.map(id => linhasInfo[id]?.short_name || id).join(', ')
+            : 'sem linhas associadas';
+
+        // Tenta obter os próximos horários reais (arrivals) desta paragem
+        let horariosHtml = '';
+        try {
+            const realtimeRes = await fetch(`https://api.carrismetropolitana.pt/v2/stops/${paragem.id}/realtime`);
+            if (realtimeRes.ok) {
+                const arrivals = await realtimeRes.json();
+                if (Array.isArray(arrivals) && arrivals.length > 0) {
+                    const agora = Date.now() / 1000;
+                    const proximos = arrivals
+                        .filter(a => (a.estimated_arrival_unix || a.scheduled_arrival_unix) >= agora)
+                        .sort((a, b) => (a.estimated_arrival_unix || a.scheduled_arrival_unix) - (b.estimated_arrival_unix || b.scheduled_arrival_unix))
+                        .slice(0, 3);
+
+                    if (proximos.length > 0) {
+                        horariosHtml = '<div style="margin-top:6px;"><b>Próximas passagens:</b><br>' +
+                            proximos.map(a => {
+                                const linhaInfo = linhasInfo[a.line_id] || {};
+                                const tsFinal = a.estimated_arrival_unix || a.scheduled_arrival_unix;
+                                const minutosFaltam = Math.round((tsFinal - agora) / 60);
+                                return `🚌 ${escapeHtml(linhaInfo.short_name || a.line_id)} → ${escapeHtml(a.headsign || '')} — ${minutosFaltam <= 0 ? 'a chegar' : `${minutosFaltam} min`}`;
+                            }).join('<br>') +
+                            '</div>';
+                    }
+                }
+            }
+        } catch (e) {
+            // Sem horários em tempo real disponíveis para esta paragem; segue sem eles
+        }
 
         return `
             <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #ccc;">
             <div style="font-size:12px;">
-                <b>Paragens próximas:</b>
-                ${paragensHtml}
-                <div style="margin-top:6px; color:#9ca3af; font-size:10px;">
-                    ⚠️ Horários em tempo real não disponíveis nesta versão.
-                    Consulte a app navegante® para horários precisos.
-                </div>
+                <b>Paragem mais próxima:</b> ${escapeHtml(paragem.name || paragem.id)} (${Math.round(paragem.distancia)}m a pé)<br>
+                🚌 <b>Linhas:</b> ${escapeHtml(linhasStr)}
+                ${horariosHtml}
             </div>
         `;
     } catch (error) {
