@@ -557,3 +557,88 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
   .route-grid{grid-template-columns:repeat(2,1fr)}
   .modal-two-columns{grid-template-columns:1fr}
 }
+
+/* ==================== NOVOS ESTILOS PARA ADMISTRAÇÃO ==================== */
+
+/* Ajustes para o Grid de Categorias */
+.categorias-table-wrap {
+    margin-top: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Tooltip customizado para as linhas de Autocarro (Hover na rota) */
+.bus-routing-tooltip {
+    background: #ffffff !important;
+    border: 2px solid #979d23 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+    color: #1f2937 !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+    opacity: 0.95 !important;
+}
+
+.bus-routing-tooltip hr {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+    margin: 6px 0;
+}
+
+/* Container de imagens nos cards de pontos */
+.posto-img-container {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background-color: #f3f4f6;
+}
+
+.posto-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.posto-card:hover .posto-img-container img {
+    transform: scale(1.05);
+}
+
+/* Estilização para a lista ordenada de pontos na criação de rotas */
+.route-point-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px;
+    background: #ffffff;
+    margin-top: 5px;
+}
+
+.route-point-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9fafb;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    border: 1px solid #e5e7eb;
+    transition: background 0.2s ease;
+}
+
+.route-point-item:hover {
+    background: #f3f4f6;
+}
+
+/* Estilo para marcar as rotas de "Volta/Regresso" quando passam na mesma rua */
+.leaflet-interactive {
+    transition: stroke-width 0.2s ease, stroke 0.2s ease;
+}
+.leaflet-interactive:hover {
+    stroke-width: 9 !important; /* Destaca a linha ao passar o rato */
+    cursor: pointer;
+}
