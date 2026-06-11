@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Perfil</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="src/perfil.css" rel="stylesheet">
+<link rel="icon" type="image/png" href="Imagens/logo.png">
+
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="container">
+        <div class="navbar">
+            <a href="#" class="logo">Castelo<span>Sesimbra</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">Início</a></li>
+                <li><a href="index.html#rotas">Rotas</a></li>
+                <li><a href="index.html#historicos">Pontos Históricos</a></li>
+                <li><a href="index.html#mapa">Mapa</a></li>
+                <li class="user-nav-item">
+                    <div class="user-header-btn" id="userHeaderBtn">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="user-header-name">Visitante</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="user-header-dropdown" id="userHeaderDropdown">
+                        <button class="dropdown-item" id="fakeProfileBtn">
+                            <i class="fas fa-user"></i> Meu Perfil
+                        </button>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item logout-item" id="fakeLogoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+<!-- HERO BANNER -->
+<div class="hero"></div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- AVATAR + META -->
+  <div class="avatar-zone">
+    <div class="avatar-wrap">
+      <div class="avatar-big" id="avatarBig">JS</div>
+      <div class="avatar-btn" onclick="openAvatarModal()" title="Alterar foto">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+    </div>
+    <div class="user-meta">
+      <div class="user-fullname" id="displayName">João Silva</div>
+      <div class="user-since">Membro desde Março 2024 · Natureza e Trilhos</div>
+    </div>
+    <div class="avatar-right">
+      <button class="btn-primary" onclick="saveAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar tudo
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('info',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Informações
+    </div>
+    <div class="tab" onclick="showTab('preferencias',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Preferências
+    </div>
+    <div class="tab" onclick="showTab('seguranca',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Segurança
+    </div>
+    <div class="tab" onclick="showTab('notificacoes',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notificações
+    </div>
+    <div class="tab" onclick="showTab('atividade',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Atividade
+    </div>
+    <div class="tab" onclick="showTab('conta',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Conta
+    </div>
+  </div>
+
+  <!-- ── TAB: INFORMAÇÕES ── -->
+  <div class="tab-section active" id="tab-info">
+    <div class="profile-grid">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div>
+            <div class="card-title">Dados Pessoais</div>
+            <div class="card-sub">Nome, contacto e localização</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input class="form-input" id="firstName" placeholder="João" oninput="updateName()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apelido</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input class="form-input" id="lastName" placeholder="Silva" oninput="updateName()">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Telefone</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.03z"/></svg>
+              <input class="form-input" type="tel" placeholder="+351 212 689 210">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Localidade</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+              <input class="form-input" placeholder="Sesimbra">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sobre mim</label>
+            <textarea class="form-textarea" placeholder="Escreve algo sobre ti…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+            <div>
+              <div class="card-title">Contacto</div>
+              <div class="card-sub">Email e redes sociais</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <input class="form-input" type="email" placeholder="joao.s@gmail.com">
+              </div>
+              <div class="form-hint">Para alterar o email é necessária confirmação.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Website / Instagram</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <input class="form-input" placeholder="@username ou URL">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon orange"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div>
+              <div class="card-title">Data de Nascimento</div>
+              <div class="card-sub">Opcional — para personalizar conteúdo</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group" style="margin-bottom:0">
+              <div class="form-row">
+                <div>
+                  <label class="form-label">Data</label>
+                  <input class="form-input no-icon" type="date">
+                </div>
+                <div>
+                  <label class="form-label">Género</label>
+                  <div class="select-wrap">
+                    <select class="form-select no-icon">
+                      <option selected>Prefiro não dizer</option>
+                      <option>Masculino</option>
+                      <option>Feminino</option>
+                      <option>Outro</option>
+                    </select>
+                    <svg class="select-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <button class="btn-secondary" onclick="showToast('Alterações descartadas.')">Descartar</button>
+      <button class="btn-primary" onclick="saveAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar alterações
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TAB: PREFERÊNCIAS ── -->
+  <div class="tab-section" id="tab-preferencias">
+    <div class="profile-grid">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+          <div>
+            <div class="card-title">Interesses</div>
+            <div class="card-sub">Seleciona o que mais gostas</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="interest-grid">
+            <div class="interest-chip selected" onclick="toggleChip(this)">
+              <span class="chip-icon">🏛️</span>
+              <span class="chip-label">História</span>
+            </div>
+            <div class="interest-chip selected" onclick="toggleChip(this)">
+              <span class="chip-icon">🌿</span>
+              <span class="chip-label">Natureza</span>
+            </div>
+            <div class="interest-chip" onclick="toggleChip(this)">
+              <span class="chip-icon">🍽️</span>
+              <span class="chip-label">Gastronomia</span>
+            </div>
+            <div class="interest-chip selected" onclick="toggleChip(this)">
+              <span class="chip-icon">🏖️</span>
+              <span class="chip-label">Praias</span>
+            </div>
+            <div class="interest-chip" onclick="toggleChip(this)">
+              <span class="chip-icon">📷</span>
+              <span class="chip-label">Fotografia</span>
+            </div>
+            <div class="interest-chip" onclick="toggleChip(this)">
+              <span class="chip-icon">⛵</span>
+              <span class="chip-label">Náutica</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
+          <div>
+            <div class="card-title">Preferências de Rotas</div>
+            <div class="card-sub">Personaliza as sugestões</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Dificuldade preferida</label>
+            <div class="select-wrap">
+              <select class="form-select no-icon">
+                <option>Indiferente</option>
+                <option selected>Fácil</option>
+                <option>Moderada</option>
+                <option>Difícil</option>
+              </select>
+              <svg class="select-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Distância máxima (km)</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+              <input class="form-input" type="number" value="10" min="1" max="50">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Idioma preferido</label>
+            <div class="select-wrap">
+              <select class="form-select no-icon">
+                <option selected>Português</option>
+                <option>English</option>
+                <option>Español</option>
+                <option>Français</option>
+              </select>
+              <svg class="select-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <button class="btn-secondary" onclick="showToast('Alterações descartadas.')">Descartar</button>
+      <button class="btn-primary" onclick="saveAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar preferências
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TAB: SEGURANÇA ── -->
+  <div class="tab-section" id="tab-seguranca">
+    <div class="profile-grid">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div>
+            <div class="card-title">Alterar Palavra-passe</div>
+            <div class="card-sub">Usa uma palavra-passe forte</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Palavra-passe atual</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input class="form-input" type="password" placeholder="••••••••" id="currentPwd">
+              <button type="button" class="pwd-toggle-btn" onclick="togglePwdVisibility('currentPwd', this)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nova palavra-passe</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input class="form-input" type="password" placeholder="••••••••" id="newPwd" oninput="checkPwd(this.value)">
+              <button type="button" class="pwd-toggle-btn" onclick="togglePwdVisibility('newPwd', this)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+            <div class="pwd-rules" id="pwdRules">
+              <div class="pwd-rule" id="rule-len">
+                <div class="rule-dot"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                Mínimo 8 caracteres
+              </div>
+              <div class="pwd-rule" id="rule-upper">
+                <div class="rule-dot"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                Letra maiúscula
+              </div>
+              <div class="pwd-rule" id="rule-num">
+                <div class="rule-dot"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                Número
+              </div>
+              <div class="pwd-rule" id="rule-special">
+                <div class="rule-dot"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                Caractere especial
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmar nova palavra-passe</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input class="form-input" type="password" placeholder="••••••••" id="confirmPwd">
+              <button type="button" class="pwd-toggle-btn" onclick="togglePwdVisibility('confirmPwd', this)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="changePwd()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Atualizar palavra-passe
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div>
+              <div class="card-title">Autenticação de 2 Fatores</div>
+              <div class="card-sub">Aumenta a segurança da conta</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="notif-row" style="padding:0 0 14px">
+              <div class="notif-info">
+                <div class="notif-label">Ativar 2FA por email</div>
+                <div class="notif-desc">Recebes um código ao fazer login</div>
+              </div>
+              <button class="toggle" id="toggle2fa" onclick="toggleBtn(this)"></button>
+            </div>
+            <div style="font-size:12.5px;color:#9ca3af;line-height:1.6;padding-top:14px;border-top:1px solid #f3f4f6">
+              Com a autenticação de dois fatores ativa, receberás um código de verificação no teu email sempre que iniciares sessão num novo dispositivo.
+            </div>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: NOTIFICAÇÕES ── -->
+  <div class="tab-section" id="tab-notificacoes">
+    <div class="profile-grid">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          <div>
+            <div class="card-title">Notificações por Email</div>
+            <div class="card-sub">Escolhe o que queres receber</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="notif-list">
+            <div class="notif-row">
+              <div class="notif-info"><div class="notif-label">Novas rotas e trilhos</div><div class="notif-desc">Quando uma nova rota é adicionada à região</div></div>
+              <button class="toggle on" onclick="toggleBtn(this)"></button>
+            </div>
+            <div class="notif-row">
+              <div class="notif-info"><div class="notif-label">Eventos e festividades</div><div class="notif-desc">Atividades e eventos locais</div></div>
+              <button class="toggle on" onclick="toggleBtn(this)"></button>
+            </div>
+            <div class="notif-row">
+              <div class="notif-info"><div class="notif-label">Alertas de segurança</div><div class="notif-desc">Acessos e alterações à conta</div></div>
+              <button class="toggle on" onclick="toggleBtn(this)"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+          <div>
+            <div class="card-title">Notificações Push</div>
+            <div class="card-sub">Notificações no dispositivo</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="notif-list">
+            <div class="notif-row">
+              <div class="notif-info"><div class="notif-label">Ativar notificações push</div><div class="notif-desc">Recebe alertas em tempo real</div></div>
+              <button class="toggle on" onclick="toggleBtn(this)"></button>
+            </div>
+            <div class="notif-row">
+              <div class="notif-info"><div class="notif-label">Novas mensagens</div><div class="notif-desc">Comunicações da equipa Sesimbra</div></div>
+              <button class="toggle on" onclick="toggleBtn(this)"></button>
+            </div>  
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <button class="btn-primary" onclick="saveAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar preferências
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TAB: ATIVIDADE ── -->
+  <div class="tab-section" id="tab-atividade">
+    <div class="profile-grid">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div>
+            <div class="card-title">Atividade Recente</div>
+            <div class="card-sub">Últimas interações na plataforma</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-dot route"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
+              <div class="activity-info">
+                <div class="ai-title">Iniciou a Rota do Castelo</div>
+                <div class="ai-time">Hoje, 14:32</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot fav"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+              <div class="activity-info">
+                <div class="ai-title">Guardou Forte de Santiago nos favoritos</div>
+                <div class="ai-time">Ontem, 18:05</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot hist"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div>
+              <div class="activity-info">
+                <div class="ai-title">Visitou Castelo de Sesimbra</div>
+                <div class="ai-time">28/05/2026</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot route"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
+              <div class="activity-info">
+                <div class="ai-title">Concluiu o Trilho da Serra</div>
+                <div class="ai-time">25/05/2026</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot fav"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+              <div class="activity-info">
+                <div class="ai-title">Adicionou Praia do Ouro aos favoritos</div>
+                <div class="ai-time">22/05/2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div>
+            <div class="card-title">Estatísticas</div>
+            <div class="card-sub">O teu percurso até hoje</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div style="background:var(--primary-faint);border-radius:12px;padding:16px;text-align:center">
+              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:var(--primary-dark)">7</div>
+              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Rotas feitas</div>
+            </div>
+            <div style="background:var(--secondary-faint);border-radius:12px;padding:16px;text-align:center">
+              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:var(--secondary-dark)">12</div>
+              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Postos visitados</div>
+            </div>
+            <div style="background:#fff7ed;border-radius:12px;padding:16px;text-align:center">
+              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:#c2410c">34km</div>
+              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Distância total</div>
+            </div>
+            <div style="background:#f5f3ff;border-radius:12px;padding:16px;text-align:center">
+              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:#6d28d9">5</div>
+              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Favoritos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: CONTA ── -->
+  <div class="tab-section" id="tab-conta">
+    <div class="profile-grid wide">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon red"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div>
+            <div class="card-title">Zona de Perigo</div>
+            <div class="card-sub">Ações irreversíveis sobre a tua conta</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="danger-list">
+            <div class="danger-item">
+              <div class="danger-text">
+                <div class="dt-label">Exportar os meus dados</div>
+                <div class="dt-desc">Recebe um ficheiro com todos os teus dados pessoais e atividade.</div>
+              </div>
+              <button class="btn-danger" onclick="showToast('A preparar exportação… receberás um email em breve.')">Exportar</button>
+            </div>
+            <div class="danger-item">
+              <div class="danger-text">
+                <div class="dt-label">Eliminar conta permanentemente</div>
+                <div class="dt-desc">Todos os teus dados serão apagados de forma irreversível.</div>
+              </div>
+              <button class="btn-danger" onclick="openDangerModal('delete')">Eliminar conta</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODAL PERIGO -->
+<div class="modal-overlay" id="dangerModal" onclick="closeDangerOutside(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span class="modal-title" id="dangerTitle">Confirmar ação</span>
+      <button class="modal-close" onclick="closeDanger()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="dangerBody"></div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeDanger()">Cancelar</button>
+      <button class="btn-danger" style="padding:9px 18px" onclick="confirmDanger()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVATAR -->
+<div class="modal-overlay" id="avatarModal" onclick="closeAvatarOutside(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="modal-title">Alterar foto de perfil</span>
+      <button class="modal-close" onclick="closeAvatar()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="text-align:center">
+      <div style="position:relative;display:inline-block;margin-bottom:16px">
+        <div style="width:80px;height:80px;border-radius:50%;background:var(--primary);color:white;font-family:'Poppins',sans-serif;font-weight:800;font-size:1.8rem;display:flex;align-items:center;justify-content:center;border:3px solid var(--primary-light);overflow:hidden" id="modalAvatarPreview">JS</div>
+      </div>
+
+      <!-- Upload de foto -->
+      <div style="margin-bottom:18px">
+        <label for="avatarFileInput" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:9px;border:1.5px solid var(--border);background:white;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Carregar foto
+        </label>
+        <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="previewAvatarFile(event)">
+        <div id="avatarFileName" style="font-size:12px;color:#9ca3af;margin-top:6px"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:12px;color:#9ca3af;font-weight:600">ou escolhe uma cor</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+
+      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+        <div onclick="setAvatarColor('#979d23')" style="width:32px;height:32px;border-radius:50%;background:#979d23;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
+        <div onclick="setAvatarColor('#23769d')" style="width:32px;height:32px;border-radius:50%;background:#23769d;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
+        <div onclick="setAvatarColor('#f97316')" style="width:32px;height:32px;border-radius:50%;background:#f97316;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
+        <div onclick="setAvatarColor('#8b5cf6')" style="width:32px;height:32px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
+        <div onclick="setAvatarColor('#ef4444')" style="width:32px;height:32px;border-radius:50%;background:#ef4444;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
+        <div onclick="setAvatarColor('#1e2a32')" style="width:32px;height:32px;border-radius:50%;background:#1e2a32;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeAvatar()">Cancelar</button>
+      <button class="btn-primary" onclick="saveAvatar()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg">Guardado com sucesso.</span>
+</div>
+
+    <script src="src/perfil.js"></script>
+
+</body>
+</html>
