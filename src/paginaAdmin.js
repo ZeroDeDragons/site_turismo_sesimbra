@@ -1,7 +1,7 @@
 // src/paginaAdmin.js
 import { supabase } from './supabaseClient.js';
 
-// ==================== VARIABES GLOBAIS ====================
+// ==================== VARIÁVEIS GLOBAIS ====================
 let currentSection = 'dashboard';
 let currentEditId = null;
 let currentEditType = null;
@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadUsers();
     updateDashboardCounts();
     setupEventListeners();
-    setupNavigationListeners(); // Adicionado
     if (currentSection === 'dashboard') {
         await loadLastUsers();
     }
@@ -54,31 +53,12 @@ function setupEventListeners() {
     if (btnSair) btnSair.addEventListener('click', logout);
 }
 
-function setupNavigationListeners() {
-    // Configurar navegação programática como fallback
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const onclickAttr = item.getAttribute('onclick');
-            if (onclickAttr) {
-                // Extrair o nome da seção do onclick
-                const match = onclickAttr.match(/showSection\('([^']+)'/);
-                if (match && match[1]) {
-                    showSection(match[1], item);
-                }
-            }
-        });
-    });
-}
-
 async function logout() {
     await supabase.auth.signOut();
     window.location.href = 'login.html';
 }
 
 // ==================== NAVEGAÇÃO DO PAINEL ====================
-// Garantir que showSection está no escopo global ANTES de ser chamada
 window.showSection = function(section, element) {
     currentSection = section;
     
@@ -105,11 +85,6 @@ window.showSection = function(section, element) {
     else if (section === 'categorias') renderCategoriasTable();
     else if (section === 'dashboard') { updateDashboardCounts(); loadLastUsers(); }
 };
-
-// Exportar para garantir disponibilidade global (se estiver usando módulos)
-if (typeof window !== 'undefined') {
-    window.showSection = showSection;
-}
 
 // ==================== DASHBOARD ====================
 async function updateDashboardCounts() {
@@ -138,19 +113,19 @@ async function updateDashboardCounts() {
 
 async function loadLastUsers() {
     try {
-        const { data, error } = await supabase.from('profiles').select('nome_completo, email, criado_em, status, role').order('criado_em', { ascending: false }).limit(5);
+        const { data, error } = await supabase.from('profiles').select('full_name, email, created_at, status, role').order('created_at', { ascending: false }).limit(5);
         if (error) throw error;
         const tbody = document.getElementById('dashLastUsers');
         if (!tbody) return;
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhum utilizador registado</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhum utilizador registado</td>' + '</tr>';
             return;
         }
         tbody.innerHTML = data.map(user => `
             <tr>
-                <td>${escapeHtml(user.nome_completo || 'N/A')}</td>
+                <td>${escapeHtml(user.full_name || 'N/A')}</td>
                 <td>${escapeHtml(user.email || 'N/A')}</td>
-                <td>${formatDate(user.criado_em)}</td>
+                <td>${formatDate(user.created_at)}</td>
                 <td><span class="badge ${user.status === 'active' ? 'active' : 'inactive'}">${getStatusText(user.status)}</span></td>
             </tr>
         `).join('');
@@ -162,7 +137,7 @@ async function loadLastUsers() {
 // ==================== UTILIZADORES ====================
 async function loadUsers() {
     try {
-        const { data, error } = await supabase.from('profiles').select('id, email, nome_completo, role, status, criado_em').order('criado_em', { ascending: false });
+        const { data, error } = await supabase.from('profiles').select('id, email, full_name, role, status, created_at').order('created_at', { ascending: false });
         if (error) throw error;
         window.allUsers = data || [];
         const userCountSpan = document.getElementById('userCount');
@@ -181,7 +156,7 @@ window.filterUsers = function() {
     
     if (searchTerm) {
         filtered = filtered.filter(user => 
-            (user.nome_completo && user.nome_completo.toLowerCase().includes(searchTerm)) || 
+            (user.full_name && user.full_name.toLowerCase().includes(searchTerm)) || 
             (user.email && user.email.toLowerCase().includes(searchTerm))
         );
     }
@@ -194,16 +169,16 @@ function renderUserTable(users) {
     const tbody = document.getElementById('userTable');
     if (!tbody) return;
     if (!users || users.length === 0) { 
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum utilizador encontrado</td></tr>'; 
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum utilizador encontrado</td>' + '</tr>';
         return; 
     }
     tbody.innerHTML = users.map(user => `
-        <tr>
-            <td><div class="td-name"><div class="td-avatar ${user.role === 'admin' ? 'green' : ''}">${getInitials(user.nome_completo || user.email)}</div><div><div class="td-main">${escapeHtml(user.nome_completo || 'Sem nome')}</div><div class="td-sub">ID: ${user.id.slice(0,8)}...</div></div></div></td>
+        <table>
+            <td><div class="td-name"><div class="td-avatar ${user.role === 'admin' ? 'green' : ''}">${getInitials(user.full_name || user.email)}</div><div><div class="td-main">${escapeHtml(user.full_name || 'Sem nome')}</div><div class="td-sub">ID: ${user.id.slice(0,8)}...</div></div></div></td>
             <td>${escapeHtml(user.email || '-')}</td>
             <td><span class="badge ${user.role === 'admin' ? 'admin' : 'user'}">${user.role === 'admin' ? 'Administrador' : 'Utilizador'}</span></td>
             <td><span class="badge ${user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'inactive'}">${getStatusText(user.status)}</span></td>
-            <td>${formatDate(user.criado_em)}</td>
+            <td>${formatDate(user.created_at)}</td>
             <td class="td-actions">
                 <button class="action-btn edit" onclick="editUser('${user.id}')" title="Editar"><i class="fas fa-edit"></i></button>
                 <button class="action-btn del" onclick="toggleUserStatus('${user.id}', '${user.status}')" title="${user.status === 'active' ? 'Desativar' : 'Ativar'}"><i class="fas ${user.status === 'active' ? 'fa-ban' : 'fa-check-circle'}"></i></button>
@@ -220,7 +195,7 @@ window.editUser = function(userId) {
     const modalBody = document.getElementById('modalBody');
     if (!modalBody) return;
     modalBody.innerHTML = `
-        <div class="modal-form-group"><label class="modal-label">Nome completo</label><input type="text" class="modal-input" id="editUserName" value="${escapeHtml(user.nome_completo || '')}"></div>
+        <div class="modal-form-group"><label class="modal-label">Nome completo</label><input type="text" class="modal-input" id="editUserName" value="${escapeHtml(user.full_name || '')}"></div>
         <div class="modal-form-group"><label class="modal-label">Email</label><input type="email" class="modal-input" id="editUserEmail" value="${escapeHtml(user.email || '')}" disabled></div>
         <div class="modal-form-group"><label class="modal-label">Perfil</label><select class="modal-select" id="editUserRole"><option value="user" ${user.role === 'user' ? 'selected' : ''}>Utilizador</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option></select></div>
         <div class="modal-form-group"><label class="modal-label">Estado</label><select class="modal-select" id="editUserStatus"><option value="active" ${user.status === 'active' ? 'selected' : ''}>Ativo</option><option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inativo</option><option value="pending" ${user.status === 'pending' ? 'selected' : ''}>Pendente</option></select></div>
@@ -233,7 +208,7 @@ window.editUser = function(userId) {
 
 window.toggleUserStatus = async function(userId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const { error } = await supabase.from('perfis').update({ status: newStatus }).eq('id', userId);
+    const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', userId);
     if (error) { 
         showToast('Erro ao alterar estado', 'error'); 
         return; 
@@ -269,7 +244,7 @@ function renderCategoriasTable() {
     const tbody = document.getElementById('categoriasTableBody');
     if (!tbody) return;
     if (categoriasList.length === 0) { 
-        tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhuma categoria registada.</td></tr>'; 
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhuma categoria registada.</td>' + '</tr>';
         return; 
     }
     tbody.innerHTML = categoriasList.map(cat => `
@@ -922,7 +897,7 @@ async function saveUser() {
     const fullName = document.getElementById('editUserName')?.value || '';
     const role = document.getElementById('editUserRole')?.value || 'user';
     const status = document.getElementById('editUserStatus')?.value || 'pending';
-    await supabase.from('perfis').update({ nome_completo: fullName, role, status }).eq('id', currentEditId);
+    await supabase.from('profiles').update({ full_name: fullName, role, status }).eq('id', currentEditId);
     showToast('Utilizador atualizado');
     closeModal();
     await loadUsers();
