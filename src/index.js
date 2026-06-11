@@ -320,11 +320,11 @@ function configurarPesquisa(map) {
 //  Mostra o nome do utilizador e permite logout
 // ============================================================
 async function configurarMenuUtilizador() {
-  const userBtn        = document.getElementById('userHeaderBtn');
-  const userDropdown   = document.getElementById('userHeaderDropdown');
+  const userBtn      = document.getElementById('userHeaderBtn');
+  const userDropdown = document.getElementById('userHeaderDropdown');
   const userHeaderName = document.querySelector('.user-header-name');
-  const profileBtn     = document.getElementById('fakeProfileBtn');
-  const logoutBtn      = document.getElementById('fakeLogoutBtn');
+  const profileBtn   = document.getElementById('fakeProfileBtn');
+  const logoutBtn    = document.getElementById('fakeLogoutBtn');
 
   // Verificar se há sessão ativa
   const { data: { user } } = await supabase.auth.getUser();
@@ -337,26 +337,6 @@ async function configurarMenuUtilizador() {
     // Atualizar também o rodapé
     const rodapeNome = document.querySelector('.footer-bottom-right strong');
     if (rodapeNome) rodapeNome.textContent = nome;
-
-    // Verificar se é administrador
-    const isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
-
-    if (isAdmin && userDropdown) {
-      const adminBtn = document.createElement('button');
-      adminBtn.className = 'dropdown-item';
-      adminBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Administração';
-      adminBtn.addEventListener('click', () => {
-        window.location.href = 'paginaAdmin.html';
-      });
-
-      // Inserir antes do primeiro item do dropdown
-      userDropdown.insertBefore(adminBtn, userDropdown.firstChild);
-
-      // Adicionar divisor depois do botão admin
-      const divider = document.createElement('hr');
-      divider.className = 'dropdown-divider';
-      adminBtn.after(divider);
-    }
   } else {
     // Não está logado — mostrar "Visitante"
     if (userHeaderName) userHeaderName.textContent = 'Visitante';
@@ -387,7 +367,8 @@ async function configurarMenuUtilizador() {
 
   if (profileBtn) {
     profileBtn.addEventListener('click', () => {
-      window.location.href = 'perfil.html';
+      // Página de perfil (podes criar depois)
+      alert('Página de perfil em desenvolvimento!');
     });
   }
 
