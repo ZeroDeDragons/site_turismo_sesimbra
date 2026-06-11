@@ -681,7 +681,12 @@ async function loadAllPontosToMap() {
 }
 
 async function drawRouteOnMap() {
-    if (currentRouteLayer && routeMap) routeMap.removeLayer(currentRouteLayer);
+    // CORREÇÃO: Verifica e remove a camada diretamente do objeto do mapa
+    if (routeMap && routeMap.currentRouteLayer) {
+        routeMap.removeLayer(routeMap.currentRouteLayer);
+        routeMap.currentRouteLayer = null;
+    }
+    
     if (selectedPontosRota.length < 2) return;
     
     // Mostrar loading
@@ -691,40 +696,41 @@ async function drawRouteOnMap() {
     try {
         const route = await getRouteFromOSRM(selectedPontosRota);
         
-        // Variável de configuração visual comum do traço
         const rotaCor = document.getElementById('rotaCor')?.value || '#979d23';
         const estiloLinha = { color: rotaCor, weight: 6, opacity: 0.8, lineJoin: 'round', cursor: 'pointer' };
         
+        let novaCamada;
+        
         if (route && route.geometry) {
-            currentRouteLayer = L.geoJSON(route.geometry, { style: estiloLinha }).addTo(routeMap);
+            novaCamada = L.geoJSON(route.geometry, { style: estiloLinha }).addTo(routeMap);
             
             currentRouteDistance = route.distance;
             currentRouteDuration = route.duration;
             
-            const bounds = currentRouteLayer.getBounds();
+            const bounds = novaCamada.getBounds();
             if (bounds.isValid()) routeMap.fitBounds(bounds.pad(0.1));
             
             updateRouteStats();
         } else {
             // Fallback: linha reta se o routing falhar
             const coordinates = selectedPontosRota.map(p => [p.latitude, p.longitude]);
-            currentRouteLayer = L.polyline(coordinates, { ...estiloLinha, dashArray: '10, 10' }).addTo(routeMap);
+            novaCamada = L.polyline(coordinates, { ...estiloLinha, dashArray: '10, 10' }).addTo(routeMap);
             currentRouteDistance = 0;
             currentRouteDuration = 0;
             updateRouteStats(true);
         }
         
-        // --- NOVO CÓDIGO DE EVENTOS DO TRAÇO ---
-        if (currentRouteLayer) {
-            // Criar um popup vazio inicial agarrado à linha
-            currentRouteLayer.bindPopup("A carregar dados dos transportes...");
+        // CORREÇÃO: Guarda a referência da nova camada dentro do routeMap
+        if (routeMap && novaCamada) {
+            routeMap.currentRouteLayer = novaCamada;
             
-            // Evento ao clicar no traço
-            currentRouteLayer.on('click', async function(e) {
-                // Pegamos no primeiro ponto da rota como referência de origem (Ponto X)
+            // Vincular o popup inicial
+            routeMap.currentRouteLayer.bindPopup("A carregar dados dos transportes...");
+            
+            // Evento de Clique para Carris Metropolitana
+            routeMap.currentRouteLayer.on('click', async function(e) {
                 const pontoOrigem = selectedPontosRota[0];
                 
-                // Texto base com a Distância e Tempo de Carro (fornecidos pelo OSRM no teu código original)
                 let popupConteudo = `
                     <div style="font-family: sans-serif; min-width: 200px;">
                         <strong style="color: #979d23; font-size: 14px;">Informação do Trajeto</strong><br>
@@ -732,34 +738,31 @@ async function drawRouteOnMap() {
                         🚗 <b>Tempo de Carro:</b> ${currentRouteDuration > 0 ? Math.round(currentRouteDuration) + ' min' : 'N/A'}
                 `;
                 
-                // Adiciona o loading dos autocarros dinamicamente
-                currentRouteLayer.setPopupContent(popupConteudo + "<br>⏳ A procurar autocarros da Carris Metropolitana...</div>");
+                routeMap.currentRouteLayer.setPopupContent(popupConteudo + "<br>⏳ A procurar autocarros da Carris Metropolitana...</div>");
                 
-                // Faz a chamada à API da Carris usando a Latitude e Longitude do Ponto X
                 const dadosCarris = await getCarrisMetropolitanaData(pontoOrigem.latitude, pontoOrigem.longitude);
                 
-                // Atualiza o popup com os dados finais recebidos
                 popupConteudo += dadosCarris + "</div>";
-                currentRouteLayer.setPopupContent(popupConteudo);
+                routeMap.currentRouteLayer.setPopupContent(popupConteudo);
             });
             
-            // Evento ao passar com o rato por cima (Efeito Hover para dar feedback visual)
-            currentRouteLayer.on('mouseover', function(e) {
-                this.setStyle({ weight: 9, opacity: 1.0 }); // Engrossa a linha e remove transparência
+            // Eventos Hover
+            routeMap.currentRouteLayer.on('mouseover', function(e) {
+                this.setStyle({ weight: 9, opacity: 1.0 });
             });
             
-            // Evento ao tirar o rato de cima
-            currentRouteLayer.on('mouseout', function(e) {
-                this.setStyle({ weight: 6, opacity: 0.8 }); // Volta ao estilo normal
+            routeMap.currentRouteLayer.on('mouseout', function(e) {
+                this.setStyle({ weight: 6, opacity: 0.8 });
             });
         }
-        // ----------------------------------------
         
     } catch (error) {
         console.error('Erro ao desenhar rota:', error);
         const rotaCor = document.getElementById('rotaCor')?.value || '#979d23';
         const coordinates = selectedPontosRota.map(p => [p.latitude, p.longitude]);
-        currentRouteLayer = L.polyline(coordinates, { color: rotaCor, weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(routeMap);
+        if (routeMap) {
+            routeMap.currentRouteLayer = L.polyline(coordinates, { color: rotaCor, weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(routeMap);
+        }
         updateRouteStats(true);
     }
 }
@@ -887,8 +890,16 @@ window.deleteRota = async function(id) {
 
 window.closeModalRota = function() {
     const modal = document.getElementById('modalRotaOverlay');
-    if (modal) modal.classList.remove('show');
-    if (routeMap) { 
+    modal.classList.remove('show');
+    currentEditId = null;
+    currentEditType = null;
+    selectedPontosRota = [];
+    
+    // CORREÇÃO: Limpa a camada de dentro do mapa antes de destruí-lo
+    if (routeMap) {
+        if (routeMap.currentRouteLayer) {
+            routeMap.removeLayer(routeMap.currentRouteLayer);
+        }
         routeMap.remove(); 
         routeMap = null; 
     }
