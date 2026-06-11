@@ -133,6 +133,55 @@ async function loadLastUsers() {
         console.error('Erro ao carregar últimos utilizadores:', error); 
     }
 }
+// ==================== INTEGRAÇÃO CARRIS METROPOLITANA ====================
+async function getCarrisMetropolitanaData(lat, lng) {
+    try {
+        // 1. Procurar paragens num raio de 500 metros usando a API da Carris Metropolitana
+        const stopsResponse = await fetch(`https://api.carrismetropolitana.pt/stops?lat=${lat}&lon=${lng}&radius=500`);
+        const stops = await stopsResponse.json();
+        
+        if (!stops || stops.length === 0) {
+            return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana próxima.";
+        }
+        
+        // Pegamos na paragem mais próxima detetada
+        const closestStop = stops[0]; 
+        
+        // 2. Procurar as próximas circulações (horários) para essa paragem específica
+        const realTimeResponse = await fetch(`https://api.carrismetropolitana.pt/stops/${closestStop.id}/realtime`);
+        const realTimeData = await realTimeResponse.json();
+        
+        // Filtrar e agrupar as linhas únicas que passam nesta paragem
+        const linhasDisponiveis = [...new Set(closestStop.lines)];
+        const autocarrosStr = linhasDisponiveis.length > 0 ? linhasDisponiveis.join(', ') : 'Informação indisponível';
+        
+        let proximoHorarioStr = "Sem autocarros previstos para breve";
+        let tempoEstimadoStr = "N/A";
+        
+        if (realTimeData && realTimeData.length > 0) {
+            // Ordenar por tempo de chegada mais próximo
+            realTimeData.sort((a, b) => a.estimated_arrival_unix - b.estimated_arrival_unix);
+            const proximoAutocarro = realTimeData[0];
+            
+            // Calcular quantos minutos faltam
+            const agoraUnix = Math.floor(Date.now() / 1000);
+            const minutosFaltam = Math.round((proximoAutocarro.estimated_arrival_unix - agoraUnix) / 60);
+            
+            proximoHorarioStr = `${proximoAutocarro.line_id} (Destino: ${proximoAutocarro.headsign || 'Desconhecido'}) - ${proximoAutocarro.scheduled_arrival}`;
+            tempoEstimadoStr = minutosFaltam > 0 ? `Faltam ${minutosFaltam} min` : "A encostar / Já passou";
+        }
+        
+        return `
+            <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #ccc;">
+            🚌 <b>Autocarros na zona:</b> ${autocarrosStr}<br>
+            ⏰ <b>Próximo Autocarro:</b> ${proximoHorarioStr}<br>
+            ⏳ <b>Tempo de Espera:</b> <span style="color: #d97706; font-weight: bold;">${tempoEstimadoStr}</span>
+        `;
+    } catch (error) {
+        console.error("Erro ao buscar dados da Carris Metropolitana:", error);
+        return "<br>🚌 <b>Autocarros:</b> Erro ao carregar dados em tempo real.";
+    }
+}
 
 // ==================== UTILIZADORES ====================
 async function loadUsers() {
@@ -632,53 +681,87 @@ async function loadAllPontosToMap() {
 }
 
 async function drawRouteOnMap() {
-    if (currentRouteLayerGroup) currentRouteLayerGroup.clearLayers();
+    if (currentRouteLayer && routeMap) routeMap.removeLayer(currentRouteLayer);
     if (selectedPontosRota.length < 2) return;
     
+    // Mostrar loading
     const statsEl = document.getElementById('routeStats');
-    if (statsEl) statsEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular percurso...';
+    if (statsEl) statsEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular rota pelas estradas...';
     
-    let totalDistance = 0;
-    const corRota = document.getElementById('rotaCor')?.value || '#979d23';
-
-    for (let i = 0; i < selectedPontosRota.length - 1; i++) {
-        const origem = selectedPontosRota[i];
-        const destino = selectedPontosRota[i + 1];
+    try {
+        const route = await getRouteFromOSRM(selectedPontosRota);
         
-        try {
-            const url = `${ROUTING_API}${origem.longitude},${origem.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson`;
-            const response = await fetch(url);
-            const resData = await response.json();
+        // Variável de configuração visual comum do traço
+        const rotaCor = document.getElementById('rotaCor')?.value || '#979d23';
+        const estiloLinha = { color: rotaCor, weight: 6, opacity: 0.8, lineJoin: 'round', cursor: 'pointer' };
+        
+        if (route && route.geometry) {
+            currentRouteLayer = L.geoJSON(route.geometry, { style: estiloLinha }).addTo(routeMap);
             
-            if (resData.code === 'Ok' && resData.routes[0]) {
-                const routeGeom = resData.routes[0].geometry;
-                const distanceKm = resData.routes[0].distance / 1000;
-                const durationMin = resData.routes[0].duration / 60;
-                totalDistance += distanceKm;
-                
-                const lineStyle = {
-                    color: corRota,
-                    weight: 6,
-                    opacity: 0.85
-                };
-                
-                const polyline = L.geoJSON(routeGeom, { style: lineStyle }).addTo(currentRouteLayerGroup);
-                
-                const tooltipContent = `
-                    <div style="font-size:13px; padding:6px; line-height:1.4;">
-                        <strong><i class="fas fa-map-marker-alt"></i> ${origem.nome} → ${destino.nome}</strong>
-                        <hr style="margin:4px 0; border:0; border-top:1px solid #e5e7eb;">
-                        <div>📏 Distância: ${distanceKm.toFixed(2)} km</div>
-                        <div>⏱️ Tempo estimado: ~${Math.round(durationMin)} min</div>
-                    </div>
-                `;
-                polyline.bindTooltip(tooltipContent, { sticky: true });
-            }
-        } catch (err) { 
-            console.error('Erro no processamento do percurso:', err); 
+            currentRouteDistance = route.distance;
+            currentRouteDuration = route.duration;
+            
+            const bounds = currentRouteLayer.getBounds();
+            if (bounds.isValid()) routeMap.fitBounds(bounds.pad(0.1));
+            
+            updateRouteStats();
+        } else {
+            // Fallback: linha reta se o routing falhar
+            const coordinates = selectedPontosRota.map(p => [p.latitude, p.longitude]);
+            currentRouteLayer = L.polyline(coordinates, { ...estiloLinha, dashArray: '10, 10' }).addTo(routeMap);
+            currentRouteDistance = 0;
+            currentRouteDuration = 0;
+            updateRouteStats(true);
         }
+        
+        // --- NOVO CÓDIGO DE EVENTOS DO TRAÇO ---
+        if (currentRouteLayer) {
+            // Criar um popup vazio inicial agarrado à linha
+            currentRouteLayer.bindPopup("A carregar dados dos transportes...");
+            
+            // Evento ao clicar no traço
+            currentRouteLayer.on('click', async function(e) {
+                // Pegamos no primeiro ponto da rota como referência de origem (Ponto X)
+                const pontoOrigem = selectedPontosRota[0];
+                
+                // Texto base com a Distância e Tempo de Carro (fornecidos pelo OSRM no teu código original)
+                let popupConteudo = `
+                    <div style="font-family: sans-serif; min-width: 200px;">
+                        <strong style="color: #979d23; font-size: 14px;">Informação do Trajeto</strong><br>
+                        🛣️ <b>Distância Total:</b> ${currentRouteDistance > 0 ? currentRouteDistance.toFixed(1) + ' km' : 'N/A'}<br>
+                        🚗 <b>Tempo de Carro:</b> ${currentRouteDuration > 0 ? Math.round(currentRouteDuration) + ' min' : 'N/A'}
+                `;
+                
+                // Adiciona o loading dos autocarros dinamicamente
+                currentRouteLayer.setPopupContent(popupConteudo + "<br>⏳ A procurar autocarros da Carris Metropolitana...</div>");
+                
+                // Faz a chamada à API da Carris usando a Latitude e Longitude do Ponto X
+                const dadosCarris = await getCarrisMetropolitanaData(pontoOrigem.latitude, pontoOrigem.longitude);
+                
+                // Atualiza o popup com os dados finais recebidos
+                popupConteudo += dadosCarris + "</div>";
+                currentRouteLayer.setPopupContent(popupConteudo);
+            });
+            
+            // Evento ao passar com o rato por cima (Efeito Hover para dar feedback visual)
+            currentRouteLayer.on('mouseover', function(e) {
+                this.setStyle({ weight: 9, opacity: 1.0 }); // Engrossa a linha e remove transparência
+            });
+            
+            // Evento ao tirar o rato de cima
+            currentRouteLayer.on('mouseout', function(e) {
+                this.setStyle({ weight: 6, opacity: 0.8 }); // Volta ao estilo normal
+            });
+        }
+        // ----------------------------------------
+        
+    } catch (error) {
+        console.error('Erro ao desenhar rota:', error);
+        const rotaCor = document.getElementById('rotaCor')?.value || '#979d23';
+        const coordinates = selectedPontosRota.map(p => [p.latitude, p.longitude]);
+        currentRouteLayer = L.polyline(coordinates, { color: rotaCor, weight: 4, opacity: 0.8, dashArray: '10, 10' }).addTo(routeMap);
+        updateRouteStats(true);
     }
-    if (statsEl) statsEl.innerHTML = `<i class="fas fa-route"></i> Rota calculada | Distância total: ${totalDistance.toFixed(2)} km`;
 }
 
 window.togglePontoOnRoute = async function(localId) {
