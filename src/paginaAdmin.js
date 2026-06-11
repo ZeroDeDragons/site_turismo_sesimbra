@@ -24,7 +24,8 @@ let currentRouteLayerGroup = null;
 let currentRouteDistance = 0;
 let currentRouteDuration = 0;
 
-const ROUTING_API = 'https://router.project-osrm.org/route/v1/driving/';
+const ROUTING_API_BASE = 'https://router.project-osrm.org/route/v1/';
+let currentTransportMode = 'driving'; // 'driving' (carro) ou 'foot' (a pé)
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -228,41 +229,35 @@ function renderUserTable(users) {
             <td><span class="badge ${user.status === 'active' ? 'active' : user.status === 'pending' ? 'pending' : 'inactive'}">${getStatusText(user.status)}</span></td>
             <td>${formatDate(user.created_at)}</td>
             <td class="td-actions">
-                <button class="action-btn edit" onclick="editUser('${user.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-                <button class="action-btn del" onclick="toggleUserStatus('${user.id}', '${user.status}')" title="${user.status === 'active' ? 'Desativar' : 'Ativar'}"><i class="fas ${user.status === 'active' ? 'fa-ban' : 'fa-check-circle'}"></i></button>
+                <button class="action-btn edit" onclick="toggleAdmin('${user.id}', '${user.role}')" title="${user.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}"><i class="fas ${user.role === 'admin' ? 'fa-user-shield' : 'fa-user'}"></i></button>
+                <button class="action-btn del" onclick="deleteUser('${user.id}')" title="Apagar"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `).join('');
 }
 
-window.editUser = function(userId) {
-    const user = window.allUsers.find(u => u.id === userId);
-    if (!user) return;
-    currentEditId = userId;
-    currentEditType = 'user';
-    const modalBody = document.getElementById('modalBody');
-    if (!modalBody) return;
-    modalBody.innerHTML = `
-        <div class="modal-form-group"><label class="modal-label">Nome completo</label><input type="text" class="modal-input" id="editUserName" value="${escapeHtml(user.full_name || '')}"></div>
-        <div class="modal-form-group"><label class="modal-label">Email</label><input type="email" class="modal-input" id="editUserEmail" value="${escapeHtml(user.email || '')}" disabled></div>
-        <div class="modal-form-group"><label class="modal-label">Perfil</label><select class="modal-select" id="editUserRole"><option value="user" ${user.role === 'user' ? 'selected' : ''}>Utilizador</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option></select></div>
-        <div class="modal-form-group"><label class="modal-label">Estado</label><select class="modal-select" id="editUserStatus"><option value="active" ${user.status === 'active' ? 'selected' : ''}>Ativo</option><option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inativo</option><option value="pending" ${user.status === 'pending' ? 'selected' : ''}>Pendente</option></select></div>
-    `;
-    const modalTitle = document.getElementById('modalTitle');
-    const modalOverlay = document.getElementById('modalOverlay');
-    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Utilizador';
-    if (modalOverlay) modalOverlay.classList.add('show');
+window.toggleAdmin = async function(userId, currentRole) {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    const acaoTexto = newRole === 'admin' ? 'tornar este utilizador Administrador' : 'remover o estatuto de Administrador deste utilizador';
+    if (!confirm(`Tem a certeza que quer ${acaoTexto}?`)) return;
+    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) {
+        showToast('Erro ao alterar perfil', 'error');
+        return;
+    }
+    showToast('Perfil de utilizador atualizado');
+    await loadUsers();
 };
 
-window.toggleUserStatus = async function(userId, currentStatus) {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', userId);
-    if (error) { 
-        showToast('Erro ao alterar estado', 'error'); 
-        return; 
+window.deleteUser = async function(userId) {
+    if (!confirm('Tem a certeza que quer apagar este utilizador? Esta ação é irreversível.')) return;
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) {
+        showToast('Erro ao apagar utilizador', 'error');
+        return;
     }
-    showToast(`Utilizador modificado com sucesso`);
-    loadUsers();
+    showToast('Utilizador apagado com sucesso');
+    await loadUsers();
     updateDashboardCounts();
 };
 
@@ -351,7 +346,7 @@ async function loadLocais() {
         for (let local of locaisList) {
             const { data: cats } = await supabase.from('categorias_locais').select('categoria_id').eq('local_id', local.id);
             local.categorias = cats || [];
-            const { data: imgs } = await supabase.from('fotos').select('url').eq('locais_id', local.id);
+            const { data: imgs } = await supabase.from('fotos').select('nome, descricao, url, criado_em').eq('locais_id', local.id);
             local.imagens = imgs || [];
         }
         filterPostos();
@@ -391,7 +386,7 @@ function renderPostosGrid(locais) {
             <div class="posto-card" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                 <div class="posto-img-container" style="height: 160px; width: 100%; overflow: hidden; background: #f3f4f6; position: relative;">
                     <img src="${escapeHtml(imagemUrl)}" alt="${escapeHtml(local.nome)}" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="posto-icon" style="position: absolute; top: 10px; left: 10px; background: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); color: ${escapeHtml(categoria?.cor || '#979d23')}">${escapeHtml(categoria?.simbolo || '📍')}</div>
+                    <div class="posto-icon" style="position: absolute; top: 10px; left: 10px; background: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); color: ${escapeHtml(local.cor || categoria?.cor || '#979d23')}">${escapeHtml(categoria?.simbolo || '📍')}</div>
                 </div>
                 <div class="posto-info" style="padding: 15px; flex-grow: 1;">
                     <div class="posto-name" style="font-weight: 700; font-size: 16px; margin-bottom: 5px;">${escapeHtml(local.nome)}</div>
@@ -416,8 +411,18 @@ function initLocationPickerMap(lat = 38.4446, lng = -9.1016) {
         locationMap = null; 
     }
     locationMap = L.map('locationPickerMap').setView([lat, lng], 15);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
+    
+    const camadaRuas = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a>' 
+    }).addTo(locationMap);
+    
+    const camadaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri'
+    });
+    
+    L.control.layers({
+        'Mapa': camadaRuas,
+        'Satélite': camadaSatelite
     }).addTo(locationMap);
     
     locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
@@ -451,14 +456,15 @@ window.editLocal = async function(id) {
     currentLng = local.longitude;
     
     const associatedCatIds = (local.categorias || []).map(lc => lc.categoria_id);
-    const urlsString = local.imagens ? local.imagens.map(img => img.url).join('\n') : '';
+    const urlsString = local.imagens ? local.imagens.map(img => `${img.nome || ''} | ${img.descricao || ''} | ${img.url}`).join('\n') : '';
     
     const modalBody = document.getElementById('modalBody');
     if (!modalBody) return;
     modalBody.innerHTML = `
         <div class="modal-form-group"><label class="modal-label">Nome do ponto</label><input type="text" class="modal-input" id="localNome" value="${escapeHtml(local.nome)}"></div>
         <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="localDescricao">${escapeHtml(local.descricao || '')}</textarea></div>
-        <div class="modal-form-group"><label class="modal-label">URLs das Imagens (uma por linha)</label><textarea class="modal-textarea" id="localImagensUrls" rows="3" placeholder="https://exemplo.com/foto.jpg">${escapeHtml(urlsString)}</textarea></div>
+        <div class="modal-form-group"><label class="modal-label">Imagens (uma por linha, formato: Nome | Descrição | URL)</label><textarea class="modal-textarea" id="localImagensUrls" rows="3" placeholder="Vista do Castelo | Pôr-do-sol visto da muralha | https://exemplo.com/foto.jpg">${escapeHtml(urlsString)}</textarea></div>
+        <div class="modal-form-group"><label class="modal-label">Cor do marcador no mapa</label><input type="color" class="modal-input" id="localCor" style="height:42px; width:100%" value="${escapeHtml(local.cor || '#979d23')}"></div>
         <div class="modal-form-group"><label class="modal-label">Categorias</label><div id="localCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div></div>
         <div class="modal-form-group"><label class="modal-label">Localização</label><div id="locationMapContainer" class="location-map-container"><div id="locationPickerMap" style="height:250px;"></div></div><div class="location-coords-display" style="display:flex; gap:20px; margin-top:10px;"><div class="coord-item">Lat: <span id="coordLatDisplay">${local.latitude.toFixed(6)}</span></div><div class="coord-item">Lng: <span id="coordLngDisplay">${local.longitude.toFixed(6)}</span></div></div></div>
     `;
@@ -569,6 +575,7 @@ window.openModalRota = function(rotaId = null) {
     currentEditType = 'rota';
     currentEditId = rotaId;
     selectedPontosRota = [];
+    currentTransportMode = 'driving';
     
     const modal = document.getElementById('modalRotaOverlay');
     const title = document.getElementById('modalRotaTitle');
@@ -598,7 +605,10 @@ window.openModalRota = function(rotaId = null) {
     }
     
     modal.classList.add('show');
-    setTimeout(() => initRouteMap(), 200);
+    setTimeout(() => {
+        document.querySelectorAll('.transport-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === 'driving'));
+        initRouteMap();
+    }, 200);
 };
 
 async function loadRotaData(rotaId) {
@@ -648,9 +658,20 @@ function initRouteMap() {
         routeMap = null; 
     }
     routeMap = L.map('routeMap').setView([38.4446, -9.1016], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
+    
+    const camadaRuas = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a>' 
     }).addTo(routeMap);
+    
+    const camadaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri'
+    });
+    
+    L.control.layers({
+        'Mapa': camadaRuas,
+        'Satélite': camadaSatelite
+    }).addTo(routeMap);
+    
     currentRouteLayerGroup = L.layerGroup().addTo(routeMap);
     loadAllPontosToMap();
 }
@@ -662,16 +683,16 @@ async function loadAllPontosToMap() {
     allLocaisForMap.forEach(local => {
         const orderIdx = selectedPontosRota.findIndex(p => p.id === local.id);
         const isSelected = orderIdx !== -1;
-        const imagemHtml = local.imagens && local.imagens.length > 0 ? `<img src="${escapeHtml(local.imagens[0].url)}" style="width:100%; height:75px; object-fit:cover; border-radius:4px; margin-top:5px;">` : '';
+        const corMarcador = local.cor || '#979d23';
         
         const icon = L.divIcon({
             className: 'custom-marker',
-            html: `<div style="background:${isSelected ? '#979d23' : 'white'}; color:${isSelected ? 'white' : '#979d23'}; border:2px solid #979d23; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px">${isSelected ? (orderIdx + 1) : (escapeHtml(local.simbolo) || '📍')}</div>`,
+            html: `<div style="background:${isSelected ? corMarcador : 'white'}; color:${isSelected ? 'white' : corMarcador}; border:2px solid ${corMarcador}; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px">${isSelected ? (orderIdx + 1) : (escapeHtml(local.simbolo) || '📍')}</div>`,
             iconSize: [30, 30]
         });
         
         const marker = L.marker([local.latitude, local.longitude], { icon }).addTo(routeMap)
-            .bindPopup(`<div style="padding:5px; width:180px;"><strong>${escapeHtml(local.nome)}</strong>${imagemHtml}<br><button onclick="togglePontoOnRoute(${local.id})" style="margin-top:8px; width:100%; padding:5px; background:#979d23; color:white; border:none; border-radius:4px; cursor:pointer">${isSelected ? 'Remover' : 'Adicionar à Rota'}</button></div>`);
+            .bindPopup(buildLocalPopupHtml(local, isSelected), { maxWidth: 240 });
         
         marker.localId = local.id;
         routeMarkers.push(marker);
@@ -679,12 +700,76 @@ async function loadAllPontosToMap() {
     await window.drawRouteOnMap();
 }
 
+// ==================== CARROSSEL DE IMAGENS NO POPUP ====================
+// Guarda o índice da imagem atual de cada local, para o carrossel funcionar
+window.carrosselIndices = window.carrosselIndices || {};
+
+function buildLocalPopupHtml(local, isSelected) {
+    const imagens = local.imagens || [];
+    window.carrosselIndices[local.id] = window.carrosselIndices[local.id] || 0;
+    
+    let carrosselHtml = '';
+    if (imagens.length > 0) {
+        carrosselHtml = `<div id="carrossel-${local.id}">${renderCarrosselSlide(local.id, imagens, 0)}</div>`;
+    }
+    
+    return `
+        <div style="padding:5px; width:200px;">
+            <strong>${escapeHtml(local.nome)}</strong>
+            ${carrosselHtml}
+            <button onclick="togglePontoOnRoute(${local.id})" style="margin-top:8px; width:100%; padding:5px; background:${escapeHtml(local.cor || '#979d23')}; color:white; border:none; border-radius:4px; cursor:pointer">${isSelected ? 'Remover' : 'Adicionar à Rota'}</button>
+        </div>
+    `;
+}
+
+function renderCarrosselSlide(localId, imagens, index) {
+    const img = imagens[index];
+    const dataStr = img.criado_em ? formatDate(img.criado_em) : '';
+    return `
+        <div style="margin-top:5px;">
+            <img src="${escapeHtml(img.url)}" style="width:100%; height:90px; object-fit:cover; border-radius:4px;">
+            <div style="font-size:12px; font-weight:600; margin-top:4px;">${escapeHtml(img.nome || '')}</div>
+            <div style="font-size:11px; color:#6b7280;">${escapeHtml(img.descricao || '')}</div>
+            <div style="font-size:10px; color:#9ca3af;">${dataStr}</div>
+            ${imagens.length > 1 ? `
+                <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                    <button onclick="carrosselNavegar(${localId}, -1)" style="padding:2px 8px; border:none; background:#f3f4f6; border-radius:4px; cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
+                    <span style="font-size:11px; color:#9ca3af;">${index + 1} / ${imagens.length}</span>
+                    <button onclick="carrosselNavegar(${localId}, 1)" style="padding:2px 8px; border:none; background:#f3f4f6; border-radius:4px; cursor:pointer;"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+window.carrosselNavegar = function(localId, direcao) {
+    const local = allLocaisForMap.find(l => l.id === localId);
+    if (!local || !local.imagens || local.imagens.length === 0) return;
+    
+    const total = local.imagens.length;
+    let novoIndex = (window.carrosselIndices[localId] || 0) + direcao;
+    if (novoIndex < 0) novoIndex = total - 1;
+    if (novoIndex >= total) novoIndex = 0;
+    window.carrosselIndices[localId] = novoIndex;
+    
+    const container = document.getElementById(`carrossel-${localId}`);
+    if (container) container.innerHTML = renderCarrosselSlide(localId, local.imagens, novoIndex);
+};
+
+window.setTransportMode = async function(mode) {
+    currentTransportMode = mode;
+    document.querySelectorAll('.transport-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    await window.drawRouteOnMap();
+};
+
 // CORREÇÃO: Função exportada globalmente para o objeto window para evitar erros de compilação
 window.getRouteFromOSRM = async function(pontos) {
     if (pontos.length < 2) return null;
     try {
         const coordinates = pontos.map(p => `${p.longitude},${p.latitude}`).join(';');
-        const url = `${ROUTING_API}${coordinates}?overview=full&geometries=geojson&steps=true`;
+        const url = `${ROUTING_API_BASE}${currentTransportMode}/${coordinates}?overview=full&geometries=geojson&steps=true`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.code === 'Ok' && data.routes && data.routes[0]) {
@@ -707,13 +792,15 @@ window.updateRouteStats = function(fallback = false) {
     const statsEl = document.getElementById('routeStats');
     if (!statsEl) return;
     const totalPontos = selectedPontosRota.length;
+    const modoIcon = currentTransportMode === 'foot' ? '🚶' : '🚗';
+    const modoTexto = currentTransportMode === 'foot' ? 'Rota a pé por caminhos' : 'Rota por estradas reais';
     if (fallback || currentRouteDistance === 0) {
         statsEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${totalPontos} ${totalPontos === 1 ? 'ponto' : 'pontos'} | Distância: calculando... | ⚠️ Rota em linha reta (não segue estradas)`;
     } else {
         const horas = Math.floor(currentRouteDuration / 60);
         const minutos = Math.floor(currentRouteDuration % 60);
         const tempoStr = horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`;
-        statsEl.innerHTML = `<i class="fas fa-route"></i> ${totalPontos} ${totalPontos === 1 ? 'ponto' : 'pontos'} | <i class="fas fa-road"></i> ${currentRouteDistance.toFixed(1)} km | <i class="fas fa-clock"></i> ${tempoStr} | 🚗 Rota por estradas reais`;
+        statsEl.innerHTML = `<i class="fas fa-route"></i> ${totalPontos} ${totalPontos === 1 ? 'ponto' : 'pontos'} | <i class="fas fa-road"></i> ${currentRouteDistance.toFixed(1)} km | <i class="fas fa-clock"></i> ${tempoStr} | ${modoIcon} ${modoTexto}`;
     }
 };
 
@@ -937,7 +1024,6 @@ window.closeModalRotaOutside = function(e) {
 window.saveModal = async function() {
     if (currentEditType === 'categoria') await saveCategoria();
     else if (currentEditType === 'posto') await saveLocal();
-    else if (currentEditType === 'user') await saveUser();
 };
 
 async function saveCategoria() {
@@ -977,6 +1063,7 @@ async function saveLocal() {
     const data = { 
         nome, 
         descricao: document.getElementById('localDescricao')?.value || '', 
+        cor: document.getElementById('localCor')?.value || '#979d23',
         latitude: currentLat, 
         longitude: currentLng 
     };
@@ -999,26 +1086,23 @@ async function saveLocal() {
         
         await supabase.from('fotos').delete().eq('locais_id', localId);
         const urlsText = document.getElementById('localImagensUrls')?.value || '';
-        const lines = urlsText.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+        const lines = urlsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length > 0) {
-            const fotosInsert = lines.map(url => ({ locais_id: localId, url: url }));
-            await supabase.from('fotos').insert(fotosInsert);
+            const fotosInsert = lines.map(line => {
+                const partes = line.split('|').map(p => p.trim());
+                if (partes.length >= 3) {
+                    return { locais_id: localId, nome: partes[0], descricao: partes[1], url: partes[2] };
+                }
+                // Se o utilizador colocar apenas o URL, sem separadores
+                return { locais_id: localId, nome: '', descricao: '', url: partes[0] };
+            }).filter(f => f.url);
+            if (fotosInsert.length > 0) await supabase.from('fotos').insert(fotosInsert);
         }
     }
     showToast('Ponto turístico guardado!');
     closeModal();
     await loadLocais();
     updateDashboardCounts();
-}
-
-async function saveUser() {
-    const fullName = document.getElementById('editUserName')?.value || '';
-    const role = document.getElementById('editUserRole')?.value || 'user';
-    const status = document.getElementById('editUserStatus')?.value || 'pending';
-    await supabase.from('profiles').update({ full_name: fullName, role, status }).eq('id', currentEditId);
-    showToast('Utilizador atualizado');
-    closeModal();
-    await loadUsers();
 }
 
 window.openModal = function(type) {
@@ -1045,7 +1129,8 @@ window.openModal = function(type) {
         modalBody.innerHTML = `
             <div class="modal-form-group"><label class="modal-label">Nome do ponto</label><input type="text" class="modal-input" id="localNome" placeholder="Ex: Castelo de Sesimbra"></div>
             <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="localDescricao" placeholder="Descrição do ponto..."></textarea></div>
-            <div class="modal-form-group"><label class="modal-label">URLs das Imagens (uma por linha)</label><textarea class="modal-textarea" id="localImagensUrls" rows="3" placeholder="https://url.com/imagem.jpg"></textarea></div>
+            <div class="modal-form-group"><label class="modal-label">Imagens (uma por linha, formato: Nome | Descrição | URL)</label><textarea class="modal-textarea" id="localImagensUrls" rows="3" placeholder="Vista do Castelo | Pôr-do-sol visto da muralha | https://url.com/imagem.jpg"></textarea></div>
+            <div class="modal-form-group"><label class="modal-label">Cor do marcador no mapa</label><input type="color" class="modal-input" id="localCor" style="height:42px; width:100%" value="#979d23"></div>
             <div class="modal-form-group"><label class="modal-label">Categorias</label><div id="localCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div></div>
             <div class="modal-form-group"><label class="modal-label">Localização</label><div id="locationMapContainer" class="location-map-container"><div id="locationPickerMap" style="height:250px;"></div></div><div class="location-coords-display" style="display:flex; gap:20px; margin-top:10px;"><div class="coord-item">Lat: <span id="coordLatDisplay">38.4446</span></div><div class="coord-item">Lng: <span id="coordLngDisplay">-9.1016</span></div></div></div>
         `;
