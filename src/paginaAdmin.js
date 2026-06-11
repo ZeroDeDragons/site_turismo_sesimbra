@@ -43,7 +43,7 @@ async function checkAuth() {
         window.location.href = 'login.html';
         return;
     }
-    const { data: profile } = await supabase.from('perfis').select('role').eq('id', session.user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
     if (profile?.role !== 'admin') {
         window.location.href = 'index.html';
     }
