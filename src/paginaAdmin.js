@@ -140,46 +140,77 @@ async function loadLastUsers() {
 }
 
 // ==================== INTEGRAÇÃO CARRIS METROPOLITANA ====================
+
+// Calcula a distância em metros entre duas coordenadas (fórmula de Haversine)
+function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // raio da Terra em metros
+    const toRad = (deg) => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 async function getCarrisMetropolitanaData(lat, lng) {
     try {
-        const stopsResponse = await fetch(`https://api.carrismetropolitana.pt/stops?lat=${lat}&lon=${lng}&radius=500`);
-        const stops = await stopsResponse.json();
-        
-        if (!stops || stops.length === 0) {
-            return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana próxima.";
+        // A API v2 devolve TODAS as paragens com lat/lon próprios; não aceita filtro
+        // por raio diretamente, por isso pedimos todas e filtramos localmente pela
+        // distância real ao ponto (lat, lng) que recebemos.
+        const response = await fetch('https://api.carrismetropolitana.pt/v2/stops');
+        if (!response.ok) throw new Error('Falha ao obter paragens');
+        const todasParagens = await response.json();
+
+        if (!Array.isArray(todasParagens) || todasParagens.length === 0) {
+            return "<br>🚌 <b>Autocarros:</b> Sem dados de paragens disponíveis de momento.";
         }
-        
-        const closestStop = stops[0]; 
-        
-        const realTimeResponse = await fetch(`https://api.carrismetropolitana.pt/stops/${closestStop.id}/realtime`);
-        const realTimeData = await realTimeResponse.json();
-        
-        const linhasDisponiveis = [...new Set(closestStop.lines)];
-        const autocarrosStr = linhasDisponiveis.length > 0 ? linhasDisponiveis.join(', ') : 'Informação indisponível';
-        
-        let proximoHorarioStr = "Sem autocarros previstos para breve";
-        let tempoEstimadoStr = "N/A";
-        
-        if (realTimeData && realTimeData.length > 0) {
-            realTimeData.sort((a, b) => a.estimated_arrival_unix - b.estimated_arrival_unix);
-            const proximoAutocarro = realTimeData[0];
-            
-            const agoraUnix = Math.floor(Date.now() / 1000);
-            const minutosFaltam = Math.round((proximoAutocarro.estimated_arrival_unix - agoraUnix) / 60);
-            
-            proximoHorarioStr = `${proximoAutocarro.line_id} (Destino: ${proximoAutocarro.headsign || 'Desconhecido'}) - ${proximoAutocarro.scheduled_arrival}`;
-            tempoEstimadoStr = minutosFaltam > 0 ? `Faltam ${minutosFaltam} min` : "A encostar / Já passou";
+
+        // Calcula a distância real (em metros) de cada paragem ao ponto e filtra
+        // apenas as que estão dentro de um raio razoável (300 metros a pé)
+        const RAIO_MAX_METROS = 300;
+        const paragensProximas = todasParagens
+            .map(p => ({
+                ...p,
+                distancia: calcularDistanciaMetros(lat, lng, p.lat, p.lon)
+            }))
+            .filter(p => p.distancia <= RAIO_MAX_METROS)
+            .sort((a, b) => a.distancia - b.distancia)
+            .slice(0, 3); // no máximo as 3 paragens mais próximas
+
+        if (paragensProximas.length === 0) {
+            return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana num raio de 300m.";
         }
-        
+
+        // Para cada paragem próxima, listamos o nome, a distância e as linhas que
+        // passam por ela (a propriedade "lines" da v2 já vem com os route_id)
+        const paragensHtml = paragensProximas.map(p => {
+            const linhas = Array.isArray(p.lines) && p.lines.length > 0
+                ? [...new Set(p.lines)].join(', ')
+                : 'sem linhas associadas';
+            return `
+                <div style="margin-top:4px; padding-top:4px; border-top:1px dashed #e5e7eb;">
+                    <b>${escapeHtml(p.name || p.id)}</b> (${Math.round(p.distancia)}m)<br>
+                    🚌 Linhas: ${escapeHtml(linhas)}
+                </div>
+            `;
+        }).join('');
+
         return `
             <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #ccc;">
-            🚌 <b>Autocarros na zona:</b> ${autocarrosStr}<br>
-            ⏰ <b>Próximo Autocarro:</b> ${proximoHorarioStr}<br>
-            ⏳ <b>Tempo de Espera:</b> <span style="color: #d97706; font-weight: bold;">${tempoEstimadoStr}</span>
+            <div style="font-size:12px;">
+                <b>Paragens próximas:</b>
+                ${paragensHtml}
+                <div style="margin-top:6px; color:#9ca3af; font-size:10px;">
+                    ⚠️ Horários em tempo real não disponíveis nesta versão.
+                    Consulte a app navegante® para horários precisos.
+                </div>
+            </div>
         `;
     } catch (error) {
         console.error("Erro ao buscar dados da Carris Metropolitana:", error);
-        return "<br>🚌 <b>Autocarros:</b> Erro ao carregar dados em tempo real.";
+        return "<br>🚌 <b>Autocarros:</b> Erro ao carregar dados da Carris Metropolitana.";
     }
 }
 
@@ -845,17 +876,21 @@ window.drawRouteOnMap = async function() {
             routeMap.currentRouteLayer.bindPopup("A carregar dados dos transportes...");
             
             routeMap.currentRouteLayer.on('click', async function(e) {
-                const pontoOrigem = selectedPontosRota[0];
+                // Usamos o ponto exato onde o utilizador clicou na linha (e.latlng),
+                // não o primeiro ponto da rota — assim as paragens mostradas são
+                // sempre as mais próximas do troço que está a ser inspecionado.
+                const cliqueLat = e.latlng.lat;
+                const cliqueLng = e.latlng.lng;
                 let popupConteudo = `
                     <div style="font-family: sans-serif; min-width: 220px;">
                         <strong style="color: #979d23; font-size: 14px;">Informação do Trajeto</strong><br>
                         🛣️ <b>Distância Total:</b> ${currentRouteDistance > 0 ? currentRouteDistance.toFixed(1) + ' km' : 'N/A'}<br>
-                        🚗 <b>Tempo de Carro:</b> ${currentRouteDuration > 0 ? Math.round(currentRouteDuration) + ' min' : 'N/A'}
+                        ${currentTransportMode === 'foot' ? '🚶 <b>Tempo a Pé:</b>' : '🚗 <b>Tempo de Carro:</b>'} ${currentRouteDuration > 0 ? Math.round(currentRouteDuration) + ' min' : 'N/A'}
                 `;
                 
-                routeMap.currentRouteLayer.setPopupContent(popupConteudo + "<br>⏳ A procurar autocarros da Carris Metropolitana...</div>");
+                routeMap.currentRouteLayer.setPopupContent(popupConteudo + "<br>⏳ A procurar paragens da Carris Metropolitana...</div>");
                 
-                const dadosCarris = await getCarrisMetropolitanaData(pontoOrigem.latitude, pontoOrigem.longitude);
+                const dadosCarris = await getCarrisMetropolitanaData(cliqueLat, cliqueLng);
                 popupConteudo += dadosCarris + "</div>";
                 routeMap.currentRouteLayer.setPopupContent(popupConteudo);
             });
