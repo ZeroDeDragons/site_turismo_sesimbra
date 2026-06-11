@@ -223,6 +223,10 @@
         <div class="modal-col-right">
           <div class="modal-form-group">
             <label class="modal-label">Mapa Interativo (Defina a ordem clicando nos marcadores)</label>
+            <div class="transport-mode-selector" style="display:flex; gap:8px; margin-bottom:8px;">
+              <button type="button" class="btn-secondary transport-btn active" data-mode="driving" onclick="setTransportMode('driving')"><i class="fas fa-car"></i> Carro</button>
+              <button type="button" class="btn-secondary transport-btn" data-mode="foot" onclick="setTransportMode('foot')"><i class="fas fa-walking"></i> A pé</button>
+            </div>
             <div class="route-stats" id="routeStats">Selecione pontos no mapa para criar a rota</div>
             <div id="rotaMapContainer" class="route-map-container" style="height: 450px; position: relative;">
               <div id="routeMap" class="route-map" style="height: 100%;"></div>
