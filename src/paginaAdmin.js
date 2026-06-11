@@ -22,15 +22,6 @@ let currentRouteLayerGroup = null; // LayerGroup para gestionar segmentos indivi
 
 const ROUTING_API = 'https://router.project-osrm.org/route/v1/driving/';
 
-// Base de datos simulada (Mock) de autobuses (Carris Metropolitana) para Sesimbra
-// Mapea horarios, líneas y sentidos entre puntos específicos
-const AUTOCARROS_MOCK = [
-    { linha: "3222", destino: "Sesimbra (Terminal)", de_id: 1, para_id: 2, horarios: ["08:15", "10:30", "12:45", "14:15", "16:30", "18:45", "20:00", "22:15"] },
-    { linha: "3540", destino: "Cacilhas", de_id: 2, para_id: 1, horarios: ["07:00", "09:15", "11:30", "13:00", "15:15", "17:30", "19:15", "21:00"] },
-    { linha: "3222", destino: "Setúbal", de_id: 2, para_id: 3, horarios: ["08:45", "11:00", "13:15", "15:45", "18:00", "20:15"] },
-    { linha: "3625", destino: "Meco", de_id: 3, para_id: 2, horarios: ["06:45", "09:30", "12:00", "15:00", "17:45", "19:30"] }
-];
-
 // ==================== INICIALIZACIÓN ====================
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
@@ -515,19 +506,81 @@ async function loadAllPontosToMap() {
     await drawRouteOnMap();
 }
 
-function obterInfoAutocarro(deId, paraId) {
-    let info = AUTOCARROS_MOCK.find(b => b.de_id === deId && b.para_id === paraId);
-    let sentido = "Ida";
-    if (!info) {
-        info = AUTOCARROS_MOCK.find(b => b.de_id === paraId && b.para_id === deId);
-        sentido = "Volta";
-    }
-    if (!info) return { linha: "Carreira municipal 3000", proxima: "Sem horário associado", sentido: "Direto", destino: "Sesimbra" };
+// 1. Encontra o ID da paragem física da Carris Metropolitana mais próxima das coordenadas do seu local
+async function procurarParagemMaisProxima(lat, lng) {
+    try {
+        // Consultar todas as paragens oficiais cadastradas na Carris Metropolitana
+        const response = await fetch('https://api.carrismetropolitana.pt/v2/stops');
+        if (!response.ok) return null;
+        const paragens = await response.json();
 
-    const agora = new Date();
-    const horaAtualStr = agora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-    const proximaHora = info.horarios.find(h => h > horaAtualStr) || info.horarios[0];
-    return { linha: info.linha, proxima: proximaHora, sentido: sentido, destino: info.destino };
+        let paragemMaisProxima = null;
+        let menorDistancia = Infinity;
+
+        // Algoritmo matemático simples para achar a paragem com menor distância linear (Haversine/Euclidiana simplificada)
+        paragens.forEach(p => {
+            const dLat = p.lat - lat;
+            const dLon = p.lon - lng;
+            const distancia = Math.sqrt(dLat * dLat + dLon * dLon);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                paragemMaisProxima = p;
+            }
+        });
+
+        // Retorna a paragem encontrada se estiver num raio aceitável (ex: menos de ~1.5km)
+        return paragemMaisProxima;
+    } catch (err) {
+        console.error("Erro ao localizar paragem Carris Metropolitana:", err);
+        return null;
+    }
+}
+
+// 2. Consulta a API de tempo real (ao vivo) para a paragem detetada
+async function obterInfoAutocarroTempoReal(lat, lng) {
+    const paragem = await procurarParagemMaisProxima(lat, lng);
+    
+    if (!paragem) {
+        return { dadosDisponiveis: false, msg: "Sem paragens Carris Metropolitana próximas." };
+    }
+
+    try {
+        // Endpoint oficial de chegadas em tempo real por ID de paragem
+        const response = await fetch(`https://api.carrismetropolitana.pt/v2/stops/${paragem.id}/arrivals`);
+        if (!response.ok) throw new Error();
+        const chegadas = await response.json();
+
+        if (!chegadas || chegadas.length === 0) {
+            return {
+                dadosDisponiveis: true,
+                paragemNome: paragem.long_name,
+                msg: "Sem autocarros em circulação imediata para esta zona."
+            };
+        }
+
+        // Ordena as próximas chegadas (as estimadas 'estimated' têm prioridade sobre o planeado 'scheduled')
+        const proximasCirculacoes = chegadas
+            .filter(c => c.estimated || c.scheduled)
+            .map(c => {
+                const horaExata = c.estimated || c.scheduled; // Ex: "14:25:00"
+                return {
+                    linha: c.line_id,
+                    destino: c.headsign || "Destino Indefinido",
+                    horario: horaExata.substring(0, 5), // Corta os segundos para mostrar "14:25"
+                    eTempoReal: !!c.estimated // Se veio do GPS do autocarro é true
+                };
+            })
+            .sort((a, b) => a.horario.localeCompare(b.horario));
+
+        return {
+            dadosDisponiveis: true,
+            paragemNome: paragem.long_name,
+            proximas: proximasCirculacoes.slice(0, 3) // Obtém os 3 autocarros mais próximos ao vivo
+        };
+    } catch (err) {
+        console.error("Erro ao buscar dados ao vivo:", err);
+        return { dadosDisponiveis: false, msg: "Erro na ligação ao servidor da Carris Metropolitana." };
+    }
 }
 
 async function drawRouteOnMap() {
@@ -535,7 +588,7 @@ async function drawRouteOnMap() {
     if (selectedPontosRota.length < 2) return;
     
     const statsEl = document.getElementById('routeStats');
-    if (statsEl) statsEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traçando percurso nas ruas...';
+    if (statsEl) statsEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A calcular percurso e a conectar à API Carris Metropolitana...';
     
     let totalDistance = 0;
     const corRota = document.getElementById('rotaCor')?.value || '#979d23';
@@ -543,7 +596,9 @@ async function drawRouteOnMap() {
     for (let i = 0; i < selectedPontosRota.length - 1; i++) {
         const origem = selectedPontosRota[i];
         const destino = selectedPontosRota[i + 1];
+        
         try {
+            // Desenha a rota real nas estradas via OSRM
             const url = `${ROUTING_API}${origem.longitude},${origem.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson`;
             const response = await fetch(url);
             const resData = await response.json();
@@ -554,30 +609,64 @@ async function drawRouteOnMap() {
                 const durationMin = resData.routes[0].duration / 60;
                 totalDistance += distanceKm;
                 
-                const busInfo = obterInfoAutocarro(origem.id, destino.id);
+                // CHAMADA À API EM TEMPO REAL usando as coordenadas do ponto de Origem
+                const infoCarris = await obterInfoAutocarroTempoReal(origem.latitude, origem.longitude);
+                
+                let blocoAutocarrosHtml = "";
+
+                if (infoCarris.dadosDisponiveis && infoCarris.proximas && infoCarris.proximas.length > 0) {
+                    blocoAutocarrosHtml = infoCarris.proximas.map(autocarro => `
+                        <div style="margin-top: 5px; display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border-left: 3px solid #22c55e; padding: 4px 8px; border-radius: 0 4px 4px 0;">
+                            <div>
+                                <strong style="color: #166534;"><i class="fas fa-bus"></i> ${autocarro.linha}</strong> 
+                                <span style="font-size: 11px; color: #4b5563;">&rarr; ${autocarro.destino}</span>
+                            </div>
+                            <span style="font-weight: bold; color: #15803d; font-size: 12px; display: flex; align-items: center; gap: 3px;">
+                                ${autocarro.eTempoReal ? '<i class="fas fa-satellite-dish" style="font-size:10px; color:#22c55e;" title="Satélite ao vivo"></i>' : '<i class="far fa-clock" title="Horário planeado"></i>'} 
+                                ${autocarro.horario}
+                            </span>
+                        </div>
+                    `).join('');
+                } else {
+                    // Caso não haja autocarros próximos ou dê erro
+                    blocoAutocarrosHtml = `
+                        <div style="font-size: 11px; color: #6b7280; font-style: italic; margin-top: 5px; background: #f9fafb; padding: 6px; border-radius: 4px; border: 1px dashed #e5e7eb;">
+                            <i class="fas fa-exclamation-circle"></i> ${infoCarris.msg || "Sem partidas programadas."}
+                        </div>
+                    `;
+                }
+
                 const lineStyle = {
-                    color: busInfo.sentido === "Volta" ? "#dc2626" : corRota,
+                    color: corRota,
                     weight: 6,
-                    opacity: 0.85,
-                    dashArray: busInfo.sentido === "Volta" ? "5, 10" : null
+                    opacity: 0.85
                 };
 
                 const polyline = L.geoJSON(routeGeom, { style: lineStyle }).addTo(currentRouteLayerGroup);
+                
+                // Criação do Tooltip Dinâmico Oficial
                 const tooltipContent = `
-                    <div style="font-size:12px; padding:3px; line-height:1.4;">
-                        <strong style="color:#979d23;"><i class="fas fa-bus"></i> Carris Metropolitana: Linha ${busInfo.linha}</strong><br>
-                        <strong>Sentido:</strong> ${busInfo.sentido} às ${busInfo.destino}<br>
-                        <strong>Próxima passagem:</strong> ${busInfo.proxima}<br>
-                        <hr style="margin:4px 0; border:0; border-top:1px solid #ddd;">
-                        <span><i class="fas fa-road"></i> ${distanceKm.toFixed(2)} km</span> | 
-                        <span><i class="fas fa-clock"></i> ${Math.round(durationMin)} min</span>
+                    <div style="font-size:13px; padding:6px; line-height:1.4; font-family:'Poppins', sans-serif; min-width: 240px;">
+                        <strong style="color:#1f2937; font-size:13px;"><i class="fas fa-map-marker-alt" style="color:#979d23"></i> Desde: ${origem.nome}</strong>
+                        ${infoCarris.paragemNome ? `<br><span style="font-size:11px; color:#6b7280;">Paragem Carris: ${infoCarris.paragemNome}</span>` : ''}
+                        
+                        <div style="margin-top: 6px; font-weight: 700; font-size: 11px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px;">Próximas Passagens Ao Vivo:</div>
+                        ${blocoAutocarrosHtml}
+                        
+                        <hr style="margin:8px 0; border:0; border-top:1px solid #e5e7eb;">
+                        <div style="color:#4b5563; font-size:11px; display:flex; justify-content: space-between;">
+                            <span><i class="fas fa-road"></i> <strong>${distanceKm.toFixed(2)} km</strong> percorridos</span>
+                            <span><i class="fas fa-car"></i> <strong>~${Math.round(durationMin)} min</strong></span>
+                        </div>
                     </div>
                 `;
                 polyline.bindTooltip(tooltipContent, { sticky: true, className: 'bus-routing-tooltip' });
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error('Erro no processamento do percurso:', err); 
+        }
     }
-    if (statsEl) statsEl.innerHTML = `<i class="fas fa-route"></i> ${selectedPontosRota.length} paragens | Distância Total: ${totalDistance.toFixed(1)} km | Passe o rato nas linhas para ver horários.`;
+    if (statsEl) statsEl.innerHTML = `<i class="fas fa-route"></i> Rota ligada com dados oficiais da Carris Metropolitana via GPS | Passe o rato sobre as linhas para inspecionar os autocarros diretos.`;
 }
 
 window.togglePontoOnRoute = async function(localId) {
