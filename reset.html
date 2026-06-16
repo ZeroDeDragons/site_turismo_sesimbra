@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redefinir Senha | Castelo Sesimbra</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="Imagens/logo.png">
+<link href="src/registo.css" rel="stylesheet">
+<style>
+  /* Ajustes específicos para a página de reset */
+  .reset-panel {
+    width: 500px;
+    flex-shrink: 0;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reset-panel::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: var(--primary-faint);
+    z-index: 0;
+  }
+
+  .reset-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -60px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: var(--secondary-faint);
+    z-index: 0;
+  }
+
+  @media(max-width:960px) {
+    .login-visual { display: none; }
+    .reset-panel {
+      width: 100%;
+      overflow-y: auto;
+    }
+    html, body { overflow: auto; }
+  }
+
+  @media(max-width:480px) {
+    .reset-panel { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- lado esquerdo - imagem -->
+<div class="login-visual">
+  <a href="#" class="visual-logo">Castelo<span>Sesimbra</span></a>
+  <div>
+    <div class="visual-tag">
+      <span></span>
+      Segurança
+    </div>
+    <h1 class="visual-title">Redefine a<br>tua <em>palavra-passe</em></h1>
+    <p class="visual-sub">Cria uma nova palavra-passe segura para aceder à tua conta na plataforma Castelo Sesimbra.</p>
+  </div>
+</div>
+
+<!-- lado direito - formulário -->
+<div class="reset-panel">
+  <div class="panel-content" id="panelContent">
+
+    <span class="panel-eyebrow">Nova Palavra-passe</span>
+    <h2 class="panel-title">Cria uma<br>nova palavra-passe</h2>
+    <p class="panel-sub">A palavra-passe deve ter pelo menos 8 caracteres.</p>
+
+    <div class="error-msg" id="errorMsg">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="errorText">As palavras-passe não coincidem.</span>
+    </div>
+
+    <!-- Token (oculto) -->
+    <input type="hidden" id="resetToken" value="">
+
+    <!-- Nova palavra-passe -->
+    <div class="form-group">
+      <label class="form-label" for="newPassword">Nova palavra-passe *</label>
+      <div class="input-wrap">
+        <input class="form-input" type="password" id="newPassword" placeholder="••••••••" autocomplete="new-password">
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <button class="password-toggle" id="togglePwd1" type="button">
+          <svg id="eyeIcon1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Confirmar palavra-passe -->
+    <div class="form-group">
+      <label class="form-label" for="confirmPassword">Confirmar palavra-passe *</label>
+      <div class="input-wrap">
+        <input class="form-input" type="password" id="confirmPassword" placeholder="••••••••" autocomplete="new-password">
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <button class="password-toggle" id="togglePwd2" type="button">
+          <svg id="eyeIcon2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <span class="input-status" id="confirmStatus"></span>
+      </div>
+      <div class="field-hint" id="confirmHint"></div>
+    </div>
+
+    <!-- Botão -->
+    <div class="btn-row">
+      <button class="btn-back" id="backBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Voltar ao Login
+      </button>
+      <button class="btn-submit" id="submitBtn">
+        Redefinir
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+
+    <div class="panel-footer">
+      <a href="login.html">← Voltar para o Login</a>
+    </div>
+
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2 class="success-title">Palavra-passe alterada!</h2>
+    <p class="success-sub">A tua palavra-passe foi redefinida com sucesso. Já podes fazer login com a nova palavra-passe.</p>
+    <a href="login.html" class="btn-login-now">
+      Ir para o Login
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</div>
+
+<script type="module">
+import { supabase } from './src/supabaseClient.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // ========================================
+  // PEGAR TOKEN DA URL (SUPABASE USA #)
+  // ========================================
+  function getTokensFromURL() {
+    const hash = window.location.hash;
+    if (!hash) return null;
+    
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const type = params.get('type');
+    
+    console.log('🔑 Tokens da URL:', { accessToken, refreshToken, type });
+    
+    return { accessToken, refreshToken, type };
+  }
+
+  const tokens = getTokensFromURL();
+
+  // Se não tiver tokens, redirecionar
+  if (!tokens || !tokens.accessToken) {
+    alert('Link de recuperação inválido. Solicite um novo.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // ========================================
+  // CRIAR SESSÃO COM O TOKEN
+  // ========================================
+  try {
+    const { data, error } = await supabase.auth.setSession({
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken || ''
+    });
+
+    if (error) {
+      console.error('❌ Erro ao criar sessão:', error);
+      alert('Link inválido ou expirado. Solicite um novo.');
+      window.location.href = 'login.html';
+      return;
+    }
+
+    console.log('✅ Sessão criada! Usuário:', data.user?.email);
+
+  } catch (error) {
+    console.error('❌ Erro:', error);
+    alert('Erro ao processar link. Tente novamente.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // ========================================
+  // ELEMENTOS DO DOM
+  // ========================================
+  const newPassword = document.getElementById('newPassword');
+  const confirmPassword = document.getElementById('confirmPassword');
+  const submitBtn = document.getElementById('submitBtn');
+  const backBtn = document.getElementById('backBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const errorText = document.getElementById('errorText');
+  const confirmStatus = document.getElementById('confirmStatus');
+  const confirmHint = document.getElementById('confirmHint');
+  const successScreen = document.getElementById('successScreen');
+  const panelContent = document.getElementById('panelContent');
+
+  // Toggle de visibilidade da senha
+  function setupToggle(btnId, inputId, iconId) {
+    const btn = document.getElementById(btnId);
+    const inp = document.getElementById(inputId);
+    const ico = document.getElementById(iconId);
+    const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+    const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+    if (btn && inp && ico) {
+      btn.addEventListener('click', () => {
+        const show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        ico.innerHTML = show ? eyeClosed : eyeOpen;
+      });
+    }
+  }
+  setupToggle('togglePwd1', 'newPassword', 'eyeIcon1');
+  setupToggle('togglePwd2', 'confirmPassword', 'eyeIcon2');
+
+  // Validar confirmação de senha
+  confirmPassword.addEventListener('input', () => {
+    const pw = newPassword.value;
+    const cp = confirmPassword.value;
+    
+    if (!cp) {
+      confirmPassword.className = 'form-input';
+      confirmStatus.className = 'input-status';
+      confirmHint.className = 'field-hint';
+      return;
+    }
+    
+    if (cp === pw) {
+      confirmPassword.className = 'form-input valid';
+      confirmStatus.className = 'input-status show ok';
+      confirmStatus.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+      confirmHint.className = 'field-hint show ok';
+      confirmHint.textContent = 'As palavras-passe coincidem.';
+    } else {
+      confirmPassword.className = 'form-input invalid';
+      confirmStatus.className = 'input-status show err';
+      confirmStatus.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      confirmHint.className = 'field-hint show err';
+      confirmHint.textContent = 'As palavras-passe não coincidem.';
+    }
+  });
+
+  function showError(msg) {
+    errorText.textContent = msg;
+    errorMsg.classList.add('show');
+    setTimeout(() => errorMsg.classList.remove('show'), 5000);
+  }
+
+  function hideError() {
+    errorMsg.classList.remove('show');
+  }
+
+  // Botão voltar
+  backBtn.addEventListener('click', () => {
+    window.location.href = 'login.html';
+  });
+
+  // ========================================
+  // SUBMETER NOVA SENHA
+  // ========================================
+  submitBtn.addEventListener('click', async () => {
+    const pw = newPassword.value;
+    const cp = confirmPassword.value;
+
+    hideError();
+
+    if (!pw || !cp) {
+      showError('Preenche todos os campos.');
+      return;
+    }
+
+    if (pw.length < 8) {
+      showError('A palavra-passe deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    if (pw !== cp) {
+      showError('As palavras-passe não coincidem.');
+      return;
+    }
+
+    // Loading
+    submitBtn.classList.add('loading');
+    submitBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> A atualizar...`;
+
+    try {
+      // Atualizar senha
+      const { error } = await supabase.auth.updateUser({
+        password: pw
+      });
+
+      if (error) throw error;
+
+      // Sucesso!
+      panelContent.style.display = 'none';
+      successScreen.classList.add('show');
+
+    } catch (error) {
+      console.error('❌ Erro:', error);
+      
+      if (error.message.includes('session')) {
+        showError('Sessão expirada. Solicite um novo link.');
+      } else {
+        showError(error.message || 'Erro ao redefinir senha.');
+      }
+      
+      submitBtn.classList.remove('loading');
+      submitBtn.innerHTML = `Redefinir <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    }
+  });
+
+  // Enter para submeter
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const active = document.activeElement;
+      if (active === newPassword || active === confirmPassword) {
+        submitBtn.click();
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

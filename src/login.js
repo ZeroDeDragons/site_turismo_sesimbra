@@ -1,3 +1,4 @@
+import { API_URL } from './config/api.js';
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -79,23 +80,23 @@ document.addEventListener('DOMContentLoaded', () => {
     async function verificarRoleUtilizador(userId) {
         try {
             console.log('Verificando role do utilizador:', userId);
-            
+
             // Buscar o role na tabela profiles
             const { data, error } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', userId)
                 .single();
-            
+
             if (error) {
                 console.error('Erro ao buscar role:', error);
                 // Se não encontrar na tabela profiles, assume user normal
                 return 'user';
             }
-            
+
             console.log('Role encontrado:', data?.role);
             return data?.role || 'user';
-            
+
         } catch (error) {
             console.error('Erro ao verificar role:', error);
             return 'user';
@@ -114,19 +115,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error) throw error;
 
             console.log('Login bem sucedido!', data.user);
-            
+
             // Salvar sessão
             salvarSessao(email);
-            
+
             // Verificar se o utilizador é admin
             const role = await verificarRoleUtilizador(data.user.id);
-            
+
             // Guardar role na sessão (opcional, para uso posterior)
             sessionStorage.setItem('userRole', role);
             sessionStorage.setItem('userId', data.user.id);
-            
+
             console.log('Role do utilizador:', role);
-            
+
             // Redirecionar baseado no role
             if (role === 'admin') {
                 console.log('Redirecionando para página de admin...');
@@ -204,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        emailInput.addEventListener('keypress', handleEnter);
+        emailInput.addEventListener('keyp   s', handleEnter);
         pwdInput.addEventListener('keypress', handleEnter);
     }
 
@@ -227,19 +228,30 @@ document.addEventListener('DOMContentLoaded', () => {
         forgotLink.addEventListener('click', async (e) => {
             e.preventDefault();
             const email = emailInput ? emailInput.value.trim() : '';
+
             if (!email) {
                 showError('Digite seu email para recuperar a palavra-passe');
                 return;
             }
 
             try {
+                forgotLink.style.pointerEvents = 'none';
+                forgotLink.textContent = 'Enviando...';
+
+                // ✅ USA O SUPABASE PARA ENVIAR O EMAIL
                 const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/login.html',
+                    redirectTo: window.location.origin + '/reset'
                 });
+
                 if (error) throw error;
-                alert(`Um link de recuperação foi enviado para ${email}`);
+
+                alert(`📧 Um link de recuperação foi enviado para ${email}`);
+
             } catch (err) {
                 showError('Erro ao enviar recuperação: ' + err.message);
+            } finally {
+                forgotLink.style.pointerEvents = 'auto';
+                forgotLink.textContent = 'Esqueci a palavra-passe';
             }
         });
     }
@@ -248,13 +260,13 @@ document.addEventListener('DOMContentLoaded', () => {
     async function verificarSessaoExistente() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            
+
             if (session) {
                 console.log('Sessão existente encontrada:', session.user.id);
-                
+
                 // Verificar role
                 const role = await verificarRoleUtilizador(session.user.id);
-                
+
                 if (role === 'admin') {
                     console.log('Utilizador admin já logado, redirecionando...');
                     window.location.href = '/paginaAdmin.html';
@@ -267,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Erro ao verificar sessão:', error);
         }
     }
-    
+
     // Verificar se já existe sessão ativa
     verificarSessaoExistente();
 

@@ -319,27 +319,63 @@ function configurarPesquisa(map) {
 //  MENU DE UTILIZADOR (HEADER)
 //  Mostra o nome do utilizador e permite logout
 // ============================================================
+// ============================================================
+//  MENU DE UTILIZADOR (HEADER)
+//  Mostra o nome do utilizador e permite logout
+//  Mostra o botão de admin APENAS para utilizadores com role = 'admin'
+// ============================================================
 async function configurarMenuUtilizador() {
   const userBtn      = document.getElementById('userHeaderBtn');
   const userDropdown = document.getElementById('userHeaderDropdown');
   const userHeaderName = document.querySelector('.user-header-name');
   const profileBtn   = document.getElementById('fakeProfileBtn');
   const logoutBtn    = document.getElementById('fakeLogoutBtn');
+  const adminBtn     = document.getElementById('paginaadminBtn');
 
   // Verificar se há sessão ativa
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
+    // Buscar os dados do perfil na tabela profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', user.id)
+      .single();
+
     // Utilizador está logado — mostrar o nome
-    const nome = user.user_metadata?.full_name || user.email.split('@')[0];
+    // Prioridade: profiles.full_name > user_metadata.full_name > email
+    let nome = profileData?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
+    
     if (userHeaderName) userHeaderName.textContent = nome;
 
     // Atualizar também o rodapé
     const rodapeNome = document.querySelector('.footer-bottom-right strong');
     if (rodapeNome) rodapeNome.textContent = nome;
+
+    // VERIFICAR SE O UTILIZADOR É ADMIN
+    // Verifica na tabela profiles se o role é 'admin'
+    const isAdmin = profileData?.role === 'admin';
+
+    // Mostrar ou esconder o botão de admin
+    if (adminBtn) {
+      if (isAdmin) {
+        adminBtn.style.display = 'flex'; // ou 'block'
+        console.log('🔐 Botão de admin visível para:', nome);
+      } else {
+        adminBtn.style.display = 'none';
+        console.log('👤 Utilizador normal:', nome);
+      }
+    }
+
   } else {
     // Não está logado — mostrar "Visitante"
     if (userHeaderName) userHeaderName.textContent = 'Visitante';
+    
+    // Esconder o botão de admin para visitantes
+    if (adminBtn) {
+      adminBtn.style.display = 'none';
+    }
   }
 
   // Abrir/fechar dropdown ou ir para o login se não estiver logado
@@ -367,8 +403,14 @@ async function configurarMenuUtilizador() {
 
   if (profileBtn) {
     profileBtn.addEventListener('click', () => {
-      // Página de perfil (podes criar depois)
-      alert('Página de perfil em desenvolvimento!');
+      window.location.href = './perfil.html';
+    });
+  }
+
+  // Botão admin - redirecionar para página admin
+  if (adminBtn) {
+    adminBtn.addEventListener('click', () => {
+      window.location.href = './paginaadmin.html';
     });
   }
 
@@ -383,7 +425,6 @@ async function configurarMenuUtilizador() {
     });
   }
 }
-
 
 // ============================================================
 //  BOTÕES DE FILTRO

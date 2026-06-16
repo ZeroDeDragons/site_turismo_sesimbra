@@ -1,17 +1,24 @@
 {
-  "name": "sesimbra-turismo",
+  "name": "site_turismo_sesimbra-main",
+  "version": "0.0.0",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
+    "preview": "vite preview",
+    "server": "node server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\""
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "concurrently": "^10.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "nodemailer": "^9.0.0"
   }
 }
