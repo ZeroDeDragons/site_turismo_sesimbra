@@ -739,7 +739,6 @@ footer {
     background: var(--secondary);
     color: white;
     border: none;
-    display: none;
     align-items: center;
     justify-content: center;
     font-size: 18px;
@@ -751,19 +750,21 @@ footer {
     pointer-events: none;
     transform: translateY(10px);
     transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
+    /* visível só em ecrãs pequenos */
+    display: none;
 }
 
 .back-to-top-btn:hover {
     background: var(--secondary-dark);
 }
 
+/* só aparece em ecrãs pequenos, e só depois do scroll (.show) */
 @media (max-width: 600px) {
     .back-to-top-btn {
         display: flex;
     }
 
     .back-to-top-btn.show {
-        display: flex;           
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
