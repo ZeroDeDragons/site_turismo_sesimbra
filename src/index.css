@@ -38,7 +38,10 @@ section {
     clear: both;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
 }
@@ -129,15 +132,6 @@ header {
     list-style: none;
     align-items: center;
     margin: 0;
-    padding: 0;
-}
-
-.nav-links li {
-    list-style: none;
-}
-
-.nav-links li::marker {
-    content: none;
 }
 
 .nav-links a {
@@ -728,69 +722,92 @@ footer {
     display: none;
 }
 
-/* BOTÃO VOLTAR AO TOPO */
-.back-to-top-btn {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--secondary);
-    color: white;
-    border: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(10px);
-    transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
-    /* visível só em ecrãs pequenos */
+
+
+/* ── HAMBURGER ── */
+.hamburger {
     display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.2s;
 }
 
-.back-to-top-btn:hover {
-    background: var(--secondary-dark);
+.hamburger:hover {
+    background: rgba(151, 157, 35, 0.10);
 }
 
-/* só aparece em ecrãs pequenos, e só depois do scroll (.show) */
-@media (max-width: 600px) {
-    .back-to-top-btn {
-        display: flex;
-    }
-
-    .back-to-top-btn.show {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-        transform: translateY(0);
-    }
+.hamburger span {
+    display: block;
+    width: 22px;
+    height: 2.5px;
+    background: var(--dark);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
 }
+
+.hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
 
 @media (max-width: 900px) {
+
+    .hamburger { display: flex; }
+
+    .navbar { flex-wrap: wrap; }
+
     .nav-links {
-        gap: 16px;
-        flex-wrap: wrap;
+        display: none !important;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+        order: 4;
+        padding: 12px 0 8px;
+        border-top: 1px solid #e5e7eb;
     }
 
+    .nav-links.open {
+        display: flex !important;
+    }
+
+    .nav-links li { width: 100%; }
+
     .nav-links a {
-        font-size: 14px;
-        padding: 5px 8px;
+        display: block;
+        padding: 10px 14px;
+        font-size: 15px;
     }
 
     .user-nav-item {
-        margin-left: 8px;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .user-header-btn {
+        width: 100%;
+        justify-content: flex-start;
     }
 
     .user-header-dropdown {
-        right: 0;
-        left: auto;
+        position: static;
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        margin-top: 6px;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        display: none;
+        transition: none;
     }
+
+    .user-header-dropdown.show { display: block !important; }
 
     .hero { background-attachment: scroll; min-height: 60vh; }
     .hero h1 { font-size: 2rem; }
@@ -798,29 +815,12 @@ footer {
 
     .section { padding: 48px 0; }
     .section-title h2 { font-size: 1.8rem; }
+
     .cards-grid { grid-template-columns: 1fr; }
 
     .footer-content { grid-template-columns: 1fr; text-align: center; }
     .footer-column h4:after { left: 50%; transform: translateX(-50%); }
     .footer-bottom { flex-direction: column; text-align: center; }
-}
-
-@media (max-width: 600px) {
-    .nav-links li:not(.user-nav-item) {
-        display: none;
-    }
-
-    .user-nav-item {
-        margin-left: auto;
-    }
-
-    .user-header-name {
-        display: none;
-    }
-
-    .user-header-btn {
-        padding: 8px 12px;
-    }
 }
 
 @media (max-width: 480px) {
