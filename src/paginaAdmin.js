@@ -13,19 +13,18 @@ let locationMarker = null;
 let currentLat = null;
 let currentLng = null;
 
-// Variáveis para o mapa de rotas interativo
 let routeMap = null;
 let routeMarkers = [];
 let selectedPontosRota = [];
 let allLocaisForMap = [];
 let currentRouteLayerGroup = null;
 
-// Variáveis para armazenamento das métricas da rota ativa
 let currentRouteDistance = 0;
 let currentRouteDuration = 0;
+let currentTransportMode = 'driving';
 
 const ROUTING_API_BASE = 'https://router.project-osrm.org/route/v1/';
-let currentTransportMode = 'driving'; // 'driving' (carro) ou 'foot' (a pé)
+let cacheLinhasCarris = null;
 
 // ==================== INICIALIZAÇÃO ====================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -63,7 +62,7 @@ async function logout() {
     window.location.href = 'login.html';
 }
 
-// ==================== NAVEGAÇÃO DO PAINEL ====================
+// ==================== NAVEGAÇÃO ====================
 window.showSection = function(section, element) {
     currentSection = section;
     
@@ -139,11 +138,9 @@ async function loadLastUsers() {
     }
 }
 
-// ==================== INTEGRAÇÃO CARRIS METROPOLITANA ====================
-
-// Calcula a distância em metros entre duas coordenadas (fórmula de Haversine)
+// ==================== CARRIS METROPOLITANA ====================
 function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // raio da Terra em metros
+    const R = 6371000;
     const toRad = (deg) => deg * Math.PI / 180;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
@@ -153,9 +150,6 @@ function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
-
-// Cache de linhas (id -> {short_name, long_name, color}) para não pedir repetidamente
-let cacheLinhasCarris = null;
 
 async function getLinhasCarris() {
     if (cacheLinhasCarris) return cacheLinhasCarris;
@@ -185,8 +179,6 @@ async function getCarrisMetropolitanaData(lat, lng) {
             return "<br>🚌 <b>Autocarros:</b> Sem dados de paragens disponíveis de momento.";
         }
 
-        // Calcula a distância real (em metros) de cada paragem ao ponto e
-        // escolhe APENAS a mais próxima dentro de um raio razoável a pé
         const RAIO_MAX_METROS = 400;
         const paragensComDistancia = todasParagens
             .map(p => ({
@@ -201,15 +193,12 @@ async function getCarrisMetropolitanaData(lat, lng) {
         }
 
         const paragem = paragensComDistancia[0];
-
-        // O campo correto na API v2 é "line_ids", não "lines"
         const lineIds = Array.isArray(paragem.line_ids) ? [...new Set(paragem.line_ids)] : [];
         const linhasInfo = await getLinhasCarris();
         const linhasStr = lineIds.length > 0
             ? lineIds.map(id => linhasInfo[id]?.short_name || id).join(', ')
             : 'sem linhas associadas';
 
-        // Tenta obter os próximos horários reais (arrivals) desta paragem
         let horariosHtml = '';
         try {
             const realtimeRes = await fetch(`https://api.carrismetropolitana.pt/v2/stops/${paragem.id}/realtime`);
@@ -234,9 +223,7 @@ async function getCarrisMetropolitanaData(lat, lng) {
                     }
                 }
             }
-        } catch (e) {
-            // Sem horários em tempo real disponíveis para esta paragem; segue sem eles
-        }
+        } catch (e) {}
 
         return `
             <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #ccc;">
@@ -415,7 +402,7 @@ async function loadLocais() {
         for (let local of locaisList) {
             const { data: cats } = await supabase.from('categorias_locais').select('categoria_id').eq('local_id', local.id);
             local.categorias = cats || [];
-            const { data: imgs } = await supabase.from('fotos').select('nome, descricao, url, criado_em').eq('locais_id', local.id);
+            const { data: imgs } = await supabase.from('fotos').select('id, nome, descricao, url, criado_em').eq('locais_id', local.id);
             local.imagens = imgs || [];
         }
         filterPostos();
@@ -474,6 +461,407 @@ function renderPostosGrid(locais) {
     }).join('');
 }
 
+// ==================== FUNÇÃO DE UPLOAD PARA SUPABASE STORAGE (MELHORADA) ====================
+// Compress image file to target max size (KB) using canvas
+async function comprimirImagemParaUpload(file, maxSizeKB = 500) {
+    if (!file || !file.type.startsWith('image/')) return file;
+
+    const loadImage = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+    const image = await loadImage(file);
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = image.width;
+    let height = image.height;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(image, 0, 0, width, height);
+
+    const toBlob = (quality) => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+
+    let quality = 0.92;
+    let blob = await toBlob(quality);
+
+    // If already under limit, return as File
+    if (blob && (blob.size / 1024) <= maxSizeKB) {
+        return new File([blob], (file.name || 'image') .replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    }
+
+    // Try reducing quality first
+    while (quality > 0.4) {
+        quality -= 0.07;
+        blob = await toBlob(quality);
+        if (blob && (blob.size / 1024) <= maxSizeKB) {
+            return new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+        }
+    }
+
+    // If still too large, progressively scale down dimensions
+    let scale = 0.9;
+    while (scale > 0.2) {
+        width = Math.round(image.width * scale);
+        height = Math.round(image.height * scale);
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(image, 0, 0, width, height);
+        quality = 0.85;
+        blob = await toBlob(quality);
+        if (blob && (blob.size / 1024) <= maxSizeKB) {
+            return new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+        }
+        // reduce quality on this scale too
+        while (quality > 0.45) {
+            quality -= 0.08;
+            blob = await toBlob(quality);
+            if (blob && (blob.size / 1024) <= maxSizeKB) {
+                return new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+            }
+        }
+        scale -= 0.1;
+    }
+
+    // Fallback: return the last generated blob as File (might be larger than target)
+    if (blob) return new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+    return file;
+}
+
+async function uploadImagemParaSupabase(file, localId) {
+    try {
+        // Verificar autenticação antes de tentar upload
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            throw new Error('Utilizador não autenticado. Faça login novamente.');
+        }
+
+        // Comprimir a imagem para < 500 KB
+        const imagemComprimida = await comprimirImagemParaUpload(file);
+        
+        // Gerar nome único para a imagem no Storage
+        const timestamp = Date.now();
+        const nomeLimpo = file.name
+            .replace(/\.[^.]+$/, '')
+            .substring(0, 30)
+            .replace(/[^a-zA-Z0-9]/g, '_');
+        const nomeUnico = `locais/${localId}/${timestamp}_${nomeLimpo}.jpg`;
+        
+        console.log(`📤 A fazer upload de: ${nomeUnico} (${(imagemComprimida.size / 1024).toFixed(0)} KB)`);
+        
+        // Upload para o Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('fotos-guiasesimbra')
+            .upload(nomeUnico, imagemComprimida, {
+                cacheControl: '3600',
+                upsert: false,
+                contentType: 'image/jpeg'
+            });
+        
+        if (uploadError) {
+            console.error('Erro detalhado do upload:', uploadError);
+            
+            // Verificar se o erro é de permissão
+            if (uploadError.message.includes('row-level security policy') || 
+                uploadError.message.includes('permission denied')) {
+                throw new Error('Permissão negada. Verifique as políticas RLS do bucket "fotos-guiasesimbra".');
+            }
+            
+            throw new Error(uploadError.message);
+        }
+        
+        // Obter a URL pública da imagem
+        const { data: publicUrlData } = supabase.storage
+            .from('fotos-guiasesimbra')
+            .getPublicUrl(nomeUnico);
+        
+        console.log(`✅ Upload concluído: ${publicUrlData.publicUrl}`);
+        return publicUrlData.publicUrl;
+        
+    } catch (error) {
+        console.error('Erro no upload da imagem:', error);
+        throw error;
+    }
+}
+
+
+
+// ==================== EDITAR LOCAL (COM UPLOAD DE IMAGENS) ====================
+window.editLocal = async function(id) {
+    const local = locaisList.find(l => l.id === id);
+    if (!local) return;
+    
+    currentEditType = 'posto';
+    currentEditId = id;
+    currentLat = local.latitude;
+    currentLng = local.longitude;
+    
+    const associatedCatIds = (local.categorias || []).map(lc => lc.categoria_id);
+    
+    // Buscar imagens existentes
+    const { data: imagensExistentes } = await supabase
+        .from('fotos')
+        .select('*')
+        .eq('locais_id', id);
+    
+    const modalBody = document.getElementById('modalBody');
+    if (!modalBody) return;
+    
+    // Gerar HTML das imagens existentes
+    let imagensHtml = '';
+    if (imagensExistentes && imagensExistentes.length > 0) {
+        imagensHtml = imagensExistentes.map(img => `
+            <div class="imagem-item" data-id="${img.id}" style="display:inline-block; margin:5px; position:relative; border:1px solid #e5e7eb; border-radius:8px; padding:5px; background:white; width:100px; text-align:center;">
+                <img src="${escapeHtml(img.url)}" style="width:80px; height:80px; object-fit:cover; border-radius:4px;">
+                <div style="font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:90px;">${escapeHtml(img.nome || '')}</div>
+                <button type="button" onclick="removerImagemExistente(${img.id}, ${id})" style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center;">×</button>
+            </div>
+        `).join('');
+    }
+    
+    modalBody.innerHTML = `
+        <div class="modal-form-group">
+            <label class="modal-label">Nome do ponto</label>
+            <input type="text" class="modal-input" id="localNome" value="${escapeHtml(local.nome)}">
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Descrição</label>
+            <textarea class="modal-textarea" id="localDescricao">${escapeHtml(local.descricao || '')}</textarea>
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Cor do marcador no mapa</label>
+            <input type="color" class="modal-input" id="localCor" style="height:42px; width:100%" value="${escapeHtml(local.cor || '#979d23')}">
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Categorias</label>
+            <div id="localCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Imagens existentes</label>
+            <div id="imagensExistentesContainer" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;">
+                ${imagensHtml || '<span style="color:#9ca3af; font-size:13px;">Nenhuma imagem associada.</span>'}
+            </div>
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Adicionar novas imagens</label>
+            <input type="file" id="novasImagens" accept="image/*" multiple style="display:block; margin-top:5px; padding:8px; border:1px dashed #d1d5db; border-radius:8px; width:100%;">
+            <div style="font-size:12px; color:#6b7280; margin-top:4px;">Selecione uma ou mais imagens. Serão comprimidas automaticamente para menos de 500 KB.</div>
+            <div id="previewNovasImagens" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; min-height:40px;"></div>
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Buscar localização</label>
+            <div class="search-bar-container" style="margin-bottom: 12px;"><div class="search-bar-wrapper"><div class="search-input-group"><i class="fas fa-search search-icon"></i><input type="text" id="admin-point-search-input" placeholder="Pesquisar lugar em Sesimbra..." class="search-input"><button id="admin-point-search-btn" class="search-btn-action"><i class="fas fa-arrow-right"></i></button></div><div id="admin-point-search-results-dropdown" class="search-results-dropdown" style="display: none;"><div class="search-results-list"></div></div></div></div>
+        </div>
+        <div class="modal-form-group">
+            <label class="modal-label">Localização</label>
+            <div id="locationMapContainer" class="location-map-container">
+                <div id="locationPickerMap" style="height:250px;"></div>
+            </div>
+            <div class="location-coords-display" style="display:flex; gap:20px; margin-top:10px;">
+                <div class="coord-item">Lat: <span id="coordLatDisplay">${local.latitude.toFixed(6)}</span></div>
+                <div class="coord-item">Lng: <span id="coordLngDisplay">${local.longitude.toFixed(6)}</span></div>
+            </div>
+        </div>
+    `;
+    
+    // Preencher categorias e inicializar mapa
+    setTimeout(() => {
+        const container = document.getElementById('localCategoriasList');
+        if (container) {
+            container.innerHTML = categoriasList.map(cat => 
+                `<label style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#f3f4f6;border-radius:20px; cursor:pointer;">
+                    <input type="checkbox" value="${cat.id}" ${associatedCatIds.includes(cat.id) ? 'checked' : ''}> 
+                    <span>${escapeHtml(cat.simbolo || '')} ${escapeHtml(cat.nome)}</span>
+                </label>`
+            ).join('');
+        }
+        initLocationPickerMap(local.latitude, local.longitude);
+        configurarPesquisaPonto(locationMap);
+        
+        // Preview das novas imagens
+        const inputImagens = document.getElementById('novasImagens');
+        if (inputImagens) {
+            inputImagens.addEventListener('change', function(e) {
+                const previewContainer = document.getElementById('previewNovasImagens');
+                if (!previewContainer) return;
+                previewContainer.innerHTML = '';
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const div = document.createElement('div');
+                        div.style.cssText = 'position:relative; display:inline-block; margin:3px;';
+                        div.innerHTML = `
+                            <img src="${event.target.result}" style="width:80px; height:80px; object-fit:cover; border-radius:4px; border:2px solid #979d23;">
+                            <span style="position:absolute; bottom:2px; right:2px; background:rgba(0,0,0,0.7); color:white; font-size:10px; padding:1px 4px; border-radius:4px;">${(file.size / 1024).toFixed(0)} KB</span>
+                        `;
+                        previewContainer.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        }
+    }, 100);
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Ponto Turístico';
+    if (modalOverlay) modalOverlay.classList.add('show');
+};
+
+// ==================== REMOVER IMAGEM EXISTENTE ====================
+window.removerImagemExistente = async function(fotoId, localId) {
+    if (!confirm('Tem certeza que deseja remover esta imagem?')) return;
+    
+    const { error } = await supabase
+        .from('fotos')
+        .delete()
+        .eq('id', fotoId);
+    
+    if (error) {
+        showToast('Erro ao remover imagem', 'error');
+        return;
+    }
+    
+    showToast('Imagem removida com sucesso');
+    await editLocal(localId);
+};
+
+// ==================== SALVAR LOCAL (COM UPLOAD DE IMAGENS) ====================
+async function saveLocal() {
+    const nomeInput = document.getElementById('localNome');
+    const nome = nomeInput?.value.trim();
+    if (!nome) { 
+        showToast('Nome obrigatório', 'warning'); 
+        return; 
+    }
+    
+    const data = { 
+        nome, 
+        descricao: document.getElementById('localDescricao')?.value || '', 
+        cor: document.getElementById('localCor')?.value || '#979d23',
+        latitude: currentLat, 
+        longitude: currentLng 
+    };
+    
+    let localId = currentEditId;
+    
+    // Salvar ou atualizar o local
+    if (currentEditId) {
+        const { error } = await supabase.from('locais').update(data).eq('id', currentEditId);
+        if (error) {
+            showToast('Erro ao atualizar local: ' + error.message, 'error');
+            return;
+        }
+    } else {
+        const res = await supabase.from('locais').insert([data]).select();
+        if (res.error) {
+            showToast('Erro ao criar local: ' + res.error.message, 'error');
+            return;
+        }
+        if (res.data) localId = res.data[0].id;
+    }
+    
+    if (!localId) {
+        showToast('Erro ao obter ID do local', 'error');
+        return;
+    }
+    
+    // Atualizar categorias
+    await supabase.from('categorias_locais').delete().eq('local_id', localId);
+    const selectedCats = [];
+    document.querySelectorAll('#localCategoriasList input:checked').forEach(cb => {
+        selectedCats.push({ local_id: localId, categoria_id: parseInt(cb.value) });
+    });
+    if (selectedCats.length > 0) {
+        await supabase.from('categorias_locais').insert(selectedCats);
+    }
+    
+    // Processar novas imagens
+    const inputImagens = document.getElementById('novasImagens');
+    if (inputImagens && inputImagens.files.length > 0) {
+        showToast('A processar imagens...', 'info');
+        
+        const files = Array.from(inputImagens.files);
+        let imagensUploaded = 0;
+        let imagensComErro = 0;
+        
+        for (const file of files) {
+            try {
+                if (!file.type.startsWith('image/')) {
+                    imagensComErro++;
+                    continue;
+                }
+                
+                // Upload da imagem comprimida
+                const urlPublica = await uploadImagemParaSupabase(file, localId);
+                
+                // Salvar a URL na tabela fotos
+                const { error: insertError } = await supabase
+                    .from('fotos')
+                    .insert([{
+                        locais_id: localId,
+                        url: urlPublica,
+                        nome: file.name,
+                        descricao: 'Imagem carregada automaticamente'
+                    }]);
+                
+                if (insertError) {
+                    console.error('Erro ao salvar URL da foto:', insertError);
+                    imagensComErro++;
+                    continue;
+                }
+                
+                imagensUploaded++;
+                
+            } catch (erro) {
+                console.error('Erro ao processar imagem:', erro);
+                imagensComErro++;
+            }
+        }
+        
+        let mensagem = `Local guardado! ${imagensUploaded} imagem(ens) enviada(s).`;
+        if (imagensComErro > 0) {
+            mensagem += ` ${imagensComErro} falha(s) no upload.`;
+        }
+        showToast(mensagem, imagensComErro > 0 ? 'warning' : 'success');
+        
+    } else {
+        showToast('Ponto turístico guardado com sucesso!');
+    }
+    
+    closeModal();
+    await loadLocais();
+    updateDashboardCounts();
+}
+
+// ==================== DELETAR LOCAL ====================
+window.deleteLocal = async function(id) {
+    if (!confirm('Tem certeza que deseja eliminar este ponto turístico? O processo apagará fotos e paragens vinculadas.')) return;
+    try {
+        await supabase.from('fotos').delete().eq('locais_id', id);
+        await supabase.from('categorias_locais').delete().eq('local_id', id);
+        await supabase.from('segmentos_rota').delete().or(`local_origem_id.eq.${id},local_destino_id.eq.${id}`);
+        const { error } = await supabase.from('locais').delete().eq('id', id);
+        if (error) throw error;
+        showToast('Ponto eliminado com sucesso');
+        await loadLocais();
+        updateDashboardCounts();
+    } catch (err) { 
+        showToast('Erro ao deletar ponto', 'error'); 
+    }
+};
+
+// ==================== MAPA DE LOCALIZAÇÃO ====================
 function initLocationPickerMap(lat = 38.4446, lng = -9.1016) {
     if (locationMap) { 
         locationMap.remove(); 
@@ -514,64 +902,6 @@ function initLocationPickerMap(lat = 38.4446, lng = -9.1016) {
         if (lngDisplay) lngDisplay.textContent = e.latlng.lng.toFixed(6); 
     });
 }
-
-window.editLocal = async function(id) {
-    const local = locaisList.find(l => l.id === id);
-    if (!local) return;
-    
-    currentEditType = 'posto';
-    currentEditId = id;
-    currentLat = local.latitude;
-    currentLng = local.longitude;
-    
-    const associatedCatIds = (local.categorias || []).map(lc => lc.categoria_id);
-    const urlsString = local.imagens ? local.imagens.map(img => `${img.nome || ''} | ${img.descricao || ''} | ${img.url}`).join('\n') : '';
-    
-    const modalBody = document.getElementById('modalBody');
-    if (!modalBody) return;
-    modalBody.innerHTML = `
-        <div class="modal-form-group"><label class="modal-label">Nome do ponto</label><input type="text" class="modal-input" id="localNome" value="${escapeHtml(local.nome)}"></div>
-        <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="localDescricao">${escapeHtml(local.descricao || '')}</textarea></div>
-        <div class="modal-form-group"><label class="modal-label">Imagens (uma por linha, formato: Nome | Descrição | URL)</label><textarea class="modal-textarea" id="localImagensUrls" rows="3" placeholder="Vista do Castelo | Pôr-do-sol visto da muralha | https://exemplo.com/foto.jpg">${escapeHtml(urlsString)}</textarea></div>
-        <div class="modal-form-group"><label class="modal-label">Cor do marcador no mapa</label><input type="color" class="modal-input" id="localCor" style="height:42px; width:100%" value="${escapeHtml(local.cor || '#979d23')}"></div>
-        <div class="modal-form-group"><label class="modal-label">Categorias</label><div id="localCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div></div>
-        <div class="modal-form-group"><label class="modal-label">Localização</label><div id="locationMapContainer" class="location-map-container"><div id="locationPickerMap" style="height:250px;"></div></div><div class="location-coords-display" style="display:flex; gap:20px; margin-top:10px;"><div class="coord-item">Lat: <span id="coordLatDisplay">${local.latitude.toFixed(6)}</span></div><div class="coord-item">Lng: <span id="coordLngDisplay">${local.longitude.toFixed(6)}</span></div></div></div>
-    `;
-    
-    setTimeout(() => {
-        const container = document.getElementById('localCategoriasList');
-        if (container) {
-            container.innerHTML = categoriasList.map(cat => 
-                `<label style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#f3f4f6;border-radius:20px; cursor:pointer;">
-                    <input type="checkbox" value="${cat.id}" ${associatedCatIds.includes(cat.id) ? 'checked' : ''}> 
-                    <span>${escapeHtml(cat.simbolo || '')} ${escapeHtml(cat.nome)}</span>
-                </label>`
-            ).join('');
-        }
-        initLocationPickerMap(local.latitude, local.longitude);
-    }, 100);
-    
-    const modalTitle = document.getElementById('modalTitle');
-    const modalOverlay = document.getElementById('modalOverlay');
-    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Ponto Turístico';
-    if (modalOverlay) modalOverlay.classList.add('show');
-};
-
-window.deleteLocal = async function(id) {
-    if (!confirm('Tem certeza que deseja eliminar este ponto turístico? O processo apagará fotos e paragens vinculadas.')) return;
-    try {
-        await supabase.from('fotos').delete().eq('locais_id', id);
-        await supabase.from('categorias_locais').delete().eq('local_id', id);
-        await supabase.from('segmentos_rota').delete().or(`local_origem_id.eq.${id},local_destino_id.eq.${id}`);
-        const { error } = await supabase.from('locais').delete().eq('id', id);
-        if (error) throw error;
-        showToast('Ponto eliminado com sucesso');
-        await loadLocais();
-        updateDashboardCounts();
-    } catch (err) { 
-        showToast('Erro ao deletar ponto', 'error'); 
-    }
-};
 
 // ==================== ROTAS TURÍSTICAS ====================
 async function loadRotas() {
@@ -640,6 +970,7 @@ function renderRotasGrid(rotas) {
     }).join('');
 }
 
+// ==================== MODAL ROTA ====================
 window.openModalRota = function(rotaId = null) {
     currentEditType = 'rota';
     currentEditId = rotaId;
@@ -721,6 +1052,7 @@ async function loadRotaData(rotaId) {
     }
 }
 
+// ==================== MAPA DE ROTAS ====================
 function initRouteMap() {
     if (routeMap) { 
         routeMap.remove(); 
@@ -745,6 +1077,170 @@ function initRouteMap() {
     loadAllPontosToMap();
 }
 
+function configurarPesquisaAdmin(map) {
+    window.adminRouteMap = map;
+
+    async function searchPlaces(query) {
+        const resultsDiv = document.getElementById('admin-route-search-results-dropdown');
+        const resultsList = document.querySelector('#admin-route-search-results-dropdown .search-results-list');
+        if (!query || query.length < 3) {
+            if (resultsDiv) resultsDiv.style.display = 'none';
+            return;
+        }
+
+        try {
+            const viewbox = '-9.28,38.56,-9.03,38.35';
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&viewbox=${viewbox}&bounded=1&countrycodes=pt`;
+            const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-PT,pt;q=0.9' } });
+            const data = await resp.json();
+
+            if (data && data.length) {
+                resultsList.innerHTML = '';
+                data.forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.innerHTML = `
+                        <div class="search-result-name">${r.display_name.split(',')[0]}</div>
+                        <div class="search-result-address">${r.display_name.split(',').slice(1, 4).join(',')}</div>
+                    `;
+                    item.addEventListener('click', () => {
+                        const lat = parseFloat(r.lat);
+                        const lng = parseFloat(r.lon);
+                        if (!isNaN(lat) && !isNaN(lng) && window.adminRouteMap) {
+                            window.adminRouteMap.flyTo([lat, lng], 15);
+                            if (window.tempAdminSearchMarker) window.tempAdminSearchMarker.remove();
+                            window.tempAdminSearchMarker = L.marker([lat, lng]).addTo(window.adminRouteMap);
+                            window.tempAdminSearchMarker.bindPopup(r.display_name.split(',')[0]).openPopup();
+                            setTimeout(() => {
+                                if (window.tempAdminSearchMarker) {
+                                    window.tempAdminSearchMarker.remove();
+                                    window.tempAdminSearchMarker = null;
+                                }
+                            }, 5000);
+                        }
+                        if (resultsDiv) resultsDiv.style.display = 'none';
+                        const input = document.getElementById('admin-route-search-input');
+                        if (input) input.value = r.display_name.split(',')[0];
+                    });
+                    resultsList.appendChild(item);
+                });
+                resultsDiv.style.display = 'block';
+            } else {
+                resultsList.innerHTML = '<div class="search-result-item" style="color:#888">Nenhum resultado encontrado</div>';
+                resultsDiv.style.display = 'block';
+            }
+        } catch (e) {
+            console.error('Erro na pesquisa de locais (admin):', e);
+        }
+    }
+
+    const searchInput = document.getElementById('admin-route-search-input');
+    const searchBtn = document.getElementById('admin-route-search-btn');
+    let timeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => searchPlaces(searchInput.value), 500);
+        });
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => searchPlaces(searchInput?.value || ''));
+    }
+
+    document.addEventListener('click', (e) => {
+        const container = document.querySelector('.search-bar-container');
+        const resultsDiv = document.getElementById('admin-route-search-results-dropdown');
+        if (container && resultsDiv && !container.contains(e.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+}
+
+function configurarPesquisaPonto(map) {
+    if (window.adminPointSearchConfigured) return;
+    window.adminPointSearchConfigured = true;
+    window.adminPointMap = map;
+
+    async function searchPlaces(query) {
+        const resultsDiv = document.getElementById('admin-point-search-results-dropdown');
+        const resultsList = document.querySelector('#admin-point-search-results-dropdown .search-results-list');
+        if (!resultsDiv || !resultsList) return;
+        if (!query || query.length < 3) {
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        try {
+            const viewbox = '-9.28,38.56,-9.03,38.35';
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&viewbox=${viewbox}&bounded=1&countrycodes=pt`;
+            const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-PT,pt;q=0.9' } });
+            const data = await resp.json();
+
+            resultsList.innerHTML = '';
+            if (data && data.length) {
+                data.forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+                    item.innerHTML = `
+                        <div class="search-result-name">${r.display_name.split(',')[0]}</div>
+                        <div class="search-result-address">${r.display_name.split(',').slice(1, 4).join(',')}</div>
+                    `;
+                    item.addEventListener('click', () => {
+                        const lat = parseFloat(r.lat);
+                        const lng = parseFloat(r.lon);
+                        if (!isNaN(lat) && !isNaN(lng) && window.adminPointMap) {
+                            window.adminPointMap.flyTo([lat, lng], 15);
+                            if (window.tempPointSearchMarker) window.tempPointSearchMarker.remove();
+                            window.tempPointSearchMarker = L.marker([lat, lng]).addTo(window.adminPointMap);
+                            window.tempPointSearchMarker.bindPopup(r.display_name.split(',')[0]).openPopup();
+                            currentLat = lat;
+                            currentLng = lng;
+                            const latDisplay = document.getElementById('coordLatDisplay');
+                            const lngDisplay = document.getElementById('coordLngDisplay');
+                            if (latDisplay) latDisplay.textContent = lat.toFixed(6);
+                            if (lngDisplay) lngDisplay.textContent = lng.toFixed(6);
+                        }
+                        resultsDiv.style.display = 'none';
+                        const input = document.getElementById('admin-point-search-input');
+                        if (input) input.value = r.display_name.split(',')[0];
+                    });
+                    resultsList.appendChild(item);
+                });
+            } else {
+                resultsList.innerHTML = '<div class="search-result-item" style="color:#888">Nenhum resultado encontrado</div>';
+            }
+            resultsDiv.style.display = 'block';
+        } catch (e) {
+            console.error('Erro na pesquisa de locais (admin ponto):', e);
+        }
+    }
+
+    const searchInput = document.getElementById('admin-point-search-input');
+    const searchBtn = document.getElementById('admin-point-search-btn');
+    let timeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => searchPlaces(searchInput.value), 500);
+        });
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => searchPlaces(searchInput?.value || ''));
+    }
+
+    document.addEventListener('click', (e) => {
+        const container = document.querySelector('.search-bar-container');
+        const resultsDiv = document.getElementById('admin-point-search-results-dropdown');
+        if (container && resultsDiv && !container.contains(e.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+}
+
 async function loadAllPontosToMap() {
     routeMarkers.forEach(marker => marker.removeFrom(routeMap));
     routeMarkers = [];
@@ -756,7 +1252,7 @@ async function loadAllPontosToMap() {
         
         const icon = L.divIcon({
             className: 'custom-marker',
-            html: `<div style="background:${isSelected ? corMarcador : 'white'}; color:${isSelected ? 'white' : corMarcador}; border:2px solid ${corMarcador}; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px">${isSelected ? (orderIdx + 1) : (escapeHtml(local.simbolo) || '📍')}</div>`,
+            html: `<div style="background:${isSelected ? corMarcador : 'white'}; color:${isSelected ? 'white' : corMarcador}; border:2px solid ${corMarcador}; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px">${isSelected ? (orderIdx + 1) : (local.simbolo || '📍')}</div>`,
             iconSize: [30, 30]
         });
         
@@ -769,8 +1265,6 @@ async function loadAllPontosToMap() {
     await window.drawRouteOnMap();
 }
 
-// ==================== CARROSSEL DE IMAGENS NO POPUP ====================
-// Guarda o índice da imagem atual de cada local, para o carrossel funcionar
 window.carrosselIndices = window.carrosselIndices || {};
 
 function buildLocalPopupHtml(local, isSelected) {
@@ -786,20 +1280,18 @@ function buildLocalPopupHtml(local, isSelected) {
         <div style="padding:5px; width:200px;">
             <strong>${escapeHtml(local.nome)}</strong>
             ${carrosselHtml}
-            <button onclick="togglePontoOnRoute(${local.id})" style="margin-top:8px; width:100%; padding:5px; background:${escapeHtml(local.cor || '#979d23')}; color:white; border:none; border-radius:4px; cursor:pointer">${isSelected ? 'Remover' : 'Adicionar à Rota'}</button>
+            <button onclick="togglePontoOnRoute(${local.id})" style="margin-top:8px; width:100%; padding:5px; background:${local.cor || '#979d23'}; color:white; border:none; border-radius:4px; cursor:pointer">${isSelected ? 'Remover' : 'Adicionar à Rota'}</button>
         </div>
     `;
 }
 
 function renderCarrosselSlide(localId, imagens, index) {
     const img = imagens[index];
-    const dataStr = img.criado_em ? formatDate(img.criado_em) : '';
     return `
         <div style="margin-top:5px;">
             <img src="${escapeHtml(img.url)}" style="width:100%; height:90px; object-fit:cover; border-radius:4px;">
             <div style="font-size:12px; font-weight:600; margin-top:4px;">${escapeHtml(img.nome || '')}</div>
             <div style="font-size:11px; color:#6b7280;">${escapeHtml(img.descricao || '')}</div>
-            <div style="font-size:10px; color:#9ca3af;">${dataStr}</div>
             ${imagens.length > 1 ? `
                 <div style="display:flex; justify-content:space-between; margin-top:4px;">
                     <button onclick="carrosselNavegar(${localId}, -1)" style="padding:2px 8px; border:none; background:#f3f4f6; border-radius:4px; cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
@@ -833,7 +1325,6 @@ window.setTransportMode = async function(mode) {
     await window.drawRouteOnMap();
 };
 
-// CORREÇÃO: Função exportada globalmente para o objeto window para evitar erros de compilação
 window.getRouteFromOSRM = async function(pontos) {
     if (pontos.length < 2) return null;
     try {
@@ -856,7 +1347,6 @@ window.getRouteFromOSRM = async function(pontos) {
     }
 };
 
-// CORREÇÃO: Função exportada globalmente para atualização das estatísticas
 window.updateRouteStats = function(fallback = false) {
     const statsEl = document.getElementById('routeStats');
     if (!statsEl) return;
@@ -873,7 +1363,6 @@ window.updateRouteStats = function(fallback = false) {
     }
 };
 
-// CORREÇÃO: Função de desenho exposta no window e configurada com eventos interativos nativos (Hover + Clique)
 window.drawRouteOnMap = async function() {
     if (routeMap && routeMap.currentRouteLayer) {
         routeMap.removeLayer(routeMap.currentRouteLayer);
@@ -914,9 +1403,6 @@ window.drawRouteOnMap = async function() {
             routeMap.currentRouteLayer.bindPopup("A carregar dados dos transportes...");
             
             routeMap.currentRouteLayer.on('click', async function(e) {
-                // Usamos o ponto exato onde o utilizador clicou na linha (e.latlng),
-                // não o primeiro ponto da rota — assim as paragens mostradas são
-                // sempre as mais próximas do troço que está a ser inspecionado.
                 const cliqueLat = e.latlng.lat;
                 const cliqueLng = e.latlng.lng;
                 let popupConteudo = `
@@ -1125,59 +1611,6 @@ async function saveCategoria() {
     updateDashboardCounts();
 }
 
-async function saveLocal() {
-    const nomeInput = document.getElementById('localNome');
-    const nome = nomeInput?.value.trim();
-    if (!nome) { 
-        showToast('Nome obrigatório', 'warning'); 
-        return; 
-    }
-    
-    const data = { 
-        nome, 
-        descricao: document.getElementById('localDescricao')?.value || '', 
-        cor: document.getElementById('localCor')?.value || '#979d23',
-        latitude: currentLat, 
-        longitude: currentLng 
-    };
-    let localId = currentEditId;
-    
-    if (currentEditId) {
-        await supabase.from('locais').update(data).eq('id', currentEditId);
-    } else {
-        const res = await supabase.from('locais').insert([data]).select();
-        if (res.data) localId = res.data[0].id;
-    }
-    
-    if (localId) {
-        await supabase.from('categorias_locais').delete().eq('local_id', localId);
-        const selectedCats = [];
-        document.querySelectorAll('#localCategoriasList input:checked').forEach(cb => {
-            selectedCats.push({ local_id: localId, categoria_id: parseInt(cb.value) });
-        });
-        if (selectedCats.length > 0) await supabase.from('categorias_locais').insert(selectedCats);
-        
-        await supabase.from('fotos').delete().eq('locais_id', localId);
-        const urlsText = document.getElementById('localImagensUrls')?.value || '';
-        const lines = urlsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (lines.length > 0) {
-            const fotosInsert = lines.map(line => {
-                const partes = line.split('|').map(p => p.trim());
-                if (partes.length >= 3) {
-                    return { locais_id: localId, nome: partes[0], descricao: partes[1], url: partes[2] };
-                }
-                // Se o utilizador colocar apenas o URL, sem separadores
-                return { locais_id: localId, nome: '', descricao: '', url: partes[0] };
-            }).filter(f => f.url);
-            if (fotosInsert.length > 0) await supabase.from('fotos').insert(fotosInsert);
-        }
-    }
-    showToast('Ponto turístico guardado!');
-    closeModal();
-    await loadLocais();
-    updateDashboardCounts();
-}
-
 window.openModal = function(type) {
     if (type === 'categoria') {
         currentEditType = 'categoria';
@@ -1202,9 +1635,14 @@ window.openModal = function(type) {
         modalBody.innerHTML = `
             <div class="modal-form-group"><label class="modal-label">Nome do ponto</label><input type="text" class="modal-input" id="localNome" placeholder="Ex: Castelo de Sesimbra"></div>
             <div class="modal-form-group"><label class="modal-label">Descrição</label><textarea class="modal-textarea" id="localDescricao" placeholder="Descrição do ponto..."></textarea></div>
-            <div class="modal-form-group"><label class="modal-label">Imagens (uma por linha, formato: Nome | Descrição | URL)</label><textarea class="modal-textarea" id="localImagensUrls" rows="3" placeholder="Vista do Castelo | Pôr-do-sol visto da muralha | https://url.com/imagem.jpg"></textarea></div>
             <div class="modal-form-group"><label class="modal-label">Cor do marcador no mapa</label><input type="color" class="modal-input" id="localCor" style="height:42px; width:100%" value="#979d23"></div>
             <div class="modal-form-group"><label class="modal-label">Categorias</label><div id="localCategoriasList" style="display:flex;flex-wrap:wrap;gap:8px"></div></div>
+            <div class="modal-form-group"><label class="modal-label">Adicionar imagens</label>
+                <input type="file" id="novasImagens" accept="image/*" multiple style="display:block; margin-top:5px; padding:8px; border:1px dashed #d1d5db; border-radius:8px; width:100%;">
+                <div style="font-size:12px; color:#6b7280; margin-top:4px;">Serão comprimidas automaticamente para menos de 500 KB.</div>
+                <div id="previewNovasImagens" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; min-height:40px;"></div>
+            </div>
+            <div class="modal-form-group"><label class="modal-label">Buscar localização</label><div class="search-bar-container" style="margin-bottom: 12px;"><div class="search-bar-wrapper"><div class="search-input-group"><i class="fas fa-search search-icon"></i><input type="text" id="admin-point-search-input" placeholder="Pesquisar lugar em Sesimbra..." class="search-input"><button id="admin-point-search-btn" class="search-btn-action"><i class="fas fa-arrow-right"></i></button></div><div id="admin-point-search-results-dropdown" class="search-results-dropdown" style="display: none;"><div class="search-results-list"></div></div></div></div></div>
             <div class="modal-form-group"><label class="modal-label">Localização</label><div id="locationMapContainer" class="location-map-container"><div id="locationPickerMap" style="height:250px;"></div></div><div class="location-coords-display" style="display:flex; gap:20px; margin-top:10px;"><div class="coord-item">Lat: <span id="coordLatDisplay">38.4446</span></div><div class="coord-item">Lng: <span id="coordLngDisplay">-9.1016</span></div></div></div>
         `;
         setTimeout(() => {
@@ -1218,6 +1656,30 @@ window.openModal = function(type) {
                 ).join('');
             }
             initLocationPickerMap();
+            configurarPesquisaPonto(locationMap);
+            
+            const inputImagens = document.getElementById('novasImagens');
+            if (inputImagens) {
+                inputImagens.addEventListener('change', function(e) {
+                    const previewContainer = document.getElementById('previewNovasImagens');
+                    if (!previewContainer) return;
+                    previewContainer.innerHTML = '';
+                    const files = Array.from(e.target.files);
+                    files.forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const div = document.createElement('div');
+                            div.style.cssText = 'position:relative; display:inline-block; margin:3px;';
+                            div.innerHTML = `
+                                <img src="${event.target.result}" style="width:80px; height:80px; object-fit:cover; border-radius:4px; border:2px solid #979d23;">
+                                <span style="position:absolute; bottom:2px; right:2px; background:rgba(0,0,0,0.7); color:white; font-size:10px; padding:1px 4px; border-radius:4px;">${(file.size / 1024).toFixed(0)} KB</span>
+                            `;
+                            previewContainer.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
         }, 100);
         const modalTitle = document.getElementById('modalTitle');
         const modalOverlay = document.getElementById('modalOverlay');

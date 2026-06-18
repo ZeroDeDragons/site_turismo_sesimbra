@@ -8,11 +8,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link href="src/perfil.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="Imagens/logo.png">
-
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- ============================================================ -->
+<!-- HEADER                                                        -->
+<!-- ============================================================ -->
 <header>
     <div class="container">
         <div class="navbar">
@@ -43,13 +44,19 @@
     </div>
 </header>
 
-<!-- HERO BANNER -->
+<!-- ============================================================ -->
+<!-- HERO BANNER                                                   -->
+<!-- ============================================================ -->
 <div class="hero"></div>
 
-<!-- PAGE -->
+<!-- ============================================================ -->
+<!-- PAGE                                                          -->
+<!-- ============================================================ -->
 <div class="page">
 
-  <!-- AVATAR + META -->
+  <!-- ========================================================== -->
+  <!-- AVATAR + META                                              -->
+  <!-- ========================================================== -->
   <div class="avatar-zone">
     <div class="avatar-wrap">
       <div class="avatar-big" id="avatarBig">JS</div>
@@ -69,7 +76,9 @@
     </div>
   </div>
 
-  <!-- TABS -->
+  <!-- ========================================================== -->
+  <!-- TABS                                                       -->
+  <!-- ========================================================== -->
   <div class="tabs">
     <div class="tab active" onclick="showTab('info',this)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -97,10 +106,11 @@
     </div>
   </div>
 
-  <!-- ── TAB: INFORMAÇÕES ── -->
+  <!-- ============================================================ -->
+  <!-- TAB 1: INFORMAÇÕES (hardcoded porque são únicas)             -->
+  <!-- ============================================================ -->
   <div class="tab-section active" id="tab-info">
     <div class="profile-grid">
-
       <div class="card">
         <div class="card-head">
           <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -126,7 +136,6 @@
               </div>
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Telefone</label>
             <div class="input-wrap">
@@ -134,7 +143,6 @@
               <input class="form-input" type="tel" placeholder="+351 212 689 210">
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Localidade</label>
             <div class="input-wrap">
@@ -142,7 +150,6 @@
               <input class="form-input" placeholder="Sesimbra">
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Sobre mim</label>
             <textarea class="form-textarea" placeholder="Escreve algo sobre ti…"></textarea>
@@ -151,7 +158,6 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:20px">
-
         <div class="card">
           <div class="card-head">
             <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
@@ -210,7 +216,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -223,10 +228,11 @@
     </div>
   </div>
 
-  <!-- ── TAB: PREFERÊNCIAS ── -->
+  <!-- ============================================================ -->
+  <!-- TAB 2: PREFERÊNCIAS (conteúdo dinâmico via JS)               -->
+  <!-- ============================================================ -->
   <div class="tab-section" id="tab-preferencias">
     <div class="profile-grid">
-
       <div class="card">
         <div class="card-head">
           <div class="card-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
@@ -236,32 +242,7 @@
           </div>
         </div>
         <div class="card-body">
-          <div class="interest-grid">
-            <div class="interest-chip selected" onclick="toggleChip(this)">
-              <span class="chip-icon">🏛️</span>
-              <span class="chip-label">História</span>
-            </div>
-            <div class="interest-chip selected" onclick="toggleChip(this)">
-              <span class="chip-icon">🌿</span>
-              <span class="chip-label">Natureza</span>
-            </div>
-            <div class="interest-chip" onclick="toggleChip(this)">
-              <span class="chip-icon">🍽️</span>
-              <span class="chip-label">Gastronomia</span>
-            </div>
-            <div class="interest-chip selected" onclick="toggleChip(this)">
-              <span class="chip-icon">🏖️</span>
-              <span class="chip-label">Praias</span>
-            </div>
-            <div class="interest-chip" onclick="toggleChip(this)">
-              <span class="chip-icon">📷</span>
-              <span class="chip-label">Fotografia</span>
-            </div>
-            <div class="interest-chip" onclick="toggleChip(this)">
-              <span class="chip-icon">⛵</span>
-              <span class="chip-label">Náutica</span>
-            </div>
-          </div>
+          <div class="interest-grid" id="interestsGrid"></div>
         </div>
       </div>
 
@@ -318,10 +299,11 @@
     </div>
   </div>
 
-  <!-- ── TAB: SEGURANÇA ── -->
+  <!-- ============================================================ -->
+  <!-- TAB 3: SEGURANÇA (hardcoded)                                 -->
+  <!-- ============================================================ -->
   <div class="tab-section" id="tab-seguranca">
     <div class="profile-grid">
-
       <div class="card">
         <div class="card-head">
           <div class="card-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
@@ -412,7 +394,9 @@
     </div>
   </div>
 
-  <!-- ── TAB: NOTIFICAÇÕES ── -->
+  <!-- ============================================================ -->
+  <!-- TAB 4: NOTIFICAÇÕES (conteúdo dinâmico via JS)               -->
+  <!-- ============================================================ -->
   <div class="tab-section" id="tab-notificacoes">
     <div class="profile-grid">
       <div class="card">
@@ -424,20 +408,7 @@
           </div>
         </div>
         <div class="card-body">
-          <div class="notif-list">
-            <div class="notif-row">
-              <div class="notif-info"><div class="notif-label">Novas rotas e trilhos</div><div class="notif-desc">Quando uma nova rota é adicionada à região</div></div>
-              <button class="toggle on" onclick="toggleBtn(this)"></button>
-            </div>
-            <div class="notif-row">
-              <div class="notif-info"><div class="notif-label">Eventos e festividades</div><div class="notif-desc">Atividades e eventos locais</div></div>
-              <button class="toggle on" onclick="toggleBtn(this)"></button>
-            </div>
-            <div class="notif-row">
-              <div class="notif-info"><div class="notif-label">Alertas de segurança</div><div class="notif-desc">Acessos e alterações à conta</div></div>
-              <button class="toggle on" onclick="toggleBtn(this)"></button>
-            </div>
-          </div>
+          <div class="notif-list" id="emailNotifList"></div>
         </div>
       </div>
 
@@ -450,16 +421,7 @@
           </div>
         </div>
         <div class="card-body">
-          <div class="notif-list">
-            <div class="notif-row">
-              <div class="notif-info"><div class="notif-label">Ativar notificações push</div><div class="notif-desc">Recebe alertas em tempo real</div></div>
-              <button class="toggle on" onclick="toggleBtn(this)"></button>
-            </div>
-            <div class="notif-row">
-              <div class="notif-info"><div class="notif-label">Novas mensagens</div><div class="notif-desc">Comunicações da equipa Sesimbra</div></div>
-              <button class="toggle on" onclick="toggleBtn(this)"></button>
-            </div>  
-          </div>
+          <div class="notif-list" id="pushNotifList"></div>
         </div>
       </div>
     </div>
@@ -472,7 +434,9 @@
     </div>
   </div>
 
-  <!-- ── TAB: ATIVIDADE ── -->
+  <!-- ============================================================ -->
+  <!-- TAB 5: ATIVIDADE (conteúdo dinâmico via JS)                  -->
+  <!-- ============================================================ -->
   <div class="tab-section" id="tab-atividade">
     <div class="profile-grid">
       <div class="card">
@@ -484,43 +448,7 @@
           </div>
         </div>
         <div class="card-body">
-          <div class="activity-list">
-            <div class="activity-item">
-              <div class="activity-dot route"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
-              <div class="activity-info">
-                <div class="ai-title">Iniciou a Rota do Castelo</div>
-                <div class="ai-time">Hoje, 14:32</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot fav"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-              <div class="activity-info">
-                <div class="ai-title">Guardou Forte de Santiago nos favoritos</div>
-                <div class="ai-time">Ontem, 18:05</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot hist"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div>
-              <div class="activity-info">
-                <div class="ai-title">Visitou Castelo de Sesimbra</div>
-                <div class="ai-time">28/05/2026</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot route"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
-              <div class="activity-info">
-                <div class="ai-title">Concluiu o Trilho da Serra</div>
-                <div class="ai-time">25/05/2026</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot fav"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-              <div class="activity-info">
-                <div class="ai-title">Adicionou Praia do Ouro aos favoritos</div>
-                <div class="ai-time">22/05/2026</div>
-              </div>
-            </div>
-          </div>
+          <div class="activity-list" id="activityList"></div>
         </div>
       </div>
 
@@ -532,31 +460,16 @@
             <div class="card-sub">O teu percurso até hoje</div>
           </div>
         </div>
-        <div class="card-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-            <div style="background:var(--primary-faint);border-radius:12px;padding:16px;text-align:center">
-              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:var(--primary-dark)">7</div>
-              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Rotas feitas</div>
-            </div>
-            <div style="background:var(--secondary-faint);border-radius:12px;padding:16px;text-align:center">
-              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:var(--secondary-dark)">12</div>
-              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Postos visitados</div>
-            </div>
-            <div style="background:#fff7ed;border-radius:12px;padding:16px;text-align:center">
-              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:#c2410c">34km</div>
-              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Distância total</div>
-            </div>
-            <div style="background:#f5f3ff;border-radius:12px;padding:16px;text-align:center">
-              <div style="font-family:'Poppins',sans-serif;font-size:1.8rem;font-weight:800;color:#6d28d9">5</div>
-              <div style="font-size:12px;font-weight:700;color:var(--mid);margin-top:2px">Favoritos</div>
-            </div>
-          </div>
+        <div class="card-body" id="statsGrid">
+          <!-- Preenchido via JS -->
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── TAB: CONTA ── -->
+  <!-- ============================================================ -->
+  <!-- TAB 6: CONTA (hardcoded)                                     -->
+  <!-- ============================================================ -->
   <div class="tab-section" id="tab-conta">
     <div class="profile-grid wide">
       <div class="card">
@@ -591,7 +504,9 @@
 
 </div><!-- /page -->
 
-<!-- MODAL PERIGO -->
+<!-- ============================================================ -->
+<!-- MODAL PERIGO                                                  -->
+<!-- ============================================================ -->
 <div class="modal-overlay" id="dangerModal" onclick="closeDangerOutside(event)">
   <div class="modal">
     <div class="modal-head">
@@ -609,7 +524,9 @@
   </div>
 </div>
 
-<!-- MODAL AVATAR -->
+<!-- ============================================================ -->
+<!-- MODAL AVATAR                                                  -->
+<!-- ============================================================ -->
 <div class="modal-overlay" id="avatarModal" onclick="closeAvatarOutside(event)">
   <div class="modal">
     <div class="modal-head">
@@ -623,8 +540,6 @@
       <div style="position:relative;display:inline-block;margin-bottom:16px">
         <div style="width:80px;height:80px;border-radius:50%;background:var(--primary);color:white;font-family:'Poppins',sans-serif;font-weight:800;font-size:1.8rem;display:flex;align-items:center;justify-content:center;border:3px solid var(--primary-light);overflow:hidden" id="modalAvatarPreview">JS</div>
       </div>
-
-      <!-- Upload de foto -->
       <div style="margin-bottom:18px">
         <label for="avatarFileInput" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:9px;border:1.5px solid var(--border);background:white;color:var(--mid);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -633,13 +548,11 @@
         <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="previewAvatarFile(event)">
         <div id="avatarFileName" style="font-size:12px;color:#9ca3af;margin-top:6px"></div>
       </div>
-
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <div style="flex:1;height:1px;background:var(--border)"></div>
         <span style="font-size:12px;color:#9ca3af;font-weight:600">ou escolhe uma cor</span>
         <div style="flex:1;height:1px;background:var(--border)"></div>
       </div>
-
       <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
         <div onclick="setAvatarColor('#979d23')" style="width:32px;height:32px;border-radius:50%;background:#979d23;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
         <div onclick="setAvatarColor('#23769d')" style="width:32px;height:32px;border-radius:50%;background:#23769d;cursor:pointer;border:3px solid transparent;transition:.2s" class="color-swatch"></div>
@@ -659,13 +572,17 @@
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- ============================================================ -->
+<!-- TOAST                                                         -->
+<!-- ============================================================ -->
 <div class="toast" id="toast">
   <div class="toast-dot"></div>
   <span id="toastMsg">Guardado com sucesso.</span>
 </div>
 
-<script type="module" src="src/perfil.js"></script>
-
+<!-- ============================================================ -->
+<!-- SCRIPTS                                                       -->
+<!-- ============================================================ -->
+<script type="module" src="/src/perfil.js"></script>
 </body>
 </html>

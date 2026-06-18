@@ -19,50 +19,355 @@ document.addEventListener('DOMContentLoaded', function () {
   initMap();
 });
 
+// ============================================================
+//  VARIÁVEIS GLOBAIS
+// ============================================================
+let todasCategorias = [];
+let todosLocais = [];
+let todasRotas = [];
+let todosMarcadores = [];
+let mapaAtual = null;
+let marcadoresPorId = {};
+let rotasPorLocalId = {};
+let rotaLayerGroup = null;
+let currentRouteDistance = 0;
+let currentRouteDuration = 0;
+let currentTransportMode = 'driving';
+let cacheLinhasCarris = null;
+const ROUTING_API_BASE = 'https://router.project-osrm.org/route/v1/';
 
 // ============================================================
 //  BUSCAR DADOS DA BASE DE DADOS
-//  Vai à tabela 'locais' buscar todos os pontos com as fotos
-//  e categorias relacionadas (JOIN automático do Supabase)
 // ============================================================
 async function buscarDadosSupabase() {
   try {
-    const { data, error } = await supabase
+    // Buscar locais com fotos e categorias
+    const { data: locais, error: locaisError } = await supabase
       .from('locais')
       .select(`
         *,
         fotos ( url, descricao ),
         categorias_locais (
-          categorias ( nome, cor, simbolo )
+          categorias ( id, nome, cor, simbolo )
         )
       `);
 
-    if (error) throw error;
-    return data;
+    if (locaisError) {
+      console.error('Erro ao buscar locais:', locaisError);
+      throw locaisError;
+    }
+
+    // Buscar todas as categorias da tabela categorias
+    const { data: categorias, error: categoriasError } = await supabase
+      .from('categorias')
+      .select('*')
+      .order('nome');
+
+    if (categoriasError) {
+      console.error('Erro ao buscar categorias:', categoriasError);
+      throw categoriasError;
+    }
+
+    const { data: rotas, error: rotasError } = await supabase
+      .from('rotas')
+      .select('*')
+      .order('nome');
+
+    if (rotasError) {
+      console.error('Erro ao buscar rotas:', rotasError);
+      throw rotasError;
+    }
+
+    for (const rota of rotas || []) {
+      const { data: segmentos, error: segmentosError } = await supabase
+        .from('segmentos_rota')
+        .select('*')
+        .eq('rota_id', rota.id)
+        .order('ordem_segmento');
+      if (segmentosError) {
+        console.error('Erro ao buscar segmentos da rota:', segmentosError);
+        throw segmentosError;
+      }
+      rota.segmentos = segmentos || [];
+    }
+
+    console.log('📊 Locais carregados:', locais?.length || 0);
+    console.log('🏷️ Categorias carregadas:', categorias?.length || 0);
+    console.log('🧭 Rotas carregadas:', rotas?.length || 0);
+    console.log('📋 Categorias:', categorias);
+
+    todosLocais = locais || [];
+    todasCategorias = categorias || [];
+    todasRotas = rotas || [];
+    construirRotasPorLocal(todasRotas);
+
+    return { locais: todosLocais, categorias: todasCategorias, rotas: todasRotas };
   } catch (error) {
     console.error('Erro ao buscar dados do Supabase:', error.message);
-    return null;
+    // Usar dados de exemplo em caso de erro
+    const dadosExemplo = gerarDadosExemplo();
+    todosLocais = dadosExemplo.locais;
+    todasCategorias = dadosExemplo.categorias;
+    todasRotas = dadosExemplo.rotas || [];
+    construirRotasPorLocal(todasRotas);
+    return dadosExemplo;
   }
 }
 
+// ============================================================
+//  GERAR DADOS DE EXEMPLO
+// ============================================================
+function gerarDadosExemplo() {
+  const categorias = [
+    { id: 1, nome: 'historico', cor: '#8B0000', simbolo: 'landmark' },
+    { id: 2, nome: 'rota', cor: '#228B22', simbolo: 'route' },
+    { id: 3, nome: 'miradouro', cor: '#FFA500', simbolo: 'mountain' },
+    { id: 4, nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' },
+    { id: 5, nome: 'restaurante', cor: '#800080', simbolo: 'utensils' },
+    { id: 6, nome: 'natureza', cor: '#2E8B57', simbolo: 'tree' },
+    { id: 7, nome: 'cultura', cor: '#4A90E2', simbolo: 'museum' }
+  ];
+
+  const locais = [
+    {
+      id: 1,
+      nome: 'Castelo de Sesimbra',
+      latitude: 38.4550,
+      longitude: -9.1025,
+      descricao: 'Fortificação medieval com vista deslumbrante sobre a vila',
+      categoria: 'historico',
+      categorias_locais: [{ categorias: { id: 1, nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
+      fotos: [{ url: 'https://www.castelosdeportugal.pt/castelos/assets/img/CastelosSECXIII/sesimbra/sesimbra1.jpg' }]
+    },
+    {
+      id: 2,
+      nome: 'Farol do Cabo Espichel',
+      latitude: 38.4186,
+      longitude: -9.2187,
+      descricao: 'Farol histórico do século XVIII',
+      categoria: 'historico',
+      categorias_locais: [{ categorias: { id: 1, nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
+      fotos: [{ url: 'https://elements-resized.envatousercontent.com/elements-video-cover-images/fed34031-4317-40fe-a87c-2daeed6c0b2f/video_preview/video_preview_0000.jpg?w=500&cf_fit=cover&q=85&format=auto&s=9b33f8c113d6a19bd45ce0c8cd322d4c95d021c6bd47490bfb87c123299aebcf' }]
+    },
+    {
+      id: 3,
+      nome: 'Miradouro do Facho',
+      latitude: 38.4420,
+      longitude: -9.1020,
+      descricao: 'Vista panorâmica sobre a costa e a vila',
+      categoria: 'miradouro',
+      categorias_locais: [{ categorias: { id: 3, nome: 'miradouro', cor: '#FFA500', simbolo: 'mountain' } }],
+      fotos: [{ url: '' }]
+    },
+    {
+      id: 4,
+      nome: 'Praia do Ouro',
+      latitude: 38.4385,
+      longitude: -9.0805,
+      descricao: 'Praia urbana muito procurada na época balnear',
+      categoria: 'praia',
+      categorias_locais: [{ categorias: { id: 4, nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' } }],
+      fotos: [{ url: 'https://www.guiadacidade.pt/assets/capas_poi/capa_284029.jpg' }]
+    },
+    {
+      id: 5,
+      nome: 'Trilho da Lagoa de Albufeira',
+      latitude: 38.4470,
+      longitude: -9.0950,
+      descricao: 'Percurso pedestre com vista para a lagoa',
+      categoria: 'rota',
+      categorias_locais: [{ categorias: { id: 2, nome: 'rota', cor: '#228B22', simbolo: 'route' } }],
+      fotos: [{ url: 'https://sandee.com/_next/image?url=https%3A%2F%2Flh5.googleusercontent.com%2Fp%2FAF1QipOtAAlbE-YnNp8GjLREX25ZPn5y26JTsrdE9HJ9%3Ds1600-k-no&w=3840&q=75' }]
+    }
+  ];
+
+  const rotas = [
+    {
+      id: 1,
+      nome: 'Rota Histórica do Castelo',
+      descricao: 'Ligação entre o Castelo, o Miradouro do Facho e o Farol do Cabo Espichel.',
+      cor: '#228B22',
+      segmentos: [
+        { id: 1, rota_id: 1, local_origem_id: 1, local_destino_id: 3, ordem_segmento: 1 },
+        { id: 2, rota_id: 1, local_origem_id: 3, local_destino_id: 2, ordem_segmento: 2 }
+      ]
+    }
+  ];
+
+  return { locais, categorias, rotas };
+}
+
+function construirRotasPorLocal(rotas) {
+  rotasPorLocalId = {};
+  (rotas || []).forEach(rota => {
+    const localIds = new Set();
+    (rota.segmentos || []).forEach(seg => {
+      if (seg.local_origem_id) localIds.add(seg.local_origem_id);
+      if (seg.local_destino_id) localIds.add(seg.local_destino_id);
+    });
+    localIds.forEach(id => {
+      rotasPorLocalId[id] = rotasPorLocalId[id] || [];
+      rotasPorLocalId[id].push(rota);
+    });
+  });
+}
+
+async function getLinhasCarris() {
+  if (cacheLinhasCarris) return cacheLinhasCarris;
+  try {
+    const response = await fetch('https://api.carrismetropolitana.pt/v2/lines');
+    const linhas = await response.json();
+    cacheLinhasCarris = {};
+    if (Array.isArray(linhas)) {
+      linhas.forEach(l => {
+        cacheLinhasCarris[l.id] = { short_name: l.short_name, long_name: l.long_name, color: l.color };
+      });
+    }
+    return cacheLinhasCarris;
+  } catch (error) {
+    console.error('Erro ao buscar linhas da Carris:', error);
+    return {};
+  }
+}
+
+async function getCarrisMetropolitanaData(lat, lng) {
+  try {
+    const response = await fetch('https://api.carrismetropolitana.pt/v2/stops');
+    if (!response.ok) throw new Error('Falha ao obter paragens');
+    const todasParagens = await response.json();
+
+    if (!Array.isArray(todasParagens) || todasParagens.length === 0) {
+      return "<br>🚌 <b>Autocarros:</b> Sem dados de paragens disponíveis de momento.";
+    }
+
+    const RAIO_MAX_METROS = 400;
+    const paragensComDistancia = todasParagens
+      .map(p => ({
+        ...p,
+        distancia: calcularDistanciaMetros(lat, lng, p.lat, p.lon)
+      }))
+      .filter(p => p.distancia <= RAIO_MAX_METROS)
+      .sort((a, b) => a.distancia - b.distancia);
+
+    if (paragensComDistancia.length === 0) {
+      return "<br>🚌 <b>Autocarros:</b> Nenhuma paragem da Carris Metropolitana num raio de 400m.";
+    }
+
+    const paragem = paragensComDistancia[0];
+    const lineIds = Array.isArray(paragem.line_ids) ? [...new Set(paragem.line_ids)] : [];
+    const linhasInfo = await getLinhasCarris();
+    const linhasStr = lineIds.length > 0
+      ? lineIds.map(id => linhasInfo[id]?.short_name || id).join(', ')
+      : 'sem linhas associadas';
+
+    let horariosHtml = '';
+    try {
+      const realtimeRes = await fetch(`https://api.carrismetropolitana.pt/v2/stops/${paragem.id}/realtime`);
+      if (realtimeRes.ok) {
+        const arrivals = await realtimeRes.json();
+        if (Array.isArray(arrivals) && arrivals.length > 0) {
+          const agora = Date.now() / 1000;
+          const proximos = arrivals
+            .filter(a => (a.estimated_arrival_unix || a.scheduled_arrival_unix) >= agora)
+            .sort((a, b) => (a.estimated_arrival_unix || a.scheduled_arrival_unix) - (b.estimated_arrival_unix || b.scheduled_arrival_unix))
+            .slice(0, 3);
+
+          if (proximos.length > 0) {
+            horariosHtml = '<div style="margin-top:6px;"><b>Próximas passagens:</b><br>' +
+              proximos.map(a => {
+                const linhaInfo = linhasInfo[a.line_id] || {};
+                const tsFinal = a.estimated_arrival_unix || a.scheduled_arrival_unix;
+                const minutosFaltam = Math.round((tsFinal - agora) / 60);
+                return `🚌 ${escapeHtml(linhaInfo.short_name || a.line_id)} → ${escapeHtml(a.headsign || '')} — ${minutosFaltam <= 0 ? 'a chegar' : `${minutosFaltam} min`}`;
+              }).join('<br>') +
+              '</div>';
+          }
+        }
+      }
+    } catch (e) {
+      // Sem horários em tempo real disponíveis
+    }
+
+    return `
+      <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #ccc;">
+      <div style="font-size:12px;">
+        <b>Paragem mais próxima:</b> ${escapeHtml(paragem.name || paragem.id)} (${Math.round(paragem.distancia)}m a pé)<br>
+        🚌 <b>Linhas:</b> ${escapeHtml(linhasStr)}
+        ${horariosHtml}
+      </div>
+    `;
+  } catch (error) {
+    console.error('Erro ao buscar dados da Carris Metropolitana:', error);
+    return "<br>🚌 <b>Autocarros:</b> Erro ao carregar dados da Carris Metropolitana.";
+  }
+}
+
+function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+window.getRouteFromOSRM = async function(pontos) {
+  if (pontos.length < 2) return null;
+  try {
+    const coordinates = pontos.map(p => `${p.longitude},${p.latitude}`).join(';');
+    const url = `${ROUTING_API_BASE}${currentTransportMode}/${coordinates}?overview=full&geometries=geojson&steps=true`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.code === 'Ok' && data.routes && data.routes[0]) {
+      return {
+        geometry: data.routes[0].geometry,
+        distance: data.routes[0].distance / 1000,
+        duration: data.routes[0].duration / 60,
+        legs: data.routes[0].legs
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Erro ao obter rota do OSRM:', error);
+    return null;
+  }
+};
+
+function formatRoutePopup(route) {
+  const distancia = route.distance > 0 ? `${route.distance.toFixed(1)} km` : 'N/A';
+  const tempo = route.duration > 0 ? `${Math.round(route.duration)} min` : 'N/A';
+  const modo = currentTransportMode === 'foot' ? '🚶 A pé' : '🚗 De carro';
+  return `
+    <div style="font-family: sans-serif; min-width: 220px;">
+      <strong style="color: #979d23; font-size: 14px;">Informação do Trajeto</strong><br>
+      🛣️ <b>Distância Total:</b> ${distancia}<br>
+      ⏱️ <b>Tempo estimado:</b> ${tempo}<br>
+      🚦 <b>Modo:</b> ${modo}
+    </div>
+  `;
+}
 
 // ============================================================
 //  INICIALIZAR O MAPA
-//  Função principal — corre depois de tudo estar preparado
 // ============================================================
 async function initMap() {
-  console.log('A carregar dados do Supabase...');
-  let locaisData = await buscarDadosSupabase();
+  console.log('🚀 A inicializar mapa...');
+  
+  // Buscar dados
+  const dados = await buscarDadosSupabase();
+  todosLocais = dados.locais;
+  todasCategorias = dados.categorias;
+  todasRotas = dados.rotas || [];
+  construirRotasPorLocal(todasRotas);
 
-  // Se o Supabase não devolveu dados, usar dados de exemplo locais
-  // para a página não ficar vazia durante o desenvolvimento
-  if (!locaisData || locaisData.length === 0) {
-    console.log('Usando dados de exemplo (Supabase vazio ou erro).');
-    locaisData = dadosExemplo();
+  // Se não houver dados, mostrar mensagem
+  if (!todosLocais || todosLocais.length === 0) {
+    console.warn('⚠️ Nenhum local encontrado');
+    return;
   }
 
   // Definir os limites do mapa (apenas a região de Sesimbra)
-  // O utilizador não consegue arrastar o mapa para fora desta área
   const sesimbraBounds = L.latLngBounds(
     L.latLng(38.40, -9.28),
     L.latLng(38.56, -9.03)
@@ -71,12 +376,12 @@ async function initMap() {
   // Criar o mapa dentro do elemento <div id="map">
   const map = L.map('map', {
     maxBounds: sesimbraBounds,
-    maxBoundsViscosity: 1.0,  // 1.0 = limite rígido, não deixa sair
+    maxBoundsViscosity: 1.0,
     minZoom: 11,
     maxZoom: 18
-  }).setView([38.4545, -9.1043], 13);  // Centro: Sesimbra, zoom 13
+  }).setView([38.4545, -9.1043], 13);
 
-  // Adicionar a camada de mapa (CartoDB — visual limpo e em português)
+  // Adicionar a camada de mapa
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
     subdomains: 'abcd',
@@ -88,56 +393,87 @@ async function initMap() {
     map.panInsideBounds(sesimbraBounds, { animate: false });
   });
 
-  // Mapeamentos de cores e ícones por categoria
-  // Estes objetos funcionam como dicionários: chave → valor
-  const iconColors = {
-    'historico':  '#8B0000',
-    'rota':       '#228B22',
-    'miradouro':  '#FFA500',
-    'praia':      '#20B2AA',
-    'restaurante':'#800080',
-    'natureza':   '#2E8B57',
-    'cultura':    '#4A90E2',
-    'default':    '#007bff'
+  mapaAtual = map;
+
+  // Criar marcadores
+  criarMarcadores(todosLocais, map);
+
+  // Atualizar os botões de filtro
+  await atualizarBotoesFiltro(todasCategorias);
+
+  // Preencher os cards
+  preencherCards(todosLocais);
+
+  // Configurar a barra de pesquisa
+  configurarPesquisa(map);
+
+  // Configurar o menu de utilizador
+  await configurarMenuUtilizador();
+
+  console.log('✅ Mapa inicializado com sucesso!');
+}
+
+// ============================================================
+//  CRIAR MARCADORES NO MAPA
+// ============================================================
+// ============================================================
+//  CRIAR MARCADORES NO MAPA
+// ============================================================
+function criarMarcadores(locais, map) {
+  // Limpar marcadores anteriores
+  todosMarcadores.forEach(m => {
+    if (map.hasLayer(m)) map.removeLayer(m);
+  });
+  todosMarcadores = [];
+  marcadoresPorId = {};
+
+  // Mapeamento de ícones por categoria
+  const iconesMap = {
+    'historico': 'fa-landmark',
+    'rota': 'fa-route',
+    'miradouro': 'fa-mountain',
+    'praia': 'fa-umbrella-beach',
+    'restaurante': 'fa-utensils',
+    'natureza': 'fa-tree',
+    'cultura': 'fa-museum',
+    'patrimonio': 'fa-monument',
+    'historia': 'fa-book-open',
+    'gastronomia': 'fa-utensil-spoon',
+    'desporto': 'fa-running',
+    'religioso': 'fa-church',
+    'militar': 'fa-shield-alt'
   };
 
-  const iconClasses = {
-    'historico':  'fa-landmark',
-    'rota':       'fa-route',
-    'miradouro':  'fa-mountain',
-    'praia':      'fa-umbrella-beach',
-    'restaurante':'fa-utensils',
-    'natureza':   'fa-tree',
-    'cultura':    'fa-museum',
-    'landmark':   'fa-landmark',
-    'mountain':   'fa-mountain',
-    'route':      'fa-route',
-    'default':    'fa-map-marker-alt'
-  };
-
-  const markersList   = [];   // Lista de todos os marcadores
-  const markerObjects = {};   // Dicionário id → marcador (para centralizar no mapa)
-
-  // Criar um marcador no mapa para cada local
-  locaisData.forEach(local => {
-    // ATENÇÃO: a base de dados usa 'latitude'/'longitude'
-    // (não 'lat'/'lng' como estava antes — esta foi uma correção importante)
+  locais.forEach(local => {
     const lat = parseFloat(local.latitude);
     const lng = parseFloat(local.longitude);
 
-    // Se as coordenadas não são números válidos, ignorar este local
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // Determinar a categoria principal do local
-    // Primeiro tenta pela relação categorias_locais, depois pelo campo 'categoria'
-    const catObj = local.categorias_locais?.[0]?.categorias;
-    let categoriaPrincipal = catObj?.nome?.toLowerCase() || local.categoria || 'default';
-    let cor   = catObj?.cor   || iconColors[categoriaPrincipal] || iconColors.default;
-    let icone = catObj?.simbolo
-      ? (iconClasses[catObj.simbolo] || 'fa-' + catObj.simbolo)
-      : (iconClasses[categoriaPrincipal] || iconClasses.default);
+    // Obter categoria do local
+    let categoriaInfo = null;
+    let categoriaNome = 'default';
 
-    // Criar o ícone personalizado (um círculo colorido com ícone FontAwesome)
+    if (local.categorias_locais && local.categorias_locais.length > 0) {
+      const cat = local.categorias_locais[0].categorias;
+      if (cat) {
+        categoriaInfo = cat;
+        // Guardar o nome exato da categoria (como está na base de dados)
+        categoriaNome = cat.nome || 'default';
+      }
+    } else if (local.categoria) {
+      categoriaNome = local.categoria;
+    }
+
+    // Guardar TANTO o nome original como o nome em minúsculas para comparação
+    const categoriaNomeLower = categoriaNome.toLowerCase();
+    
+    // Obter cor e ícone
+    const cor = categoriaInfo?.cor || '#007bff';
+    const simbolo = categoriaInfo?.simbolo || categoriaNomeLower;
+    const icone = iconesMap[simbolo] || iconesMap[categoriaNomeLower] || 'fa-map-marker-alt';
+
+    // Criar ícone personalizado
     const markerIcon = L.divIcon({
       className: 'custom-div-icon',
       html: `<div style="background-color:${cor};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;box-shadow:0 2px 5px rgba(0,0,0,0.3);border:2px solid white;"><i class="fas ${icone}"></i></div>`,
@@ -145,18 +481,17 @@ async function initMap() {
       popupAnchor: [0, -16]
     });
 
-    // Construir o conteúdo do popup (balão que aparece ao clicar no marcador)
+    // Construir popup
     let popupContent = `
       <div style="min-width:200px">
         <b style="font-size:16px">${local.nome}</b>
         <hr style="margin:5px 0">
         <p style="margin:5px 0;font-size:12px">${local.descricao || 'Sem descrição'}</p>
         <p style="margin:5px 0;font-size:12px;color:#666">
-          <i class="fas ${icone}"></i> ${categoriaPrincipal}
+          <i class="fas ${icone}"></i> ${categoriaNome}
         </p>
     `;
 
-    // Adicionar a primeira foto se existir
     const fotoUrl = local.fotos?.[0]?.url;
     if (fotoUrl) {
       popupContent += `
@@ -167,47 +502,72 @@ async function initMap() {
       `;
     }
 
-    popupContent += `<hr style="margin:5px 0"><small>ID: ${local.id}</small></div>`;
+    const rotasAssociadas = rotasPorLocalId[local.id] || [];
+    if (rotasAssociadas.length > 0) {
+      popupContent += `<hr style="margin:5px 0"><div style="margin-top:8px"><strong style="font-size:13px">Rotas relacionadas</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`;
+      rotasAssociadas.forEach(rota => {
+        const corRota = rota.cor || '#228B22';
+        popupContent += `
+          <button onclick="window.mostrarRota(${rota.id})" style="cursor:pointer;border:none;border-radius:8px;padding:6px 10px;background:${corRota};color:white;font-size:12px;white-space:nowrap">
+            ${escapeHtml(rota.nome)}
+          </button>
+        `;
+      });
+      popupContent += `</div></div>`;
+    } else {
+      popupContent += `<hr style="margin:5px 0"><small>ID: ${local.id}</small>`;
+    }
+    popupContent += `</div>`;
 
-    // Criar e adicionar o marcador ao mapa
+    // Criar marcador - GUARDAR A CATEGORIA EM MINÚSCULAS para comparação
     const marker = L.marker([lat, lng], { icon: markerIcon });
-    marker.options.categoria = categoriaPrincipal;
-    marker.options.localId   = local.id;
+    marker.options.categoria = categoriaNomeLower; // Guardar em minúsculas
+    marker.options.categoriaOriginal = categoriaNome; // Guardar o original também
+    marker.options.localId = local.id;
     marker.bindPopup(popupContent);
     marker.addTo(map);
 
-    markersList.push(marker);
-    markerObjects[local.id] = marker;
+    todosMarcadores.push(marker);
+    marcadoresPorId[local.id] = marker;
   });
 
-  // Guardar referências globais para serem usadas nas funções de filtro e scroll
-  window.marcadores    = markersList;
-  window.currentMap    = map;
-  window.markerObjects = markerObjects;
-  window.locaisDataCompleto = locaisData;
-
-  // Função global para filtrar marcadores por categoria
-  // Chamada pelos botões de filtro no HTML
+  // Função global para filtrar marcadores
   window.filtrarMarcadores = function(categoria) {
-    window.marcadores.forEach(m => {
-      const cat = m.options.categoria;
-      if (categoria === 'todos' || cat === categoria) {
-        if (!map.hasLayer(m)) m.addTo(map);
+    console.log(`🔍 Filtrando por categoria: "${categoria}"`);
+    console.log(`📊 Total de marcadores: ${todosMarcadores.length}`);
+    
+    let marcadoresVisiveis = 0;
+    
+    todosMarcadores.forEach(m => {
+      const catDoMarcador = m.options.categoria; // Está em minúsculas
+      const categoriaFiltro = categoria.toLowerCase(); // Garantir minúsculas
+      
+      // Verificar se o marcador deve ser mostrado
+      const deveMostrar = categoria === 'todos' || catDoMarcador === categoriaFiltro;
+      
+      if (deveMostrar) {
+        if (!map.hasLayer(m)) {
+          m.addTo(map);
+          marcadoresVisiveis++;
+        }
       } else {
-        if (map.hasLayer(m)) map.removeLayer(m);
+        if (map.hasLayer(m)) {
+          map.removeLayer(m);
+        }
       }
     });
+    
+    console.log(`👁️ Marcadores visíveis: ${marcadoresVisiveis}`);
   };
 
-  // Função global para centrar o mapa num local específico
-  // Usada pelos cards de rotas/históricos ("Ver no mapa")
+  // Função global para centralizar no mapa
   window.centralizarNoMapa = function(localId) {
-    const marker = window.markerObjects[localId];
+    const marker = marcadoresPorId[localId];
     if (marker) {
       map.flyTo(marker.getLatLng(), 16);
       marker.openPopup();
     } else {
-      const local = window.locaisDataCompleto?.find(l => l.id == localId);
+      const local = todosLocais.find(l => l.id == localId);
       if (local) {
         const lat = parseFloat(local.latitude);
         const lng = parseFloat(local.longitude);
@@ -216,34 +576,331 @@ async function initMap() {
     }
   };
 
-  // Gerar os botões de filtro e os cards das secções
-  atualizarBotoesFiltro(locaisData);
-  preencherCards(locaisData);
+  window.mostrarRota = function(rotaId) {
+    const rota = todasRotas.find(r => r.id === rotaId);
+    if (!rota) {
+      alert('Rota não encontrada.');
+      return;
+    }
 
-  // Configurar a barra de pesquisa de locais (Nominatim = API gratuita do OpenStreetMap)
-  configurarPesquisa(map);
+    const pontosRota = [];
+    if (rota.segmentos && rota.segmentos.length > 0) {
+      const primeiroLocal = todosLocais.find(l => l.id === rota.segmentos[0].local_origem_id);
+      if (primeiroLocal) pontosRota.push(primeiroLocal);
+      rota.segmentos.forEach(seg => {
+        const destino = todosLocais.find(l => l.id === seg.local_destino_id);
+        if (destino) pontosRota.push(destino);
+      });
+    }
 
-  // Configurar o menu de utilizador (login/logout no header)
-  await configurarMenuUtilizador();
+    if (pontosRota.length < 2) {
+      alert('Esta rota não tem pontos suficientes para ser exibida.');
+      return;
+    }
 
-  console.log('Mapa e sistema de utilizador inicializados.');
+    if (!rotaLayerGroup) rotaLayerGroup = L.layerGroup().addTo(mapaAtual);
+    rotaLayerGroup.clearLayers();
+
+    const coordinates = pontosRota
+      .map(p => [parseFloat(p.latitude), parseFloat(p.longitude)])
+      .filter(coord => !coord.some(v => Number.isNaN(v)));
+
+    pontosRota.forEach((p, index) => {
+      const marker = L.circleMarker([p.latitude, p.longitude], {
+        radius: 7,
+        fillColor: rota.cor || '#228B22',
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(rotaLayerGroup);
+      marker.bindPopup(`<strong>${escapeHtml(p.nome)}</strong><br>${escapeHtml(p.descricao || '')}`);
+      marker.bindTooltip(`${index + 1}`, { permanent: true, direction: 'top', className: 'route-point-label' }).openTooltip();
+    });
+
+    const routeLine = L.polyline(coordinates, {
+      color: rota.cor || '#228B22',
+      weight: 6,
+      opacity: 0.85,
+      lineJoin: 'round',
+      dashArray: '8,6'
+    }).addTo(rotaLayerGroup);
+
+    const bounds = routeLine.getBounds();
+    if (bounds.isValid()) {
+      mapaAtual.flyToBounds(bounds.pad(0.15));
+    }
+
+    routeLine.bindPopup('A carregar dados do trajeto...');
+    routeLine.on('click', async function(e) {
+      const popupConteudoBase = formatRoutePopup({ distance: currentRouteDistance, duration: currentRouteDuration });
+      routeLine.setPopupContent(popupConteudoBase + '<br>⏳ A procurar paragens da Carris Metropolitana...');
+      const dadosCarris = await getCarrisMetropolitanaData(e.latlng.lat, e.latlng.lng);
+      routeLine.setPopupContent(popupConteudoBase + dadosCarris);
+    });
+    routeLine.on('mouseover', function() {
+      this.setStyle({ weight: 8, opacity: 1 });
+    });
+    routeLine.on('mouseout', function() {
+      this.setStyle({ weight: 6, opacity: 0.85 });
+    });
+
+    window.getRouteFromOSRM(pontosRota).then(route => {
+      if (route && route.geometry) {
+        currentRouteDistance = route.distance;
+        currentRouteDuration = route.duration;
+        rotaLayerGroup.clearLayers();
+        const osrmLayer = L.geoJSON(route.geometry, {
+          style: { color: rota.cor || '#228B22', weight: 6, opacity: 0.85, lineJoin: 'round', dashArray: '8,6' }
+        }).addTo(rotaLayerGroup);
+        pontosRota.forEach((p, index) => {
+          const marker = L.circleMarker([p.latitude, p.longitude], {
+            radius: 7,
+            fillColor: rota.cor || '#228B22',
+            color: '#ffffff',
+            weight: 2,
+            fillOpacity: 1
+          }).addTo(rotaLayerGroup);
+          marker.bindPopup(`<strong>${escapeHtml(p.nome)}</strong><br>${escapeHtml(p.descricao || '')}`);
+          marker.bindTooltip(`${index + 1}`, { permanent: true, direction: 'top', className: 'route-point-label' }).openTooltip();
+        });
+        osrmLayer.bindPopup(formatRoutePopup(route));
+        osrmLayer.on('click', async function(e) {
+          const popupConteudoBase = formatRoutePopup(route);
+          osrmLayer.setPopupContent(popupConteudoBase + '<br>⏳ A procurar paragens da Carris Metropolitana...');
+          const dadosCarris = await getCarrisMetropolitanaData(e.latlng.lat, e.latlng.lng);
+          osrmLayer.setPopupContent(popupConteudoBase + dadosCarris);
+        });
+        osrmLayer.on('mouseover', function() { this.setStyle({ weight: 8, opacity: 1 }); });
+        osrmLayer.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.85 }); });
+        if (bounds.isValid()) mapaAtual.flyToBounds(bounds.pad(0.15));
+      }
+    });
+
+    L.popup({ closeOnClick: false, autoClose: false })
+      .setLatLng(coordinates[0])
+      .setContent(`<strong>${escapeHtml(rota.nome)}</strong><br>${escapeHtml(rota.descricao || '')}`)
+      .openOn(mapaAtual);
+  };
+
+  window.marcadores = todosMarcadores;
+  window.currentMap = map;
+  window.markerObjects = marcadoresPorId;
+  window.locaisDataCompleto = todosLocais;
+
+  console.log(`📍 ${todosMarcadores.length} marcadores criados`);
+  // Log das categorias dos marcadores para debug
+  const categoriasDosMarcadores = new Set();
+  todosMarcadores.forEach(m => categoriasDosMarcadores.add(m.options.categoria));
+  console.log('🏷️ Categorias dos marcadores:', Array.from(categoriasDosMarcadores));
 }
 
+// ============================================================
+//  BOTÕES DE FILTRO - VERSÃO CORRIGIDA
+// ============================================================
+async function atualizarBotoesFiltro(categorias) {
+  const container = document.getElementById('filtro-botoes-container');
+  if (!container) {
+    console.error('Container de filtros não encontrado');
+    return;
+  }
+
+  console.log('🏷️ Dados recebidos para filtros:', categorias);
+
+  // Se não houver categorias, usar as que existem nos locais
+  let categoriasParaUsar = categorias;
+  
+  if (!categoriasParaUsar || categoriasParaUsar.length === 0) {
+    // Extrair categorias dos locais
+    const categoriasSet = new Set();
+    todosLocais.forEach(local => {
+      if (local.categorias_locais && local.categorias_locais.length > 0) {
+        local.categorias_locais.forEach(cl => {
+          if (cl.categorias?.nome) {
+            categoriasSet.add(cl.categorias.nome);
+          }
+        });
+      } else if (local.categoria) {
+        categoriasSet.add(local.categoria);
+      }
+    });
+    
+    categoriasParaUsar = Array.from(categoriasSet).map(nome => ({
+      nome: nome,
+      cor: '#007bff',
+      simbolo: 'map-marker-alt'
+    }));
+  }
+
+  console.log('🏷️ Categorias para os filtros:', categoriasParaUsar);
+
+  // Mapeamento de ícones
+  const iconesMap = {
+    'todos': 'fa-globe',
+    'historico': 'fa-landmark',
+    'rota': 'fa-route',
+    'miradouro': 'fa-mountain',
+    'praia': 'fa-umbrella-beach',
+    'restaurante': 'fa-utensils',
+    'natureza': 'fa-tree',
+    'cultura': 'fa-museum',
+    'patrimonio': 'fa-monument',
+    'historia': 'fa-book-open',
+    'gastronomia': 'fa-utensil-spoon',
+    'desporto': 'fa-running',
+    'religioso': 'fa-church',
+    'militar': 'fa-shield-alt'
+  };
+
+  // Gerar HTML dos botões
+  let html = '';
+  
+  // Botão "Todos" sempre primeiro
+  html += `<button class="filtro-btn active" data-categoria="todos">
+    <i class="fas fa-globe"></i> Todos
+  </button>`;
+
+  // Ordenar categorias alfabeticamente
+  const categoriasOrdenadas = [...categoriasParaUsar].sort((a, b) => {
+    const nomeA = typeof a === 'string' ? a : a.nome;
+    const nomeB = typeof b === 'string' ? b : b.nome;
+    return nomeA.localeCompare(nomeB);
+  });
+
+  categoriasOrdenadas.forEach(cat => {
+    const nome = typeof cat === 'string' ? cat : cat.nome;
+    const cor = typeof cat === 'string' ? '#007bff' : cat.cor || '#007bff';
+    const simbolo = typeof cat === 'string' ? nome : cat.simbolo || nome;
+    
+    // Usar o nome em minúsculas para o data-categoria
+    const categoriaKey = nome.toLowerCase();
+    const icone = iconesMap[categoriaKey] || iconesMap[simbolo] || 'fa-map-marker-alt';
+    const texto = nome; // Manter o nome original para exibição
+    
+    html += `
+      <button class="filtro-btn" data-categoria="${categoriaKey}" style="border-color: ${cor}">
+        <i class="fas ${icone}" style="color: ${cor}"></i> ${texto}
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Adicionar eventos de clique
+  document.querySelectorAll('.filtro-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Remover classe active de todos
+      document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+      // Adicionar ao clicado
+      this.classList.add('active');
+      
+      const categoria = this.getAttribute('data-categoria');
+      console.log(`🖱️ Botão clicado: "${categoria}"`);
+      
+      if (window.filtrarMarcadores) {
+        window.filtrarMarcadores(categoria);
+      } else {
+        console.error('❌ função filtrarMarcadores não encontrada');
+      }
+    });
+  });
+
+  console.log(`✅ ${categoriasOrdenadas.length + 1} botões de filtro criados`);
+}
+
+// ============================================================
+//  CARDS DE ROTAS E PONTOS HISTÓRICOS
+// ============================================================
+function preencherCards(locais) {
+  // Separar por categoria
+  const rotas = locais.filter(l => {
+    const cat = getCategoriaLocal(l);
+    return cat === 'rota';
+  });
+
+  const historicos = locais.filter(l => {
+    const cat = getCategoriaLocal(l);
+    return cat === 'historico' || cat === 'patrimonio' || cat === 'historia';
+  });
+
+  const rotasContainer = document.getElementById('rotas-container');
+  const historicosContainer = document.getElementById('historicos-container');
+
+  if (rotasContainer) {
+    rotasContainer.innerHTML = rotas.length > 0
+      ? gerarCardsHTML(rotas.slice(0, 3))
+      : '<p class="text-center" style="color:#888">Nenhuma rota encontrada no momento.</p>';
+  }
+
+  if (historicosContainer) {
+    historicosContainer.innerHTML = historicos.length > 0
+      ? gerarCardsHTML(historicos.slice(0, 3))
+      : '<p class="text-center" style="color:#888">Nenhum ponto histórico encontrado no momento.</p>';
+  }
+}
+
+function getCategoriaLocal(local) {
+  if (local.categorias_locais && local.categorias_locais.length > 0) {
+    const cat = local.categorias_locais[0].categorias;
+    if (cat && cat.nome) return cat.nome.toLowerCase();
+  }
+  return local.categoria?.toLowerCase() || 'outro';
+}
+
+function gerarCardsHTML(locais) {
+  return locais.map(local => {
+    const fotoUrl = local.fotos?.[0]?.url ||
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
+
+    const catNome = getCategoriaLocal(local);
+    
+    // Procurar a categoria na lista de todas as categorias
+    const catInfo = todasCategorias.find(c => c.nome?.toLowerCase() === catNome);
+    const catCor = catInfo?.cor || '#007bff';
+
+    const iconesCard = {
+      'historico': 'fa-landmark',
+      'rota': 'fa-route',
+      'miradouro': 'fa-mountain',
+      'praia': 'fa-umbrella-beach',
+      'restaurante': 'fa-utensils',
+      'natureza': 'fa-tree',
+      'cultura': 'fa-museum'
+    };
+    const icone = iconesCard[catNome] || 'fa-map-marker-alt';
+
+    return `
+      <div class="card" data-local-id="${local.id}">
+        <div class="card-img" style="background-image:url('${fotoUrl}');position:relative">
+          <span style="background-color:${catCor};position:absolute;top:10px;right:10px;padding:5px 10px;border-radius:20px;color:white;font-size:12px">
+            <i class="fas ${icone}"></i> ${catNome.charAt(0).toUpperCase() + catNome.slice(1)}
+          </span>
+        </div>
+        <div class="card-content">
+          <h3>${local.nome}</h3>
+          <p>${local.descricao || 'Sem descrição disponível.'}</p>
+          <a href="#mapa" class="card-link" onclick="window.centralizarNoMapa && window.centralizarNoMapa(${local.id}); return false;">
+            Ver no mapa <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
 // ============================================================
 //  PESQUISA DE LOCAIS (NOMINATIM)
-//  Permite pesquisar por nome de rua, local, etc. na área de Sesimbra
 // ============================================================
 function configurarPesquisa(map) {
   async function searchPlaces(query) {
-    const resultsDiv  = document.getElementById('search-results-dropdown');
+    const resultsDiv = document.getElementById('search-results-dropdown');
     const resultsList = document.querySelector('#search-results-dropdown .search-results-list');
+    
     if (!query || query.length < 3) {
       if (resultsDiv) resultsDiv.style.display = 'none';
       return;
     }
+    
     try {
-      // viewbox limita os resultados à área de Sesimbra
       const viewbox = '-9.28,38.56,-9.03,38.35';
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&viewbox=${viewbox}&bounded=1&countrycodes=pt`;
       const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-PT,pt;q=0.9' } });
@@ -288,14 +945,12 @@ function configurarPesquisa(map) {
   }
 
   const searchInput = document.getElementById('search-location-input');
-  const searchBtn   = document.getElementById('search-location-btn');
+  const searchBtn = document.getElementById('search-location-btn');
   let timeout;
 
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       clearTimeout(timeout);
-      // Esperar 500ms depois de o utilizador parar de escrever antes de pesquisar
-      // (evita fazer um pedido por cada tecla)
       timeout = setTimeout(() => searchPlaces(searchInput.value), 500);
     });
   }
@@ -304,9 +959,8 @@ function configurarPesquisa(map) {
     searchBtn.addEventListener('click', () => searchPlaces(searchInput?.value || ''));
   }
 
-  // Fechar dropdown ao clicar fora
   document.addEventListener('click', (e) => {
-    const container  = document.querySelector('.search-bar-container');
+    const container = document.querySelector('.search-bar-container');
     const resultsDiv = document.getElementById('search-results-dropdown');
     if (container && resultsDiv && !container.contains(e.target)) {
       resultsDiv.style.display = 'none';
@@ -314,71 +968,47 @@ function configurarPesquisa(map) {
   });
 }
 
-
 // ============================================================
-//  MENU DE UTILIZADOR (HEADER)
-//  Mostra o nome do utilizador e permite logout
-// ============================================================
-// ============================================================
-//  MENU DE UTILIZADOR (HEADER)
-//  Mostra o nome do utilizador e permite logout
-//  Mostra o botão de admin APENAS para utilizadores com role = 'admin'
+//  MENU DE UTILIZADOR
 // ============================================================
 async function configurarMenuUtilizador() {
-  const userBtn      = document.getElementById('userHeaderBtn');
+  const userBtn = document.getElementById('userHeaderBtn');
   const userDropdown = document.getElementById('userHeaderDropdown');
   const userHeaderName = document.querySelector('.user-header-name');
-  const profileBtn   = document.getElementById('fakeProfileBtn');
-  const logoutBtn    = document.getElementById('fakeLogoutBtn');
-  const adminBtn     = document.getElementById('paginaadminBtn');
+  const profileBtn = document.getElementById('fakeProfileBtn');
+  const logoutBtn = document.getElementById('fakeLogoutBtn');
+  const adminBtn = document.getElementById('paginaadminBtn');
 
-  // Verificar se há sessão ativa
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (user) {
-    // Buscar os dados do perfil na tabela profiles
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('full_name, role')
-      .eq('id', user.id)
-      .single();
+    if (user) {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single();
 
-    // Utilizador está logado — mostrar o nome
-    // Prioridade: profiles.full_name > user_metadata.full_name > email
-    let nome = profileData?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
-    
-    if (userHeaderName) userHeaderName.textContent = nome;
+      let nome = profileData?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilizador';
+      
+      if (userHeaderName) userHeaderName.textContent = nome;
 
-    // Atualizar também o rodapé
-    const rodapeNome = document.querySelector('.footer-bottom-right strong');
-    if (rodapeNome) rodapeNome.textContent = nome;
+      const rodapeNome = document.querySelector('.footer-bottom-right strong');
+      if (rodapeNome) rodapeNome.textContent = nome;
 
-    // VERIFICAR SE O UTILIZADOR É ADMIN
-    // Verifica na tabela profiles se o role é 'admin'
-    const isAdmin = profileData?.role === 'admin';
-
-    // Mostrar ou esconder o botão de admin
-    if (adminBtn) {
-      if (isAdmin) {
-        adminBtn.style.display = 'flex'; // ou 'block'
-        console.log('🔐 Botão de admin visível para:', nome);
-      } else {
-        adminBtn.style.display = 'none';
-        console.log('👤 Utilizador normal:', nome);
+      const isAdmin = profileData?.role === 'admin';
+      if (adminBtn) {
+        adminBtn.style.display = isAdmin ? 'flex' : 'none';
+        if (isAdmin) console.log('🔐 Botão de admin visível para:', nome);
       }
+    } else {
+      if (userHeaderName) userHeaderName.textContent = 'Visitante';
+      if (adminBtn) adminBtn.style.display = 'none';
     }
-
-  } else {
-    // Não está logado — mostrar "Visitante"
-    if (userHeaderName) userHeaderName.textContent = 'Visitante';
-    
-    // Esconder o botão de admin para visitantes
-    if (adminBtn) {
-      adminBtn.style.display = 'none';
-    }
+  } catch (error) {
+    console.error('Erro ao configurar menu:', error);
   }
 
-  // Abrir/fechar dropdown ou ir para o login se não estiver logado
   if (userBtn) {
     userBtn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -393,7 +1023,6 @@ async function configurarMenuUtilizador() {
     });
   }
 
-  // Fechar dropdown ao clicar fora
   document.addEventListener('click', (e) => {
     if (userBtn && userDropdown && !userBtn.contains(e.target) && !userDropdown.contains(e.target)) {
       userBtn.classList.remove('active');
@@ -407,7 +1036,6 @@ async function configurarMenuUtilizador() {
     });
   }
 
-  // Botão admin - redirecionar para página admin
   if (adminBtn) {
     adminBtn.addEventListener('click', () => {
       window.location.href = './paginaadmin.html';
@@ -426,175 +1054,11 @@ async function configurarMenuUtilizador() {
   }
 }
 
-// ============================================================
-//  BOTÕES DE FILTRO
-//  Gerados dinamicamente com base nas categorias dos locais
-// ============================================================
-function atualizarBotoesFiltro(locaisData) {
-  const container = document.getElementById('filtro-botoes-container');
-  if (!container) return;
-
-  // Recolher todas as categorias únicas dos locais
-  const categoriasUnicas = new Set(['todos']);
-
-  locaisData.forEach(local => {
-    // Tentar pelas categorias da base de dados primeiro
-    if (local.categorias_locais?.length > 0) {
-      local.categorias_locais.forEach(cl => {
-        if (cl.categorias?.nome) categoriasUnicas.add(cl.categorias.nome.toLowerCase());
-      });
-    } else if (local.categoria) {
-      categoriasUnicas.add(local.categoria.toLowerCase());
-    }
-  });
-
-  const iconesMap = {
-    'todos':      'fa-globe',
-    'historico':  'fa-landmark',
-    'rota':       'fa-route',
-    'miradouro':  'fa-mountain',
-    'praia':      'fa-umbrella-beach',
-    'restaurante':'fa-utensils',
-    'natureza':   'fa-tree',
-    'cultura':    'fa-museum'
-  };
-
-  let html = '';
-  categoriasUnicas.forEach(cat => {
-    const icone    = iconesMap[cat] || 'fa-map-marker-alt';
-    const ativo    = cat === 'todos' ? 'active' : '';
-    const texto    = cat === 'todos' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1);
-    html += `<button class="filtro-btn ${ativo}" data-categoria="${cat}"><i class="fas ${icone}"></i> ${texto}</button>`;
-  });
-
-  container.innerHTML = html;
-
-  // Adicionar evento de clique a cada botão de filtro
-  document.querySelectorAll('.filtro-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      if (window.filtrarMarcadores) window.filtrarMarcadores(this.getAttribute('data-categoria'));
-    });
-  });
-}
-
-
-// ============================================================
-//  CARDS DE ROTAS E PONTOS HISTÓRICOS
-//  Preenche as secções do HTML com cards dinâmicos
-// ============================================================
-function preencherCards(locaisData) {
-  // Separar locais por tipo de categoria
-  const rotas = locaisData.filter(l => {
-    const cat = l.categorias_locais?.[0]?.categorias?.nome?.toLowerCase() || l.categoria || '';
-    return cat === 'rota';
-  });
-
-  const historicos = locaisData.filter(l => {
-    const cat = l.categorias_locais?.[0]?.categorias?.nome?.toLowerCase() || l.categoria || '';
-    return cat === 'historico' || cat === 'patrimonio' || cat === 'historia';
-  });
-
-  const rotasContainer     = document.getElementById('rotas-container');
-  const historicosContainer = document.getElementById('historicos-container');
-
-  if (rotasContainer) {
-    rotasContainer.innerHTML = rotas.length > 0
-      ? gerarCardsHTML(rotas.slice(0, 3))
-      : '<p class="text-center" style="color:#888">Nenhuma rota encontrada no momento.</p>';
-  }
-
-  if (historicosContainer) {
-    historicosContainer.innerHTML = historicos.length > 0
-      ? gerarCardsHTML(historicos.slice(0, 3))
-      : '<p class="text-center" style="color:#888">Nenhum ponto histórico encontrado no momento.</p>';
-  }
-}
-
-function gerarCardsHTML(locais) {
-  return locais.map(local => {
-    const fotoUrl = local.fotos?.[0]?.url
-      || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
-
-    const catObj     = local.categorias_locais?.[0]?.categorias;
-    const catNome    = catObj?.nome || local.categoria || 'Geral';
-    const catCor     = catObj?.cor  || '#007bff';
-
-    const iconesCard = {
-      'historico':  'fa-landmark',
-      'rota':       'fa-route',
-      'miradouro':  'fa-mountain',
-      'praia':      'fa-umbrella-beach',
-      'restaurante':'fa-utensils'
-    };
-    const icone = iconesCard[catNome.toLowerCase()] || 'fa-map-marker-alt';
-
-    return `
-      <div class="card" data-local-id="${local.id}">
-        <div class="card-img" style="background-image:url('${fotoUrl}');position:relative">
-          <span style="background-color:${catCor};position:absolute;top:10px;right:10px;padding:5px 10px;border-radius:20px;color:white;font-size:12px">
-            <i class="fas ${icone}"></i> ${catNome}
-          </span>
-        </div>
-        <div class="card-content">
-          <h3>${local.nome}</h3>
-          <p>${local.descricao || 'Sem descrição disponível.'}</p>
-          <a href="#mapa" class="card-link" onclick="window.centralizarNoMapa && window.centralizarNoMapa(${local.id}); return false;">
-            Ver no mapa <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-
-// ============================================================
-//  DADOS DE EXEMPLO (fallback quando Supabase está vazio)
-//  Usa o formato correto: latitude/longitude (não lat/lng)
-// ============================================================
-function dadosExemplo() {
-  return [
-    {
-      id: 1, nome: 'Castelo de Sesimbra',
-      latitude: 38.4550, longitude: -9.1025,
-      descricao: 'Fortificação medieval com vista deslumbrante sobre a vila',
-      categoria: 'historico',
-      categorias_locais: [{ categorias: { nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: [{url: "https://www.castelosdeportugal.pt/castelos/assets/img/CastelosSECXIII/sesimbra/sesimbra1.jpg"}]
-    },
-    {
-      id: 2, nome: 'Farol do Cabo Espichel',
-      latitude: 38.4186, longitude: -9.2187,
-      descricao: 'Farol histórico do século XVIII',
-      categoria: 'historico',
-      categorias_locais: [{ categorias: { nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: [{url:"https://elements-resized.envatousercontent.com/elements-video-cover-images/fed34031-4317-40fe-a87c-2daeed6c0b2f/video_preview/video_preview_0000.jpg?w=500&cf_fit=cover&q=85&format=auto&s=9b33f8c113d6a19bd45ce0c8cd322d4c95d021c6bd47490bfb87c123299aebcf"}]
-    },
-    {
-      id: 3, nome: 'Miradouro do Facho',
-      latitude: 38.4420, longitude: -9.1020,
-      descricao: 'Vista panorâmica sobre a costa e a vila',
-      categoria: 'miradouro',
-      categorias_locais: [{ categorias: { nome: 'miradouro', cor: '#FFA500', simbolo: 'mountain' } }],
-      fotos: [{url:""}]
-    },
-    {
-      id: 4, nome: 'Praia do Ouro',
-      latitude: 38.4385, longitude: -9.0805,
-      descricao: 'Praia urbana muito procurada na época balnear',
-      categoria: 'praia',
-      categorias_locais: [{ categorias: { nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' } }],
-      fotos: [{url:"https://www.guiadacidade.pt/assets/capas_poi/capa_284029.jpg"}]
-    },
-    {
-      id: 5, nome: 'Trilho da Lagoa de Albufeira',
-      latitude: 38.4470, longitude: -9.0950,
-      descricao: 'Percurso pedestre com vista para a lagoa',
-      categoria: 'rota',
-      categorias_locais: [{ categorias: { nome: 'rota', cor: '#228B22', simbolo: 'route' } }],
-      fotos: [{url: "https://sandee.com/_next/image?url=https%3A%2F%2Flh5.googleusercontent.com%2Fp%2FAF1QipOtAAlbE-YnNp8GjLREX25ZPn5y26JTsrdE9HJ9%3Ds1600-k-no&w=3840&q=75"}]
-    }
-  ];
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
