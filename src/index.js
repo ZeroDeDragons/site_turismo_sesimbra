@@ -8,32 +8,6 @@ import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── HAMBURGER ──
-    const hamburger = document.getElementById('hamburger');
-    const navLinks  = document.getElementById('navLinks');
-
-    if (hamburger && navLinks) {
-        hamburger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            hamburger.classList.toggle('open');
-            navLinks.classList.toggle('open');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
-                hamburger.classList.remove('open');
-                navLinks.classList.remove('open');
-            }
-        });
-
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                hamburger.classList.remove('open');
-                navLinks.classList.remove('open');
-            });
-        });
-    }
-
     // ── MAPA ──
     if (typeof L === 'undefined') {
         console.error('Leaflet não carregou! A tentar novamente...');
