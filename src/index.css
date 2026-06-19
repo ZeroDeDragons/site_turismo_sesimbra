@@ -70,19 +70,20 @@ h4 {
 }
 
 .btn-primary {
-    background-color: var(--primary);
+    background-color: transparent;
     color: white;
+    border: 1px solid var(--primary);
 }
 
 .btn-primary:hover {
-    background-color: #7c821c;
-    transform: translateY(-2px);
+    background-color: var(--primary);
+    color: white;
 }
 
 .btn-outline {
     background: transparent;
     border: 1px solid var(--primary);
-    color: var(--primary);
+    color: white;
 }
 
 .btn-outline:hover {
@@ -736,6 +737,20 @@ footer {
     .footer-content { grid-template-columns: 1fr; text-align: center; }
     .footer-column h4:after { left: 50%; transform: translateX(-50%); }
     .footer-bottom { flex-direction: column; text-align: center; }
+
+    /* botões hero — largura igual */
+    .btn-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    .btn-group .btn {
+        width: 100%;
+        text-align: center;
+    }
 
     /* esconder links de navegação, manter só o utilizador */
     .nav-links li:not(.user-nav-item) {

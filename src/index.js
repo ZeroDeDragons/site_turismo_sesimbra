@@ -4,6 +4,7 @@
 //  Castelo Sesimbra
 // ============================================================
 
+import './back-to-top.js';
 import { supabase } from './supabaseClient.js';
 
 // Aguardar até o HTML estar totalmente carregado antes de correr o código
@@ -35,6 +36,10 @@ let currentRouteDuration = 0;
 let currentTransportMode = 'driving';
 let cacheLinhasCarris = null;
 const ROUTING_API_BASE = 'https://router.project-osrm.org/route/v1/';
+
+// Flag que indica se o conteúdo dinâmico (cards, etc.) já está
+// totalmente inserido no DOM. Usada para corrigir o scroll das âncoras.
+window.dadosCarregados = false;
 
 // ============================================================
 //  BUSCAR DADOS DA BASE DE DADOS
@@ -410,12 +415,62 @@ async function initMap() {
   // Configurar o menu de utilizador
   await configurarMenuUtilizador();
 
+  // O conteúdo dinâmico (cards, filtros, etc.) já está todo inserido no DOM.
+  // Só agora as alturas das secções são definitivas, por isso só agora
+  // ativamos o scroll corrigido para as âncoras do menu/hero.
+  window.dadosCarregados = true;
+  configurarScrollAncoras();
+
   console.log('✅ Mapa inicializado com sucesso!');
 }
 
 // ============================================================
-//  CRIAR MARCADORES NO MAPA
+//  SCROLL SUAVE E CORRETO PARA ÂNCORAS (#rotas, #historicos, #mapa, etc.)
 // ============================================================
+function configurarScrollAncoras() {
+  const header = document.querySelector('header');
+
+  function calcularEScrollar(targetEl) {
+    const headerHeight = header ? header.offsetHeight : 0;
+    const top = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    // Evitar duplicar o listener se a função for chamada mais de uma vez
+    if (link.dataset.scrollAncoraConfigurado === 'true') return;
+    link.dataset.scrollAncoraConfigurado = 'true';
+
+    link.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href');
+      if (!targetId || targetId === '#') return;
+
+      const targetEl = document.querySelector(targetId);
+      if (!targetEl) return;
+
+      // Impede o salto automático/nativo do browser, que acontecia antes
+      // do conteúdo dinâmico (cards) estar inserido, fazendo a página
+      // "aterrar" na secção errada.
+      e.preventDefault();
+
+      if (window.dadosCarregados) {
+        calcularEScrollar(targetEl);
+      } else {
+        // Conteúdo ainda não carregado: esperar até estar pronto
+        // e só então calcular a posição final (alturas já estáveis).
+        const tentar = () => {
+          if (window.dadosCarregados) {
+            calcularEScrollar(targetEl);
+          } else {
+            setTimeout(tentar, 100);
+          }
+        };
+        tentar();
+      }
+    });
+  });
+}
+
 // ============================================================
 //  CRIAR MARCADORES NO MAPA
 // ============================================================
