@@ -693,9 +693,11 @@ function setAvatarColor(color) {
     preview.style.backgroundImage = 'none';
     preview.style.background = color;
 
-    const fn = document.getElementById('firstName')?.value || '';
-    const ln = document.getElementById('lastName')?.value || '';
-    preview.textContent = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || 'U';
+    // ← USAR AS INICIAIS DO PERFIL CARREGADO, NÃO SÓ DOS CAMPOS DO FORMULÁRIO
+    const fn = document.getElementById('firstName')?.value || userProfile?.first_name || '';
+    const ln = document.getElementById('lastName')?.value || userProfile?.last_name || '';
+    const initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || getInitials(userProfile?.full_name || 'U');
+    preview.textContent = initials;
 
     document.querySelectorAll('.color-swatch').forEach(s => {
         s.style.outline = s.style.background === color ? '2px solid var(--dark)' : 'none';
@@ -764,9 +766,12 @@ async function saveAvatar() {
         avatarBig.innerHTML = '';
         avatarBig.style.backgroundImage = 'none';
         avatarBig.style.background = pendingColor;
-        const fn = document.getElementById('firstName')?.value || '';
-        const ln = document.getElementById('lastName')?.value || '';
-        avatarBig.textContent = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || 'U';
+
+        // ← MESMA LÓGICA: usar perfil como fallback
+        const fn = document.getElementById('firstName')?.value || userProfile?.first_name || '';
+        const ln = document.getElementById('lastName')?.value || userProfile?.last_name || '';
+        const initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || getInitials(userProfile?.full_name || 'U');
+        avatarBig.textContent = initials;
     }
 
     savedAvatarState = {

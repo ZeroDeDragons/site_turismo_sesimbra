@@ -562,13 +562,135 @@ header {
 .btn-cancel:hover{border-color:var(--mid)}
 
 /* ── RESPONSIVE ── */
-@media(max-width:720px){
-  .profile-grid{grid-template-columns:1fr}
-  .form-row{grid-template-columns:1fr}
-  .interest-grid{grid-template-columns:repeat(2,1fr)}
-  .topnav{padding:0 16px}
-  .page{padding:0 14px 48px}
-  .hero{height:130px}
-  .nav-links{display:none}
-  .avatar-right{display:none}
+@media (max-width: 900px) {
+    .nav-links li:not(.user-nav-item) {
+        display: none;
+    }
+
+    .user-nav-item {
+        margin-left: auto;
+    }
+
+    .user-header-name {
+        display: none;
+    }
+
+    .user-header-btn {
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 720px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .interest-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .page {
+        padding: 0 14px 48px;
+    }
+
+    .hero {
+        height: 130px;
+    }
+
+    .avatar-zone {
+        flex-wrap: wrap;
+        margin-top: -36px;
+        gap: 14px;
+    }
+
+    .avatar-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .tabs {
+        overflow-x: auto;
+        gap: 0;
+        scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab {
+        padding: 10px 12px;
+        font-size: 12.5px;
+        white-space: nowrap;
+    }
+
+    .save-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .save-bar .btn-primary,
+    .save-bar .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 16px;
+    }
+
+    .page {
+        padding: 0 12px 40px;
+    }
+
+    .hero {
+        height: 110px;
+    }
+
+    .avatar-big {
+        width: 72px;
+        height: 72px;
+        font-size: 1.6rem;
+    }
+
+    .user-fullname {
+        font-size: 1.1rem;
+    }
+
+    .interest-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tab {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .card-body {
+        padding: 16px;
+    }
+
+    .card-head {
+        padding: 14px 16px 12px;
+    }
+
+    .danger-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .danger-item .btn-danger {
+        width: 100%;
+    }
+
+    .modal {
+        width: 95vw;
+    }
 }
