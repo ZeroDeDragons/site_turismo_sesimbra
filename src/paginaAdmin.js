@@ -46,15 +46,95 @@ async function checkAuth() {
         window.location.href = 'login.html';
         return;
     }
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', session.user.id).single();
     if (profile?.role !== 'admin') {
         window.location.href = 'index.html';
     }
+
+    // ← Actualizar nome no dropdown
+    const nameEl = document.querySelector('.user-header-name');
+    if (nameEl && profile?.full_name) {
+        nameEl.textContent = profile.full_name;
+    }
+
+    // ← Actualizar avatar na sidebar
+    const avatarEl = document.querySelector('.user-avatar');
+    if (avatarEl && profile?.full_name) {
+        const parts = profile.full_name.trim().split(' ');
+        avatarEl.textContent = parts.length > 1
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : parts[0][0].toUpperCase();
+    }
+
+    const nameCardEl = document.querySelector('.user-name');
+    if (nameCardEl && profile?.full_name) nameCardEl.textContent = profile.full_name;
 }
 
 function setupEventListeners() {
+    // Sair
     const btnSair = document.getElementById('btnSair');
     if (btnSair) btnSair.addEventListener('click', logout);
+
+    // Perfil
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) profileBtn.addEventListener('click', () => {
+        window.location.href = 'perfil.html';
+    });
+
+    // Dropdown utilizador
+    const userBtn = document.getElementById('userHeaderBtn');
+    const userDropdown = document.getElementById('userHeaderDropdown');
+
+    if (userBtn && userDropdown) {
+        userBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userBtn.classList.toggle('active');
+            userDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!userBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                userBtn.classList.remove('active');
+                userDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // Sidebar toggle (mobile)
+    const toggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const closeBtn = document.getElementById('sidebarClose');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+            if (toggle) toggle.classList.remove('hide');   // mostra de novo o hambúrguer
+        });
+    }
+
+    if (toggle && sidebar && overlay) {
+        toggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+            toggle.classList.toggle('hide');               // esconde/mostra o hambúrguer
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+            toggle.classList.remove('hide');                // mostra de novo o hambúrguer
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+                toggle.classList.remove('hide');            // mostra de novo o hambúrguer
+            });
+        });
+    }
 }
 
 async function logout() {
@@ -962,7 +1042,7 @@ function renderRotasGrid(rotas) {
                     <div class="route-desc" style="font-size:13px; color:#4b5563; line-height:1.5; margin-bottom:15px;">${rota.descricao ? escapeHtml(rota.descricao.substring(0, 120)) + (rota.descricao.length > 120 ? '...' : '') : 'Sem descrição.'}</div>
                 </div>
                 <div class="route-footer" style="padding:12px 20px; background:#f9fafb; border-top:1px solid #f3f4f6; display:flex; justify-content:flex-end; gap:8px;">
-                    <button class="action-btn edit" onclick="openModalRota(${rota.id})"><i class="fas fa-edit"></i> Edição Avançada</button>
+                    <button class="action-btn edit" onclick="openModalRota(${rota.id})"><i class="fas fa-edit"></i></button>
                     <button class="action-btn del" onclick="deleteRota(${rota.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </div>

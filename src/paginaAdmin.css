@@ -26,7 +26,7 @@ html,body{height:100%;overflow:hidden;font-family:'Nunito Sans',sans-serif;backg
   background:var(--dark);
   display:flex;flex-direction:column;
   z-index:100;
-  overflow:hidden;
+  overflow:visible; 
 }
 
 .sidebar::before{
@@ -138,6 +138,7 @@ html,body{height:100%;overflow:hidden;font-family:'Nunito Sans',sans-serif;backg
 .topbar-title{
   font-family:'Poppins',sans-serif;
   font-weight:700;font-size:1.1rem;color:var(--dark);
+  margin-top: 10px;
 }
 
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
@@ -655,4 +656,245 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
 .leaflet-interactive:hover {
     stroke-width: 9 !important; /* Destaca a linha ao passar o rato */
     cursor: pointer;
+}
+
+/* ── RESPONSIVE ── */
+
+/* Botão para abrir/fechar sidebar em mobile */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+    width: 40px;
+    height: 40px;
+    border-radius: 50px;
+    background: var(--secondary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 99;
+}
+
+@media (max-width: 1100px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .route-grid { grid-template-columns: repeat(2, 1fr); }
+    .modal-two-columns { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+    /* Sidebar em modo mobile */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 150;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay.show {
+        display: block;
+    }
+
+    .sidebar-toggle {
+        display: flex;
+    }
+
+    /* Main ocupa tudo */
+    .main {
+        margin-left: 0;
+    }
+
+    .topbar {
+        padding: 0 16px 0 64px;
+    }
+
+    .content {
+        padding: 20px 16px;
+    }
+
+    /* Stats em 2 colunas */
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+    /* Rotas em 1 coluna */
+    .route-grid { grid-template-columns: 1fr; }
+
+    /* Filter bar em coluna */
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .search-wrap { max-width: 100%; }
+
+    /* Modal ocupa mais ecrã */
+    .modal-large { width: 98vw !important; }
+    .modal-route { width: 98vw !important; }
+
+    .modal-body { max-height: 60vh; }
+}
+
+@media (max-width: 600px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .stat-card { padding: 14px 16px; }
+    .stat-value { font-size: 1.5rem; }
+
+    .topbar-title { font-size: 0.9rem; }
+
+    .user-header-name { display: none; }
+    .user-header-btn { padding: 8px 12px }
+
+    .content { padding: 14px 12px; }
+
+    .card-header { flex-wrap: wrap; gap: 8px; }
+    .card-actions { width: 100%; }
+    .card-actions .btn-primary { width: 100%; justify-content: center; }
+
+    /* Modal em full screen */
+    .modal { width: 100vw !important; max-width: 100vw !important; border-radius: 0; }
+    .modal-body { max-height: 70vh; }
+
+    /* Tabela com scroll horizontal */
+    .table-wrap { overflow-x: auto; }
+    td, th { padding: 10px 14px; font-size: 12px; }
+
+    /* Posto cards em coluna */
+    .posto-grid { gap: 8px; }
+}
+
+
+
+/* ── USER NAV TOPBAR ── */
+.user-header-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 16px;
+    background: var(--secondary);
+    border-radius: 40px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.user-header-btn:hover {
+    background: var(--primary);
+    transform: scale(1.02);
+}
+
+.user-header-btn i:first-child { font-size: 24px; }
+
+.user-header-btn .fa-chevron-down {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.user-header-btn.active .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.user-header-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    margin-top: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 4;
+    overflow: hidden;
+}
+
+.user-header-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-header-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: background 0.2s;
+}
+
+.user-header-dropdown .dropdown-item:hover { background: #f5f5f5; }
+
+.dropdown-divider { height: 1px; background: #e0e0e0; margin: 0; }
+
+.logout-item { color: #dc3545; }
+.logout-item:hover { background: #fee2e2 !important; }
+
+.user-header-name { font-size: 14px; }
+
+
+.sidebar-close {
+    position: absolute;
+    top: 26px;
+    right: 18px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    z-index: 151;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-close:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+    transform: rotate(90deg);
+}
+
+.sidebar-close:active {
+    transform: rotate(90deg) scale(0.92);
+}
+
+@media (max-width: 900px) {
+    .sidebar-close {
+        display: flex; /* ← aparece só em mobile */
+    }
+
+    /* NOVO: esconde o botão hambúrguer quando a sidebar está aberta */
+    .sidebar.open ~ .sidebar-toggle,
+    .sidebar-toggle.hide {
+        display: none;
+    }
 }
