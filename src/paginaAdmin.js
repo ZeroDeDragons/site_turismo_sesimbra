@@ -75,6 +75,12 @@ function setupEventListeners() {
     const btnSair = document.getElementById('btnSair');
     if (btnSair) btnSair.addEventListener('click', logout);
 
+    // Início
+    const inicioBtn = document.getElementById('inicioBtn');
+    if (inicioBtn) inicioBtn.addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+
     // Perfil
     const profileBtn = document.getElementById('profileBtn');
     if (profileBtn) profileBtn.addEventListener('click', () => {

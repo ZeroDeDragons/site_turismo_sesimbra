@@ -680,6 +680,16 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
+.sidebar-toggle:hover {
+    background: var(--secondary-dark);
+    transform: scale(1.05);
+}
+
+.sidebar-toggle.active {
+    background: var(--primary);
+    transform: scale(1.02);
+}
+
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -796,6 +806,11 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
 }
 
 .user-header-btn:hover {
+    background: var(--secondary-dark);
+    transform: scale(1.02);
+}
+
+.user-header-btn.active {
     background: var(--primary);
     transform: scale(1.02);
 }
