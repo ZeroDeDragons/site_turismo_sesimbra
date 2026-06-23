@@ -904,10 +904,9 @@ td{padding:13px 22px;font-size:14px;color:var(--dark);vertical-align:middle}
 
 @media (max-width: 900px) {
     .sidebar-close {
-        display: flex; /* ← aparece só em mobile */
+        display: flex;
     }
 
-    /* NOVO: esconde o botão hambúrguer quando a sidebar está aberta */
     .sidebar.open ~ .sidebar-toggle,
     .sidebar-toggle.hide {
         display: none;
