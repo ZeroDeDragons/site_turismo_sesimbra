@@ -925,3 +925,84 @@ footer .container {
         transform: translateY(0);
     }
 }
+
+
+/* ============================================================
+   ESTILOS DO CARROSSEL HÓRIZONTAL (UMA SÓ FILEIRA)
+   ============================================================ */
+.carousel-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.carousel-container {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    width: 100%;
+    padding: 15px 5px;
+    /* Esconde a barra de rolagem padrão no Chrome, Safari, Firefox e Edge */
+    scrollbar-width: none; 
+}
+
+.carousel-container::-webkit-scrollbar {
+    display: none; 
+}
+
+/* Forçar os cartões a manterem um tamanho fixo na fileira horizontal */
+.carousel-container .card {
+    flex: 0 0 300px; /* Altera 300px se quiseres cartões mais largos ou estreitos */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #eef2f5;
+    transition: transform 0.2s;
+}
+
+.carousel-container .card:hover {
+    transform: translateY(-4px);
+}
+
+/* Botões das setas laterais */
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--secondary, #23769d);
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.carousel-btn:hover {
+    background-color: var(--secondary-dark, #1a5a7a);
+}
+
+.prev-btn {
+    left: -20px;
+}
+
+.next-btn {
+    right: -20px;
+}
+
+/* Esconder setas em ecrãs de telemóveis muito pequenos se preferires o arrastar do dedo */
+@media (max-width: 576px) {
+    .carousel-btn {
+        display: none;
+    }
+    .prev-btn { left: 0; }
+    .next-btn { right: 0; }
+}
