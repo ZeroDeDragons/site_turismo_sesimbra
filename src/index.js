@@ -4,7 +4,6 @@
 //  Castelo Sesimbra
 // ============================================================
 
-import './back-to-top.js';
 import { supabase } from './supabaseClient.js';
 
 // Aguardar até o HTML estar totalmente carregado antes de correr o código
@@ -36,10 +35,6 @@ let currentRouteDuration = 0;
 let currentTransportMode = 'driving';
 let cacheLinhasCarris = null;
 const ROUTING_API_BASE = 'https://router.project-osrm.org/route/v1/';
-
-// Flag que indica se o conteúdo dinâmico (cards, etc.) já está
-// totalmente inserido no DOM. Usada para corrigir o scroll das âncoras.
-window.dadosCarregados = false;
 
 // ============================================================
 //  BUSCAR DADOS DA BASE DE DADOS
@@ -317,7 +312,7 @@ function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-window.getRouteFromOSRM = async function(pontos) {
+window.getRouteFromOSRM = async function (pontos) {
   if (pontos.length < 2) return null;
   try {
     const coordinates = pontos.map(p => `${p.longitude},${p.latitude}`).join(';');
@@ -358,7 +353,7 @@ function formatRoutePopup(route) {
 // ============================================================
 async function initMap() {
   console.log('🚀 A inicializar mapa...');
-  
+
   // Buscar dados
   const dados = await buscarDadosSupabase();
   todosLocais = dados.locais;
@@ -415,62 +410,12 @@ async function initMap() {
   // Configurar o menu de utilizador
   await configurarMenuUtilizador();
 
-  // O conteúdo dinâmico (cards, filtros, etc.) já está todo inserido no DOM.
-  // Só agora as alturas das secções são definitivas, por isso só agora
-  // ativamos o scroll corrigido para as âncoras do menu/hero.
-  window.dadosCarregados = true;
-  configurarScrollAncoras();
-
   console.log('✅ Mapa inicializado com sucesso!');
 }
 
 // ============================================================
-//  SCROLL SUAVE E CORRETO PARA ÂNCORAS (#rotas, #historicos, #mapa, etc.)
+//  CRIAR MARCADORES NO MAPA
 // ============================================================
-function configurarScrollAncoras() {
-  const header = document.querySelector('header');
-
-  function calcularEScrollar(targetEl) {
-    const headerHeight = header ? header.offsetHeight : 0;
-    const top = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
-    window.scrollTo({ top, behavior: 'smooth' });
-  }
-
-  document.querySelectorAll('a[href^="#"]').forEach(link => {
-    // Evitar duplicar o listener se a função for chamada mais de uma vez
-    if (link.dataset.scrollAncoraConfigurado === 'true') return;
-    link.dataset.scrollAncoraConfigurado = 'true';
-
-    link.addEventListener('click', function (e) {
-      const targetId = this.getAttribute('href');
-      if (!targetId || targetId === '#') return;
-
-      const targetEl = document.querySelector(targetId);
-      if (!targetEl) return;
-
-      // Impede o salto automático/nativo do browser, que acontecia antes
-      // do conteúdo dinâmico (cards) estar inserido, fazendo a página
-      // "aterrar" na secção errada.
-      e.preventDefault();
-
-      if (window.dadosCarregados) {
-        calcularEScrollar(targetEl);
-      } else {
-        // Conteúdo ainda não carregado: esperar até estar pronto
-        // e só então calcular a posição final (alturas já estáveis).
-        const tentar = () => {
-          if (window.dadosCarregados) {
-            calcularEScrollar(targetEl);
-          } else {
-            setTimeout(tentar, 100);
-          }
-        };
-        tentar();
-      }
-    });
-  });
-}
-
 // ============================================================
 //  CRIAR MARCADORES NO MAPA
 // ============================================================
@@ -522,7 +467,7 @@ function criarMarcadores(locais, map) {
 
     // Guardar TANTO o nome original como o nome em minúsculas para comparação
     const categoriaNomeLower = categoriaNome.toLowerCase();
-    
+
     // Obter cor e ícone
     const cor = categoriaInfo?.cor || '#007bff';
     const simbolo = categoriaInfo?.simbolo || categoriaNomeLower;
@@ -587,19 +532,19 @@ function criarMarcadores(locais, map) {
   });
 
   // Função global para filtrar marcadores
-  window.filtrarMarcadores = function(categoria) {
+  window.filtrarMarcadores = function (categoria) {
     console.log(`🔍 Filtrando por categoria: "${categoria}"`);
     console.log(`📊 Total de marcadores: ${todosMarcadores.length}`);
-    
+
     let marcadoresVisiveis = 0;
-    
+
     todosMarcadores.forEach(m => {
       const catDoMarcador = m.options.categoria; // Está em minúsculas
       const categoriaFiltro = categoria.toLowerCase(); // Garantir minúsculas
-      
+
       // Verificar se o marcador deve ser mostrado
       const deveMostrar = categoria === 'todos' || catDoMarcador === categoriaFiltro;
-      
+
       if (deveMostrar) {
         if (!map.hasLayer(m)) {
           m.addTo(map);
@@ -611,12 +556,12 @@ function criarMarcadores(locais, map) {
         }
       }
     });
-    
+
     console.log(`👁️ Marcadores visíveis: ${marcadoresVisiveis}`);
   };
 
   // Função global para centralizar no mapa
-  window.centralizarNoMapa = function(localId) {
+  window.centralizarNoMapa = function (localId) {
     const marker = marcadoresPorId[localId];
     if (marker) {
       map.flyTo(marker.getLatLng(), 16);
@@ -631,7 +576,7 @@ function criarMarcadores(locais, map) {
     }
   };
 
-  window.mostrarRota = function(rotaId) {
+  window.mostrarRota = function (rotaId) {
     const rota = todasRotas.find(r => r.id === rotaId);
     if (!rota) {
       alert('Rota não encontrada.');
@@ -686,16 +631,16 @@ function criarMarcadores(locais, map) {
     }
 
     routeLine.bindPopup('A carregar dados do trajeto...');
-    routeLine.on('click', async function(e) {
+    routeLine.on('click', async function (e) {
       const popupConteudoBase = formatRoutePopup({ distance: currentRouteDistance, duration: currentRouteDuration });
       routeLine.setPopupContent(popupConteudoBase + '<br>⏳ A procurar paragens da Carris Metropolitana...');
       const dadosCarris = await getCarrisMetropolitanaData(e.latlng.lat, e.latlng.lng);
       routeLine.setPopupContent(popupConteudoBase + dadosCarris);
     });
-    routeLine.on('mouseover', function() {
+    routeLine.on('mouseover', function () {
       this.setStyle({ weight: 8, opacity: 1 });
     });
-    routeLine.on('mouseout', function() {
+    routeLine.on('mouseout', function () {
       this.setStyle({ weight: 6, opacity: 0.85 });
     });
 
@@ -719,14 +664,14 @@ function criarMarcadores(locais, map) {
           marker.bindTooltip(`${index + 1}`, { permanent: true, direction: 'top', className: 'route-point-label' }).openTooltip();
         });
         osrmLayer.bindPopup(formatRoutePopup(route));
-        osrmLayer.on('click', async function(e) {
+        osrmLayer.on('click', async function (e) {
           const popupConteudoBase = formatRoutePopup(route);
           osrmLayer.setPopupContent(popupConteudoBase + '<br>⏳ A procurar paragens da Carris Metropolitana...');
           const dadosCarris = await getCarrisMetropolitanaData(e.latlng.lat, e.latlng.lng);
           osrmLayer.setPopupContent(popupConteudoBase + dadosCarris);
         });
-        osrmLayer.on('mouseover', function() { this.setStyle({ weight: 8, opacity: 1 }); });
-        osrmLayer.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.85 }); });
+        osrmLayer.on('mouseover', function () { this.setStyle({ weight: 8, opacity: 1 }); });
+        osrmLayer.on('mouseout', function () { this.setStyle({ weight: 6, opacity: 0.85 }); });
         if (bounds.isValid()) mapaAtual.flyToBounds(bounds.pad(0.15));
       }
     });
@@ -763,7 +708,7 @@ async function atualizarBotoesFiltro(categorias) {
 
   // Se não houver categorias, usar as que existem nos locais
   let categoriasParaUsar = categorias;
-  
+
   if (!categoriasParaUsar || categoriasParaUsar.length === 0) {
     // Extrair categorias dos locais
     const categoriasSet = new Set();
@@ -778,7 +723,7 @@ async function atualizarBotoesFiltro(categorias) {
         categoriasSet.add(local.categoria);
       }
     });
-    
+
     categoriasParaUsar = Array.from(categoriasSet).map(nome => ({
       nome: nome,
       cor: '#007bff',
@@ -808,7 +753,7 @@ async function atualizarBotoesFiltro(categorias) {
 
   // Gerar HTML dos botões
   let html = '';
-  
+
   // Botão "Todos" sempre primeiro
   html += `<button class="filtro-btn active" data-categoria="todos">
     <i class="fas fa-globe"></i> Todos
@@ -825,12 +770,12 @@ async function atualizarBotoesFiltro(categorias) {
     const nome = typeof cat === 'string' ? cat : cat.nome;
     const cor = typeof cat === 'string' ? '#007bff' : cat.cor || '#007bff';
     const simbolo = typeof cat === 'string' ? nome : cat.simbolo || nome;
-    
+
     // Usar o nome em minúsculas para o data-categoria
     const categoriaKey = nome.toLowerCase();
     const icone = iconesMap[categoriaKey] || iconesMap[simbolo] || 'fa-map-marker-alt';
     const texto = nome; // Manter o nome original para exibição
-    
+
     html += `
       <button class="filtro-btn" data-categoria="${categoriaKey}" style="border-color: ${cor}">
         <i class="fas ${icone}" style="color: ${cor}"></i> ${texto}
@@ -842,15 +787,15 @@ async function atualizarBotoesFiltro(categorias) {
 
   // Adicionar eventos de clique
   document.querySelectorAll('.filtro-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
       // Remover classe active de todos
       document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
       // Adicionar ao clicado
       this.classList.add('active');
-      
+
       const categoria = this.getAttribute('data-categoria');
       console.log(`🖱️ Botão clicado: "${categoria}"`);
-      
+
       if (window.filtrarMarcadores) {
         window.filtrarMarcadores(categoria);
       } else {
@@ -866,29 +811,37 @@ async function atualizarBotoesFiltro(categorias) {
 //  CARDS DE ROTAS E PONTOS HISTÓRICOS
 // ============================================================
 function preencherCards(locais) {
-  // Separar por categoria
-  const rotas = locais.filter(l => {
-    const cat = getCategoriaLocal(l);
-    return cat === 'rota';
-  });
-
+  // 1. Filtrar Pontos Históricos a partir dos locais carregados
   const historicos = locais.filter(l => {
     const cat = getCategoriaLocal(l);
-    return cat === 'historico' || cat === 'patrimonio' || cat === 'historia';
+    return cat === 'pontos históricos' || cat === 'historico' || cat === 'patrimonio' || cat === 'historia';
+  });
+
+  // 2. FILTRAR EXCLUSIVAMENTE as Rotas Turísticas
+  // (Filtra apenas as rotas que contêm "turísticas" ou "rota" no nome, ou que estejam associadas à categoria correta)
+  const rotasTuristicas = todasRotas.filter(rota => {
+    const nomeRota = rota.nome ? rota.nome.toLowerCase() : '';
+    const descricaoRota = rota.descricao ? rota.descricao.toLowerCase() : '';
+    
+    // Se tiveres uma coluna categoria_id na tabela de rotas, podes usar: rota.categoria_id === 4
+    // Caso contrário, a validação por texto ou por associação impede que rotas genéricas apareçam:
+    return nomeRota.includes('rota') || nomeRota.includes('turística') || nomeRota.includes('turistica');
   });
 
   const rotasContainer = document.getElementById('rotas-container');
   const historicosContainer = document.getElementById('historicos-container');
 
+  // 3. Preencher o container de Rotas Turísticas usando a variável já filtrada
   if (rotasContainer) {
-    rotasContainer.innerHTML = rotas.length > 0
-      ? gerarCardsHTML(rotas.slice(0, 3))
-      : '<p class="text-center" style="color:#888">Nenhuma rota encontrada no momento.</p>';
+    rotasContainer.innerHTML = rotasTuristicas.length > 0
+      ? gerarCardsRotasHTML(rotasTuristicas)
+      : '<p class="text-center" style="color:#888">Nenhuma rota turística encontrada no momento.</p>';
   }
 
+  // 4. Preencher o container de Pontos Históricos
   if (historicosContainer) {
     historicosContainer.innerHTML = historicos.length > 0
-      ? gerarCardsHTML(historicos.slice(0, 3))
+      ? gerarCardsLocaisHTML(historicos)
       : '<p class="text-center" style="color:#888">Nenhum ponto histórico encontrado no momento.</p>';
   }
 }
@@ -901,13 +854,93 @@ function getCategoriaLocal(local) {
   return local.categoria?.toLowerCase() || 'outro';
 }
 
+// Gerar HTML para os Cards de Pontos (Locais)
+function gerarCardsLocaisHTML(locais) {
+  return locais.map(local => {
+    const fotoUrl = local.fotos?.[0]?.url || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
+    const catNome = getCategoriaLocal(local);
+    const catInfo = todasCategorias.find(c => c.nome?.toLowerCase() === catNome);
+    const catCor = catInfo?.cor || '#f2ff00';
+    const simbolo = catInfo?.simbolo || '🏰';
+
+    return `
+      <div class="card" data-local-id="${local.id}">
+        <div class="card-img" style="background-image:url('${fotoUrl}'); position:relative; height: 180px; background-size: cover; background-position: center; border-radius: 8px 8px 0 0;">
+          <span style="background-color:${catCor}; position:absolute; top:10px; right:10px; padding:5px 10px; border-radius:20px; color:#000; font-weight:bold; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            ${simbolo} Ponto Histórico
+          </span>
+        </div>
+        <div class="card-content" style="padding: 15px;">
+          <h3 style="margin-top:0; font-size:18px;">${local.nome}</h3>
+          <p style="color:#555; font-size:14px; line-height:1.4; height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+            ${local.descricao || 'Sem descrição disponível.'}
+          </p>
+          <a href="#map" class="card-link" style="display: inline-block; margin-top: 10px; color: #007bff; text-decoration: none; font-weight: bold;" 
+             onclick="window.focarNoMapa('local', ${local.id}); return false;">
+            Ver no mapa <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Gerar HTML para os Cards de Rotas Turísticas
+function gerarCardsRotasHTML(rotas) {
+  return rotas.map(rota => {
+    // Tenta obter uma imagem do primeiro ponto da rota se não houver foto própria da rota
+    const fotoUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
+    const catCor = '#00ff7b';
+    const simbolo = '🧭';
+
+    return `
+      <div class="card" data-rota-id="${rota.id}">
+        <div class="card-img" style="background-image:url('${fotoUrl}'); position:relative; height: 180px; background-size: cover; background-position: center; border-radius: 8px 8px 0 0;">
+          <span style="background-color:${catCor}; position:absolute; top:10px; right:10px; padding:5px 10px; border-radius:20px; color:#000; font-weight:bold; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            ${simbolo} Rota Turística
+          </span>
+        </div>
+        <div class="card-content" style="padding: 15px;">
+          <h3 style="margin-top:0; font-size:18px;">${rota.nome}</h3>
+          <p style="color:#555; font-size:14px; line-height:1.4; height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+            ${rota.descricao || 'Sem descrição disponível.'}
+          </p>
+          <a href="#map" class="card-link" style="display: inline-block; margin-top: 10px; color: #007bff; text-decoration: none; font-weight: bold;" 
+             onclick="window.focarNoMapa('rota', ${rota.id}); return false;">
+            Ver no mapa <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Função auxiliar global para fazer scroll suave e ativar o ponto/rota correspondente
+window.focarNoMapa = function (tipo, id) {
+  const mapaElemento = document.getElementById('map');
+  if (mapaElemento) {
+    // Scroll suave até ao mapa
+    mapaElemento.scrollIntoView({ behavior: 'smooth' });
+
+    // Aguarda um pequeno momento para o scroll terminar e depois foca a informação
+    setTimeout(() => {
+      if (tipo === 'local' && window.centralizarNoMapa) {
+        window.centralizarNoMapa(id);
+      } else if (tipo === 'rota' && window.mostrarRota) {
+        window.mostrarRota(id);
+      }
+    }, 500);
+  }
+};
+
+
 function gerarCardsHTML(locais) {
   return locais.map(local => {
     const fotoUrl = local.fotos?.[0]?.url ||
       'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
 
     const catNome = getCategoriaLocal(local);
-    
+
     // Procurar a categoria na lista de todas as categorias
     const catInfo = todasCategorias.find(c => c.nome?.toLowerCase() === catNome);
     const catCor = catInfo?.cor || '#007bff';
@@ -949,12 +982,12 @@ function configurarPesquisa(map) {
   async function searchPlaces(query) {
     const resultsDiv = document.getElementById('search-results-dropdown');
     const resultsList = document.querySelector('#search-results-dropdown .search-results-list');
-    
+
     if (!query || query.length < 3) {
       if (resultsDiv) resultsDiv.style.display = 'none';
       return;
     }
-    
+
     try {
       const viewbox = '-9.28,38.56,-9.03,38.35';
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&viewbox=${viewbox}&bounded=1&countrycodes=pt`;
@@ -1045,7 +1078,7 @@ async function configurarMenuUtilizador() {
         .single();
 
       let nome = profileData?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilizador';
-      
+
       if (userHeaderName) userHeaderName.textContent = nome;
 
       const rodapeNome = document.querySelector('.footer-bottom-right strong');
@@ -1117,3 +1150,13 @@ function escapeHtml(text) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+window.scrollCarrossel = function(containerId, distancia) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.scrollBy({
+      left: distancia,
+      behavior: 'smooth'
+    });
+  }
+};
