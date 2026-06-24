@@ -21,6 +21,10 @@ document.addEventListener('click', (e) => {
     }
 });
 
+document.getElementById('inicioBtn')?.addEventListener('click', () => {
+    window.location.href = 'index.html';
+});
+
 document.getElementById('fakeProfileBtn')?.addEventListener('click', () => {
     window.location.href = 'perfil.html';
 });
