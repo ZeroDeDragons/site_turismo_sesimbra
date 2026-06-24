@@ -71,27 +71,27 @@
             </div>
         </section>
 
-        <section id="rotas" class="section">
-            <div class="container">
-                <div class="section-title">
-                    <h2><i class="fas fa-route"></i> Rotas Turísticas</h2>
-                    <p>Percursos pedestres que revelam a natureza e a história da freguesia do Castelo</p>
+        <section class="container my-5">
+            <h2 class="mb-4"><i class="fas fa-route"></i> Rotas Turísticas</h2>
+            <div class="carousel-wrapper">
+                <button class="carousel-btn prev-btn" onclick="scrollCarrossel('rotas-container', -300)"><i
+                        class="fas fa-chevron-left"></i></button>
+                <div id="rotas-container" class="carousel-container">
                 </div>
-                <div class="cards-grid" id="rotas-container">
-                    <!-- Rotas serão carregadas dinamicamente -->
-                </div>
+                <button class="carousel-btn next-btn" onclick="scrollCarrossel('rotas-container', 300)"><i
+                        class="fas fa-chevron-right"></i></button>
             </div>
         </section>
 
-        <section id="historicos" class="section section-light">
-            <div class="container">
-                <div class="section-title">
-                    <h2><i class="fas fa-landmark"></i> Pontos Históricos</h2>
-                    <p>Património que conta a história do Castelo e da sua comunidade</p>
+        <section class="container my-5">
+            <h2 class="mb-4"><i class="fas fa-landmark"></i> Pontos Históricos</h2>
+            <div class="carousel-wrapper">
+                <button class="carousel-btn prev-btn" onclick="scrollCarrossel('historicos-container', -300)"><i
+                        class="fas fa-chevron-left"></i></button>
+                <div id="historicos-container" class="carousel-container">
                 </div>
-                <div class="cards-grid" id="historicos-container">
-                    <!-- Pontos históricos serão carregados dinamicamente -->
-                </div>
+                <button class="carousel-btn next-btn" onclick="scrollCarrossel('historicos-container', 300)"><i
+                        class="fas fa-chevron-right"></i></button>
             </div>
         </section>
 
