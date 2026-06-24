@@ -36,9 +36,6 @@ let currentTransportMode = 'driving';
 let cacheLinhasCarris = null;
 const ROUTING_API_BASE = 'https://router.project-osrm.org/route/v1/';
 
-// ============================================================
-//  BUSCAR DADOS DA BASE DE DADOS
-// ============================================================
 async function buscarDadosSupabase() {
   try {
     // Buscar locais com fotos e categorias
@@ -68,9 +65,15 @@ async function buscarDadosSupabase() {
       throw categoriasError;
     }
 
+    // Buscar rotas com suas categorias
     const { data: rotas, error: rotasError } = await supabase
       .from('rotas')
-      .select('*')
+      .select(`
+        *,
+        categorias_rotas (
+          categorias ( id, nome, cor, simbolo )
+        )
+      `)
       .order('nome');
 
     if (rotasError) {
@@ -78,6 +81,7 @@ async function buscarDadosSupabase() {
       throw rotasError;
     }
 
+    // Buscar segmentos para cada rota
     for (const rota of rotas || []) {
       const { data: segmentos, error: segmentosError } = await supabase
         .from('segmentos_rota')
@@ -104,97 +108,7 @@ async function buscarDadosSupabase() {
     return { locais: todosLocais, categorias: todasCategorias, rotas: todasRotas };
   } catch (error) {
     console.error('Erro ao buscar dados do Supabase:', error.message);
-    // Usar dados de exemplo em caso de erro
-    const dadosExemplo = gerarDadosExemplo();
-    todosLocais = dadosExemplo.locais;
-    todasCategorias = dadosExemplo.categorias;
-    todasRotas = dadosExemplo.rotas || [];
-    construirRotasPorLocal(todasRotas);
-    return dadosExemplo;
   }
-}
-
-// ============================================================
-//  GERAR DADOS DE EXEMPLO
-// ============================================================
-function gerarDadosExemplo() {
-  const categorias = [
-    { id: 1, nome: 'historico', cor: '#8B0000', simbolo: 'landmark' },
-    { id: 2, nome: 'rota', cor: '#228B22', simbolo: 'route' },
-    { id: 3, nome: 'miradouro', cor: '#FFA500', simbolo: 'mountain' },
-    { id: 4, nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' },
-    { id: 5, nome: 'restaurante', cor: '#800080', simbolo: 'utensils' },
-    { id: 6, nome: 'natureza', cor: '#2E8B57', simbolo: 'tree' },
-    { id: 7, nome: 'cultura', cor: '#4A90E2', simbolo: 'museum' }
-  ];
-
-  const locais = [
-    {
-      id: 1,
-      nome: 'Castelo de Sesimbra',
-      latitude: 38.4550,
-      longitude: -9.1025,
-      descricao: 'Fortificação medieval com vista deslumbrante sobre a vila',
-      categoria: 'historico',
-      categorias_locais: [{ categorias: { id: 1, nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: [{ url: 'https://www.castelosdeportugal.pt/castelos/assets/img/CastelosSECXIII/sesimbra/sesimbra1.jpg' }]
-    },
-    {
-      id: 2,
-      nome: 'Farol do Cabo Espichel',
-      latitude: 38.4186,
-      longitude: -9.2187,
-      descricao: 'Farol histórico do século XVIII',
-      categoria: 'historico',
-      categorias_locais: [{ categorias: { id: 1, nome: 'historico', cor: '#8B0000', simbolo: 'landmark' } }],
-      fotos: [{ url: 'https://elements-resized.envatousercontent.com/elements-video-cover-images/fed34031-4317-40fe-a87c-2daeed6c0b2f/video_preview/video_preview_0000.jpg?w=500&cf_fit=cover&q=85&format=auto&s=9b33f8c113d6a19bd45ce0c8cd322d4c95d021c6bd47490bfb87c123299aebcf' }]
-    },
-    {
-      id: 3,
-      nome: 'Miradouro do Facho',
-      latitude: 38.4420,
-      longitude: -9.1020,
-      descricao: 'Vista panorâmica sobre a costa e a vila',
-      categoria: 'miradouro',
-      categorias_locais: [{ categorias: { id: 3, nome: 'miradouro', cor: '#FFA500', simbolo: 'mountain' } }],
-      fotos: [{ url: '' }]
-    },
-    {
-      id: 4,
-      nome: 'Praia do Ouro',
-      latitude: 38.4385,
-      longitude: -9.0805,
-      descricao: 'Praia urbana muito procurada na época balnear',
-      categoria: 'praia',
-      categorias_locais: [{ categorias: { id: 4, nome: 'praia', cor: '#20B2AA', simbolo: 'umbrella-beach' } }],
-      fotos: [{ url: 'https://www.guiadacidade.pt/assets/capas_poi/capa_284029.jpg' }]
-    },
-    {
-      id: 5,
-      nome: 'Trilho da Lagoa de Albufeira',
-      latitude: 38.4470,
-      longitude: -9.0950,
-      descricao: 'Percurso pedestre com vista para a lagoa',
-      categoria: 'rota',
-      categorias_locais: [{ categorias: { id: 2, nome: 'rota', cor: '#228B22', simbolo: 'route' } }],
-      fotos: [{ url: 'https://sandee.com/_next/image?url=https%3A%2F%2Flh5.googleusercontent.com%2Fp%2FAF1QipOtAAlbE-YnNp8GjLREX25ZPn5y26JTsrdE9HJ9%3Ds1600-k-no&w=3840&q=75' }]
-    }
-  ];
-
-  const rotas = [
-    {
-      id: 1,
-      nome: 'Rota Histórica do Castelo',
-      descricao: 'Ligação entre o Castelo, o Miradouro do Facho e o Farol do Cabo Espichel.',
-      cor: '#228B22',
-      segmentos: [
-        { id: 1, rota_id: 1, local_origem_id: 1, local_destino_id: 3, ordem_segmento: 1 },
-        { id: 2, rota_id: 1, local_origem_id: 3, local_destino_id: 2, ordem_segmento: 2 }
-      ]
-    }
-  ];
-
-  return { locais, categorias, rotas };
 }
 
 function construirRotasPorLocal(rotas) {
@@ -807,9 +721,6 @@ async function atualizarBotoesFiltro(categorias) {
   console.log(`✅ ${categoriasOrdenadas.length + 1} botões de filtro criados`);
 }
 
-// ============================================================
-//  CARDS DE ROTAS E PONTOS HISTÓRICOS
-// ============================================================
 function preencherCards(locais) {
   // 1. Filtrar Pontos Históricos a partir dos locais carregados
   const historicos = locais.filter(l => {
@@ -817,21 +728,25 @@ function preencherCards(locais) {
     return cat === 'pontos históricos' || cat === 'historico' || cat === 'patrimonio' || cat === 'historia';
   });
 
-  // 2. FILTRAR EXCLUSIVAMENTE as Rotas Turísticas
-  // (Filtra apenas as rotas que contêm "turísticas" ou "rota" no nome, ou que estejam associadas à categoria correta)
+  // 2. FILTRAR ROTAS PELA CATEGORIA "Rotas Turísticas"
   const rotasTuristicas = todasRotas.filter(rota => {
-    const nomeRota = rota.nome ? rota.nome.toLowerCase() : '';
-    const descricaoRota = rota.descricao ? rota.descricao.toLowerCase() : '';
-    
-    // Se tiveres uma coluna categoria_id na tabela de rotas, podes usar: rota.categoria_id === 4
-    // Caso contrário, a validação por texto ou por associação impede que rotas genéricas apareçam:
-    return nomeRota.includes('rota') || nomeRota.includes('turística') || nomeRota.includes('turistica');
+    // Verificar se a rota tem a categoria "Rotas Turísticas"
+    if (rota.categorias_rotas && Array.isArray(rota.categorias_rotas)) {
+      return rota.categorias_rotas.some(cr => {
+        const nomeCategoria = cr.categorias?.nome?.toLowerCase() || '';
+        return nomeCategoria === 'rotas turísticas' || 
+               nomeCategoria === 'rota turística' || 
+               nomeCategoria === 'rotas turisticas' ||
+               nomeCategoria === 'rota turistica';
+      });
+    }
+    return false;
   });
 
   const rotasContainer = document.getElementById('rotas-container');
   const historicosContainer = document.getElementById('historicos-container');
 
-  // 3. Preencher o container de Rotas Turísticas usando a variável já filtrada
+  // 3. Preencher o container de Rotas Turísticas
   if (rotasContainer) {
     rotasContainer.innerHTML = rotasTuristicas.length > 0
       ? gerarCardsRotasHTML(rotasTuristicas)
@@ -885,25 +800,45 @@ function gerarCardsLocaisHTML(locais) {
   }).join('');
 }
 
-// Gerar HTML para os Cards de Rotas Turísticas
 function gerarCardsRotasHTML(rotas) {
   return rotas.map(rota => {
-    // Tenta obter uma imagem do primeiro ponto da rota se não houver foto própria da rota
-    const fotoUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
-    const catCor = '#00ff7b';
-    const simbolo = '🧭';
+    // Obter a primeira categoria da rota (se existir)
+    let categoriaInfo = null;
+    let catCor = '#00ff7b';
+    let simbolo = '🧭';
+    
+    if (rota.categorias_rotas && rota.categorias_rotas.length > 0) {
+      const cat = rota.categorias_rotas[0].categorias;
+      if (cat) {
+        categoriaInfo = cat;
+        catCor = cat.cor || '#00ff7b';
+        simbolo = cat.simbolo || '🧭';
+      }
+    }
+    
+    // Usar a cor da rota se definida, senão usar a cor da categoria
+    const corFinal = rota.cor || catCor;
+    
+    // Tentar obter uma imagem do primeiro ponto da rota
+    let fotoUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format';
+    if (rota.segmentos && rota.segmentos.length > 0) {
+      const primeiroLocal = todosLocais.find(l => l.id === rota.segmentos[0].local_origem_id);
+      if (primeiroLocal && primeiroLocal.fotos && primeiroLocal.fotos.length > 0) {
+        fotoUrl = primeiroLocal.fotos[0].url || fotoUrl;
+      }
+    }
 
     return `
       <div class="card" data-rota-id="${rota.id}">
         <div class="card-img" style="background-image:url('${fotoUrl}'); position:relative; height: 180px; background-size: cover; background-position: center; border-radius: 8px 8px 0 0;">
-          <span style="background-color:${catCor}; position:absolute; top:10px; right:10px; padding:5px 10px; border-radius:20px; color:#000; font-weight:bold; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          <span style="background-color:${corFinal}; position:absolute; top:10px; right:10px; padding:5px 10px; border-radius:20px; color:#000; font-weight:bold; font-size:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
             ${simbolo} Rota Turística
           </span>
         </div>
         <div class="card-content" style="padding: 15px;">
-          <h3 style="margin-top:0; font-size:18px;">${rota.nome}</h3>
+          <h3 style="margin-top:0; font-size:18px;">${escapeHtml(rota.nome)}</h3>
           <p style="color:#555; font-size:14px; line-height:1.4; height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-            ${rota.descricao || 'Sem descrição disponível.'}
+            ${escapeHtml(rota.descricao || 'Sem descrição disponível.')}
           </p>
           <a href="#map" class="card-link" style="display: inline-block; margin-top: 10px; color: #007bff; text-decoration: none; font-weight: bold;" 
              onclick="window.focarNoMapa('rota', ${rota.id}); return false;">
@@ -913,6 +848,17 @@ function gerarCardsRotasHTML(rotas) {
       </div>
     `;
   }).join('');
+}
+
+function getCategoriaRota(rota) {
+  if (rota.categorias_rotas && Array.isArray(rota.categorias_rotas)) {
+    for (const cr of rota.categorias_rotas) {
+      if (cr.categorias && cr.categorias.nome) {
+        return cr.categorias.nome.toLowerCase();
+      }
+    }
+  }
+  return null;
 }
 
 // Função auxiliar global para fazer scroll suave e ativar o ponto/rota correspondente
