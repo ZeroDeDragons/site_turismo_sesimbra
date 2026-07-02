@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-<title>Castelo de Sesimbra — Uma Fortaleza Sobre o Mar</title>
+<title>Castelo de Sesimbra</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;800&family=Poppins:wght@500;700;800&display=swap" rel="stylesheet">
@@ -47,12 +47,16 @@
 </header>
 
 <div class="hero">
+  <img class="hero-photo" src="./Imagens/CasteloSesimbraEntrada.jpg" alt="Entrada principal do Castelo de Sesimbra, com as suas muralhas sobre a falésia" loading="eager" onerror="this.style.display='none';">
+  <div class="hero-overlay" aria-hidden="true"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
   <div class="merlons" aria-hidden="true"></div>
   <div class="hero-content">
-    <span class="eyebrow">Sesimbra, Portugal</span>
+    <span class="eyebrow"><span class="eyebrow-rule" aria-hidden="true"></span>Sesimbra, Portugal</span>
     <h1>O Castelo que <em>vigiou</em> o mar</h1>
     <p class="lede">Numa falésia sobre o Atlântico, uma fortaleza mudou de mãos entre mouros e cristãos, sobreviveu a um terramoto e continua hoje, séculos depois, a olhar para o horizonte.</p>
   </div>
+  <div class="hero-skyline" aria-hidden="true"></div>
 </div>
 
 <main>
@@ -93,105 +97,119 @@
   <section>
     <span class="eyebrow">Linha do tempo</span>
     <h2 class="section-title">Os marcos essenciais</h2>
-    <div class="timeline-track" id="timelineTrack">
-      <svg class="timeline-curve" id="timelineCurve"><path id="timelineCurvePath"></path></svg>
 
-      <div class="timeline-row">
-        <div class="t-item baixo">
-          <span class="t-marker"><i class="fas fa-moon"></i></span>
-          <div class="t-card">
-            <span class="t-year">Século IX</span>
-            <h3>A primeira fortificação</h3>
-            <p>Os muçulmanos constroem a Alcáçova, o núcleo original do castelo.</p>
-          </div>
-        </div>
+    <div class="muralha-wrap">
+      <button class="muralha-nav muralha-nav-prev" type="button" aria-label="Marco anterior" id="muralhaPrev">
+        <i class="fas fa-chevron-left"></i>
+      </button>
 
-        <div class="t-item cima">
-          <span class="t-marker"><i class="fas fa-shield-alt"></i></span>
-          <div class="t-card">
-            <span class="t-year">1165</span>
-            <h3>Conquista cristã</h3>
-            <p>D. Afonso Henriques toma o castelo e reforça as suas defesas.</p>
-          </div>
-        </div>
+      <div class="muralha-scroll" id="muralhaScroll" tabindex="0">
+        <ol class="muralha-timeline">
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-moon"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">Século IX</span>
+              <h3>A primeira fortificação</h3>
+              <p>Os muçulmanos constroem a Alcáçova, o núcleo original do castelo.</p>
+            </div>
+          </li>
 
-        <div class="t-item baixo">
-          <span class="t-marker"><i class="fas fa-fire"></i></span>
-          <div class="t-card">
-            <span class="t-year">1191</span>
-            <h3>Os almóadas recuperam o castelo</h3>
-            <p>Sob o comando de Iacube Almançor, a povoação é arrasada e abandonada.</p>
-          </div>
-        </div>
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-shield-alt"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1165</span>
+              <h3>Conquista cristã</h3>
+              <p>D. Afonso Henriques toma o castelo e reforça as suas defesas.</p>
+            </div>
+          </li>
 
-        <div class="t-item cima">
-          <span class="t-marker"><i class="fas fa-flag"></i></span>
-          <div class="t-card">
-            <span class="t-year">c. 1200 – 1201</span>
-            <h3>Reconquista definitiva</h3>
-            <p>D. Sancho I retoma a povoação e concede a Carta de Foral, mandando reconstruir o castelo.</p>
-          </div>
-        </div>
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-fire"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1191</span>
+              <h3>Os almóadas recuperam o castelo</h3>
+              <p>Sob o comando de Iacube Almançor, a povoação é arrasada e abandonada.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-flag"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">c. 1200 – 1201</span>
+              <h3>Reconquista definitiva</h3>
+              <p>D. Sancho I retoma a povoação e concede a Carta de Foral, mandando reconstruir o castelo.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-scroll"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1236 – 1323</span>
+              <h3>Ordem de Santiago e elevação a vila</h3>
+              <p>O castelo passa à Ordem de Santiago; mais tarde, D. Dinis eleva Sesimbra a vila.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-chess-rook"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1514</span>
+              <h3>Nova fortificação junto à praia</h3>
+              <p>D. Manuel I concede novo foral e manda construir defesas mais próximas do porto.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-house-damage"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1755</span>
+              <h3>O Terramoto de Lisboa</h3>
+              <p>O grande sismo causa danos severos, acelerando o declínio estratégico do castelo.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-landmark"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1910</span>
+              <h3>Monumento Nacional</h3>
+              <p>O castelo é oficialmente classificado como Monumento Nacional.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-hammer"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">1930 – 1940</span>
+              <h3>Restauro</h3>
+              <p>A DGEMN realiza obras de consolidação que ajudam a preservar o castelo até hoje.</p>
+            </div>
+          </li>
+
+          <li class="muralha-item">
+            <span class="muralha-marker"><i class="fas fa-star"></i></span>
+            <span class="muralha-stem" aria-hidden="true"></span>
+            <div class="muralha-card">
+              <span class="t-year">Atualmente</span>
+              <h3>Valorização</h3>
+              <p>Este monumento é hoje um ex-líbris da região, sendo um dos mais visitados.</p>
+            </div>
+          </li>
+        </ol>
       </div>
 
-      <div class="timeline-row reverse">
-        <div class="t-item baixo">
-          <span class="t-marker"><i class="fas fa-scroll"></i></span>
-          <div class="t-card">
-            <span class="t-year">1236 – 1323</span>
-            <h3>Ordem de Santiago e elevação a vila</h3>
-            <p>O castelo passa à Ordem de Santiago; mais tarde, D. Dinis eleva Sesimbra a vila.</p>
-          </div>
-        </div>
-
-        <div class="t-item cima">
-          <span class="t-marker"><i class="fas fa-chess-rook"></i></span>
-          <div class="t-card">
-            <span class="t-year">1514</span>
-            <h3>Nova fortificação junto à praia</h3>
-            <p>D. Manuel I concede novo foral e manda construir defesas mais próximas do porto.</p>
-          </div>
-        </div>
-
-        <div class="t-item baixo">
-          <span class="t-marker"><i class="fas fa-house-damage"></i></span>
-          <div class="t-card">
-            <span class="t-year">1755</span>
-            <h3>O Terramoto de Lisboa</h3>
-            <p>O grande sismo causa danos severos, acelerando o declínio estratégico do castelo.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="timeline-row">
-        <div class="t-item cima">
-          <span class="t-marker"><i class="fas fa-landmark"></i></span>
-          <div class="t-card">
-            <span class="t-year">1910</span>
-            <h3>Monumento Nacional</h3>
-            <p>O castelo é oficialmente classificado como Monumento Nacional.</p>
-          </div>
-        </div>
-
-        <div class="t-item baixo">
-          <span class="t-marker"><i class="fas fa-hammer"></i></span>
-          <div class="t-card">
-            <span class="t-year">1930 – 1940</span>
-            <h3>Restauro</h3>
-            <p>A DGEMN realiza obras de consolidação que ajudam a preservar o castelo até hoje.</p>
-          </div>
-        </div>
-
-        <div class="t-item cima">
-          <span class="t-marker"><i class="fas fa-star"></i></span>
-          <div class="t-card">
-            <span class="t-year">Atualmente</span>
-            <h3>Valorização</h3>
-            <p>Este monumento é hoje um ex-líbris da região, sendo um dos mais visitados.</p>
-          </div>
-        </div>
-      </div> 
-
+      <button class="muralha-nav muralha-nav-next" type="button" aria-label="Marco seguinte" id="muralhaNext">
+        <i class="fas fa-chevron-right"></i>
+      </button>
     </div>
   </section>
 
