@@ -28,14 +28,10 @@ export default defineConfig({
       }
     }
   },
-  resolve: {
+resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
       '@components': resolve(__dirname, './components')
     }
   }
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> ab6c34930675a2be95c5cba4fbea6f5316e191bf
