@@ -1,18 +1,18 @@
 const COMPONENTES_MAPA = {
     'header-container': {
-        path: './menu/header.js',
+        path: '/menu/header.js',
         init: (modulo, elemento) => {
             modulo.inicializarHeader();
         }
     },
     'container-locais': {
-        path: './cartao/cartao.js',
+        path: '/cartao/cartao.js',
         init: (modulo, elemento) => {
             modulo.renderizarGradeTuristica();
         }
     },
     'map-container': {
-        path: './mapa/mapa.js',
+        path: '/mapa/mapa.js',
         init: (modulo, elemento) => {
             window.InstanciaMapaGlobal = new modulo.ModuloMapa('map-container', {
                 centro: [38.4445, -9.1015],
