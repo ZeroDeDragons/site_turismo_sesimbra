@@ -1,22 +1,19 @@
 const COMPONENTES_MAPA = {
     'header-container': {
-        // Deixamos apenas o nome da pasta e do arquivo aqui
-        pasta: 'menu',
-        arquivo: 'header.js',
+        // Guardamos apenas o subcaminho exato aqui
+        path: 'menu/header.js', 
         init: (modulo, elemento) => {
             modulo.inicializarHeader();
         }
     },
     'container-locais': {
-        pasta: 'cartao',
-        arquivo: 'cartao.js',
+        path: 'cartao/cartao.js',
         init: (modulo, elemento) => {
             modulo.renderizarGradeTuristica();
         }
     },
     'map-container': {
-        pasta: 'mapa',
-        arquivo: 'mapa.js',
+        path: 'mapa/mapa.js',
         init: (modulo, elemento) => {
             window.InstanciaMapaGlobal = new modulo.ModuloMapa('map-container', {
                 centro: [38.4445, -9.1015],
@@ -33,9 +30,10 @@ async function carregarComponentesNecessarios() {
     const promises = componentesAcarregar.map(async (id) => {
         const config = COMPONENTES_MAPA[id];
         try {
-            // A MÁGICA ESTÁ AQUI: O Vite exige ver o "./" escrito explicitamente 
-            // seguido de uma parte do caminho para incluir os arquivos no build!
-            const modulo = await import(`./${config.pasta}/${config.arquivo}`);
+            // AQUI ESTÁ O SEGREDO:
+            // Deixamos o './' fixo para o seu notebook funcionar localmente,
+            // e usamos a template string para forçar o Vite a incluir essas subpastas no build final!
+            const modulo = await import(`./${config.path}`); 
             const elementoAlvo = document.getElementById(id);
 
             if (config.init) {
