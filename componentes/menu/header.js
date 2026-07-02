@@ -1,17 +1,9 @@
 import { ChamarServidor } from '../../serviços/api.js';
-
+import './header.css';
 let perfilUtilizador = null;
 
 export async function inicializarHeader() {
     const container = document.getElementById('header-container');
-
-    if (!document.getElementById('link-estilo-header')) {
-        const linkCSS = document.createElement('link');
-        linkCSS.id = 'link-estilo-header';
-        linkCSS.rel = 'stylesheet';
-        linkCSS.href = '/componentes/menu/header.css';
-        document.head.appendChild(linkCSS);
-    }
 
     try {
         await verificarSessaoNoServidor();
