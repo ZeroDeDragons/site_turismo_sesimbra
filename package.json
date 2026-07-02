@@ -7,18 +7,20 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "node server.js",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\""
+    "netlify:dev": "netlify dev",
+    "netlify:build": "netlify build",
+    "netlify:deploy": "netlify deploy --prod",
+    "clean": "rm -rf dist .netlify",
+    "reset": "npm run clean && npm install",
+    "setup": "npm install && cp .env.example .env"
   },
   "devDependencies": {
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "@netlify/functions": "^2.8.0",
+    "netlify-cli": "^17.0.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "concurrently": "^10.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "nodemailer": "^9.0.0"
+    "dotenv": "^17.4.2"
   }
 }
