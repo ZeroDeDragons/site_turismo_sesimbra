@@ -1,6 +1,5 @@
 const COMPONENTES_MAPA = {
     'header-container': {
-        // Guardamos apenas o subcaminho exato aqui
         path: 'menu/header.js', 
         init: (modulo, elemento) => {
             modulo.inicializarHeader();
@@ -30,9 +29,7 @@ async function carregarComponentesNecessarios() {
     const promises = componentesAcarregar.map(async (id) => {
         const config = COMPONENTES_MAPA[id];
         try {
-            // AQUI ESTÁ O SEGREDO:
-            // Deixamos o './' fixo para o seu notebook funcionar localmente,
-            // e usamos a template string para forçar o Vite a incluir essas subpastas no build final!
+            // Usando template string mantendo o "./" para o ambiente de dev local
             const modulo = await import(`./${config.path}`); 
             const elementoAlvo = document.getElementById(id);
 
