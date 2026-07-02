@@ -1,0 +1,24 @@
+# Ambientes e Segredos (Super Importante)
+.env
+.env.local
+.env.*.local
+
+# Dependências
+node_modules/
+
+# Logs e Ficheiros Locais do Netlify
+.netlify/
+.netlify-spool/
+
+# Builds / Ficheiros gerados pelo Vite
+dist/
+dist-ssr/
+*.local
+
+# Base de Dados / Ficheiros SQL locais
+sql.sql
+*.sql
+
+# Ficheiros do Sistema Operativo
+.DS_Store
+Thumbs.db
