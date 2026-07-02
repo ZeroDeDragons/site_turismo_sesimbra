@@ -21,7 +21,11 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         perfil: resolve(__dirname, 'perfil.html'),
         paginaadmin: resolve(__dirname, 'paginaadmin.html'),
-        login: resolve(__dirname, 'login.html')
+        login: resolve(__dirname, 'login.html'),
+        // FORÇANDO O VITE A ENCONTRAR E COMPILAR OS SEUS COMPONENTES:
+        header: resolve(__dirname, 'componentes/menu/header.js'),
+        cartao: resolve(__dirname, 'componentes/cartao/cartao.js'),
+        mapa: resolve(__dirname, 'componentes/mapa/mapa.js')
       }
     }
   },
