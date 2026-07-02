@@ -1,18 +1,22 @@
 const COMPONENTES_MAPA = {
     'header-container': {
-        path: '/menu/header.js',
+        // Deixamos apenas o nome da pasta e do arquivo aqui
+        pasta: 'menu',
+        arquivo: 'header.js',
         init: (modulo, elemento) => {
             modulo.inicializarHeader();
         }
     },
     'container-locais': {
-        path: '/cartao/cartao.js',
+        pasta: 'cartao',
+        arquivo: 'cartao.js',
         init: (modulo, elemento) => {
             modulo.renderizarGradeTuristica();
         }
     },
     'map-container': {
-        path: '/mapa/mapa.js',
+        pasta: 'mapa',
+        arquivo: 'mapa.js',
         init: (modulo, elemento) => {
             window.InstanciaMapaGlobal = new modulo.ModuloMapa('map-container', {
                 centro: [38.4445, -9.1015],
@@ -24,13 +28,14 @@ const COMPONENTES_MAPA = {
 
 async function carregarComponentesNecessarios() {
     const idsDosComponentes = Object.keys(COMPONENTES_MAPA);
-
     const componentesAcarregar = idsDosComponentes.filter(id => document.getElementById(id) !== null);
 
     const promises = componentesAcarregar.map(async (id) => {
         const config = COMPONENTES_MAPA[id];
         try {
-            const modulo = await import(config.path);
+            // A MÁGICA ESTÁ AQUI: O Vite exige ver o "./" escrito explicitamente 
+            // seguido de uma parte do caminho para incluir os arquivos no build!
+            const modulo = await import(`./${config.pasta}/${config.arquivo}`);
             const elementoAlvo = document.getElementById(id);
 
             if (config.init) {
