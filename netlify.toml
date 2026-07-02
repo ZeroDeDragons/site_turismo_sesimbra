@@ -4,10 +4,11 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
 
 [functions]
   node_bundler = "esbuild"
+  node_version = "22" # <--- Adicione esta linha aqui!
 
 [dev]
   framework = "vite"
@@ -16,13 +17,11 @@
   targetPort = 3000
   publish = "dist"
 
-# 1º As funções/API (Regra mais específica primeiro!)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# 2º O Frontend (Regra geral em último)
 [[redirects]]
   from = "/*"
   to = "/index.html"
