@@ -12,7 +12,7 @@ export class GerenciadorCartoes {
         div.innerHTML = `
             <div class="cartao" data-id="${dado.id}" data-tipo="${tipo}">
                 <div class="cartao-img-wrapper">
-                    <img class="cartao-img" src="${dado.fotos?.[0]?.url || 'https://via.placeholder.com/300'}" alt="${dado.nome}">
+                    <img class="cartao-img" src="${dado.fotos?.[0]?.url || '/imagem/logo.png'}" alt="${dado.nome}">
                     <button class="seta seta-esquerda" style="display: ${dado.fotos?.length > 1 ? 'block' : 'none'}">◀</button>
                     <button class="seta seta-direita" style="display: ${dado.fotos?.length > 1 ? 'block' : 'none'}">▶</button>
                 </div>

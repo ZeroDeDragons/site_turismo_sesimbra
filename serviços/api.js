@@ -30,7 +30,7 @@ export async function ChamarServidor(functionName, options = {}) {
 
         return data;
     } catch (error) {
-        console.error(`❌ Falha crítica em ${functionName}:`, error.message);
+        console.error(` Falha crítica em ${functionName}:`, error.message);
         throw error;
     }
 }
@@ -43,18 +43,11 @@ export async function obterDadosTurismo(forcarAtualizacao = false) {
     try {
         const dados = await ChamarServidor('mapa', { method: 'GET' });
 
-        // Estrutura padronizada dos dados
         cacheDadosTurismo = {
             locais: dados.locais || [],
             rotas: dados.rotas || []
         };
 
-        // Substitua a linha do seu console.log por isso:
-        console.log(" --- LOCAIS RECEBIDOS ---");
-        console.table(cacheDadosTurismo.locais);
-
-        console.log(" --- ROTAS RECEBIDAS ---");
-        console.table(cacheDadosTurismo.rotas);
         return cacheDadosTurismo;
     } catch (erro) {
         throw erro;
