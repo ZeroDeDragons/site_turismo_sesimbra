@@ -1,7 +1,6 @@
-require('dotenv').config(); 
-const { createClient } = require('@supabase/supabase-js');
+import { supabase } from './supabaseClient.js';
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     if (event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
@@ -11,19 +10,6 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-        if (!supabaseUrl || !supabaseKey) {
-            return {
-                statusCode: 500,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: 'Chaves do Supabase não configuradas.' })
-            };
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
         const { data: dadosLocais, error: erroLocais } = await supabase
             .from('Local')
             .select(`
@@ -125,18 +111,13 @@ exports.handler = async (event, context) => {
             };
         });
 
-        const resposta = {
-            locais: locaisFormatados,
-            rotas: rotasFormatadas
-        };
-
         return {
             statusCode: 200,
             headers: { 
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: JSON.stringify(resposta)
+            body: JSON.stringify({ locais: locaisFormatados, rotas: rotasFormatadas })
         };
 
     } catch (erroCritico) {
