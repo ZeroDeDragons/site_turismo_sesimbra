@@ -19,7 +19,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        perfil: resolve(__dirname, 'perfil.html'),
         paginaAdmin: resolve(__dirname, 'paginaAdmin.html'),
         login: resolve(__dirname, 'login.html'),
         registo: resolve(__dirname, 'registo.html'),
@@ -35,4 +34,8 @@ export default defineConfig({
       '@components': resolve(__dirname, './components')
     }
   }
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> ab6c34930675a2be95c5cba4fbea6f5316e191bf
