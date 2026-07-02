@@ -20,6 +20,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         paginaAdmin: resolve(__dirname, 'paginaAdmin.html'),
+        historiaCastelo: resolve(__dirname, 'historiaCastelo.html'),
         login: resolve(__dirname, 'login.html'),
         registo: resolve(__dirname, 'registo.html'),
         header: resolve(__dirname, 'componentes/menu/header.js'),
