@@ -6,9 +6,15 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Estrutura corrigida para as funções
 [functions]
   node_bundler = "esbuild"
-  node_version = "22" # <--- Adicione esta linha aqui!
+
+[functions.mapa]
+  node_version = "22"
+
+[functions.verificarsessao]
+  node_version = "22"
 
 [dev]
   framework = "vite"
