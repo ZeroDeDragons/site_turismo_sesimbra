@@ -10,6 +10,7 @@ export class ModuloMapa {
             console.error(`Container #${idContainer} não encontrado.`);
             return;
         }
+        window.InstanciaMapaGlobal = this;
 
         this.mapa = L.map(idContainer).setView(config.centro, config.zoom);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -18,7 +19,7 @@ export class ModuloMapa {
 
         this.pontosManager = new GerenciadorPontos(this.mapa);
         this.rotasManager = new GerenciadorRotas(this.mapa); // Novo
-        
+
         this.inicializarPlugins();
         this.capturarLocalizacaoUtilizador(); // Atende ao requisito do modo autocarro
         this.carregarDadosIniciais();
@@ -28,7 +29,7 @@ export class ModuloMapa {
         try {
             const { locais, rotas } = await obterDadosTurismo();
             this.pontosManager.adicionarPontos(locais, 'local');
-            
+
             // Ativação da camada de rotas
             this.rotasManager.definirDadosRotas(rotas);
             await this.rotasManager.renderizarTodasAsRotas();
@@ -73,12 +74,8 @@ export class ModuloMapa {
         const marcador = this.pontosManager.obterMarcador(id, tipo);
         if (!marcador) return;
 
-        this.container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const coordenadas = marcador.getLatLng();
-        this.mapa.setView(coordenadas, 16, { animate: true, duration: 0.5 });
-        
-        this.mapa.once('moveend', () => {
-            this.pontosManager.mostrarPopup(id, tipo);
-        });
+        this.container.scrollIntoView({ behavior: 'smooth' });
+
+        marcador.openPopup();
     }
 }

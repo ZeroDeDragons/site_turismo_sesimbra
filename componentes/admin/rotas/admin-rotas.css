@@ -1,0 +1,417 @@
+/* src/admin/rotas/admin-rotas.css */
+.admin-rotas-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 650px;
+    margin: 20px auto;
+    border-left: 5px solid #8b5cf6;
+}
+
+.admin-rotas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-rotas-header h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 18px;
+}
+
+.badge-ponto-nome {
+    background: #e2e8f0;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.rotas-selecionado-vazio {
+    padding: 30px 20px;
+    text-align: center;
+    color: #64748b;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+.rotas-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.select-rota {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    min-width: 200px;
+}
+
+.rota-detalhes {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.rota-info {
+    margin-bottom: 16px;
+}
+
+.rota-info h4 {
+    margin: 0 0 4px 0;
+    color: #1e293b;
+    font-size: 16px;
+}
+
+.rota-descricao {
+    color: #64748b;
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.segmentos-count {
+    display: inline-block;
+    background: #e2e8f0;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.segmentos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 8px 0;
+    font-weight: 600;
+    color: #475569;
+    font-size: 14px;
+}
+
+.segmentos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.segmento-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.segmento-item:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+}
+
+.segmento-ordem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ordem-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.ordem-botoes {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.btn-mover-segmento {
+    background: none;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: #64748b;
+    border-radius: 4px;
+}
+
+.btn-mover-segmento:hover:not(:disabled) {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.btn-mover-segmento:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.segmento-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.segmento-pontos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.ponto-nome {
+    color: #1e293b;
+}
+
+.ponto-destacado {
+    background: #dbeafe;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: #1d4ed8;
+}
+
+.segmento-seta {
+    color: #94a3b8;
+    font-weight: 300;
+}
+
+.segmento-acoes {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-remover-segmento {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #ef4444;
+    transition: background 0.2s;
+}
+
+.btn-remover-segmento:hover {
+    background: #fef2f2;
+}
+
+.rotas-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-pequeno {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+.sem-segmentos {
+    text-align: center;
+    color: #94a3b8;
+    padding: 20px;
+    font-style: italic;
+}
+
+.btn-primary {
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #7c3aed;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* Botão de apagar rota */
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+/* Estilo para o botão quando está desabilitado */
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Melhorias para o seletor de rotas */
+.rotas-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.rotas-selector label {
+    font-weight: 600;
+    color: #475569;
+    font-size: 14px;
+}
+/* Formulário de nova rota */
+.form-nova-rota {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-nova-rota .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-nova-rota .form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.form-nova-rota .form-group input[type="text"],
+.form-nova-rota .form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-nova-rota .form-group input[type="text"]:focus,
+.form-nova-rota .form-group textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-nova-rota .form-group input[type="color"] {
+    width: 50px;
+    height: 40px;
+    padding: 2px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.form-nova-rota .checkbox-categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.form-nova-rota .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.form-nova-rota .checkbox-item:hover {
+    border-color: #8b5cf6;
+    background: #f5f3ff;
+}
+
+.form-nova-rota .checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Ajustes para o botão voltar */
+#btn-voltar-rotas {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}

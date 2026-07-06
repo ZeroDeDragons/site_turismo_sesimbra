@@ -3,7 +3,7 @@ const modulosGlobais = import.meta.glob('./**/*.js');
 
 const COMPONENTES_MAPA = {
     'header-container': {
-        path: './menu/header.js', 
+        path: './menu/header.js',
         init: (modulo, elemento) => {
             modulo.inicializarHeader();
         }
@@ -22,6 +22,32 @@ const COMPONENTES_MAPA = {
                 zoom: 13
             });
         }
+    },
+    'container-admin-categorias': {
+        path: './admin/categoria/admin-categorias.js',
+        init: (modulo, elementoAlvo) => {
+            // Auto-instancia o painel administrativo passando o elemento HTML encontrado
+            new modulo.ComponenteCategoriasAdmin(elementoAlvo);
+        }
+    },
+    'container-admin-pontos': {
+        path: './admin/pontos/admin-pontos.js', // Ajuste o caminho conforme a sua árvore de pastas
+        init: (modulo, elementoAlvo) => {
+            // Instancia a classe passando a div correspondente do HTML
+            new modulo.ComponentePontosAdmin(elementoAlvo);
+        }
+    },
+    'container-admin-rotas': {
+        path: './admin/rotas/admin-rotas.js',
+        init: (modulo, elementoAlvo) => {
+            new modulo.ComponenteRotasAdmin(elementoAlvo);
+        }
+    },
+    'container-admin-rotas': {
+        path: './admin/rotas/admin-rotas.js',
+        init: (modulo, elementoAlvo) => {
+            new modulo.ComponenteRotasAdmin(elementoAlvo);
+        }
     }
 };
 
@@ -34,7 +60,7 @@ async function carregarComponentesNecessarios() {
         try {
             // Buscamos a função de importação que o Vite mapeou no glob
             const importarModulo = modulosGlobais[config.path];
-            
+
             if (!importarModulo) {
                 throw new Error(`Caminho não encontrado no mapeamento do Vite: ${config.path}`);
             }
@@ -46,7 +72,6 @@ async function carregarComponentesNecessarios() {
             if (config.init) {
                 config.init(modulo, elementoAlvo);
             }
-            console.log(` Componente para a ID [#${id}] carregado com sucesso.`);
         } catch (erro) {
             console.error(` Erro ao carregar o componente para a ID [#${id}]:`, erro);
         }

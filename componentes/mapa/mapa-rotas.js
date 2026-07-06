@@ -1,3 +1,4 @@
+// mapa-rotas.js
 import { converterCoordenadas } from './mapa-util.js';
 import { CarrisService } from './carris-service.js';
 import { MapEvents, dispararEvento } from './mapa-eventos.js';
@@ -22,199 +23,162 @@ export class GerenciadorRotas {
     }
 
     /**
-     * Desenha todas as rotas em modo visão geral
+     * Desenha todas as rotas em modo visão geral unindo os segmentos reais
      */
     async renderizarTodasAsRotas() {
         this.limparMapasDeRotas();
         this.modoFocoAtivo = false;
 
         for (const rota of this.dadosRotasOriginais) {
-            const corRota = rota.categoria?.cor || '#23769d';
+            const corRota = rota.cor || rota.categoria?.cor || '#23769d';
             this.rotasCamadas[rota.id] = L.featureGroup().addTo(this.mapa);
 
-            // Se a rota possui múltiplos segmentos mapeados por ID no BD
-            // No mock do Netlify temos 'coordenadas' fixas, vamos iterar sobre os pares
-            const coords = rota.coordenadas || [];
-            
-            for (let i = 0; i < coords.length - 1; i++) {
-                const p1 = converterCoordenadas(coords[i]);
-                const p2 = converterCoordenadas(coords[i+1]);
-                
-                if (p1 && p2) {
-                    const dadosCaminho = await CarrisService.obterCaminhoReal(p1, p2, 'foot');
-                    const coordenadasInvertidasParaLeaflet = dadosCaminho.geometria.coordinates.map(c => [c[1], c[0]]);
-                    
-                    const polyline = L.polyline(coordenadasInvertidasParaLeaflet, {
-                        color: corRota,
-                        weight: 4,
-                        opacity: 0.8
-                    });
-
-                    this.adicionarPopupGeral(polyline, rota, dadosCaminho);
-                    this.rotasCamadas[rota.id].addLayer(polyline);
-                }
+            if (!rota.trajeto || !Array.isArray(rota.trajeto) || rota.trajeto.length === 0) {
+                continue;
             }
+
+            // Desenha cada segmento que compõe a rota
+            rota.trajeto.forEach((segmento, index) => {
+                // Inverte de GeoJSON [lng, lat] para o padrão Leaflet [lat, lng]
+                const coordA = [segmento.ponto_A.coordinates[1], segmento.ponto_A.coordinates[0]];
+                const coordB = [segmento.ponto_B.coordinates[1], segmento.ponto_B.coordinates[0]];
+
+                const polyline = L.polyline([coordA, coordB], {
+                    color: corRota,
+                    weight: 5,
+                    opacity: 0.6,
+                    dashArray: '1, 5' // Estilo pontilhado discreto para visão geral
+                }).addTo(this.rotasCamadas[rota.id]);
+
+                // Adiciona o popup informativo contendo os detalhes desse trecho
+                this.adicionarPopupAoSegmento(polyline, rota, segmento, index + 1, 0);
+
+                // Permite clicar na linha para focar na rota inteira
+                polyline.on('click', () => {
+                    this.focarEmRota(rota.id, 'foot');
+                });
+            });
         }
     }
 
     /**
-     * Foca em uma rota específica e renderiza com base no modo de transporte selecionado
+     * Foca em uma rota específica e reconstrói o trajeto usando OSRM (Caminho Real por Ruas)
+     * de acordo com o modo de transporte para cada segmento dela.
      */
-    async focarEmRota(idRota, modoTransporte = 'foot', inverterSentido = false) {
+    async focarEmRota(id, modo = 'foot', inverterSentido = false) {
+        const rota = this.dadosRotasOriginais.find(r => r.id === id);
+        if (!rota || !rota.trajeto) return;
+
         this.limparMapasDeRotas();
         this.modoFocoAtivo = true;
-        this.rotaFocadaId = idRota;
-        this.modoTransporteAtual = modoTransporte;
+        this.rotaFocadaId = id;
+        this.modoTransporteAtual = modo;
 
-        const rota = this.dadosRotasOriginais.find(r => r.id === idRota);
-        if (!rota) return;
+        this.rotasCamadas[id] = L.featureGroup().addTo(this.mapa);
 
-        this.rotasCamadas[idRota] = L.featureGroup().addTo(this.mapa);
-        let coords = [...(rota.coordenadas || [])];
-
+        // Se solicitado, clona e inverte a ordem dos segmentos e os pontos internos deles
+        let segmentos = JSON.parse(JSON.stringify(rota.trajeto));
         if (inverterSentido) {
-            coords.reverse();
+            segmentos.reverse().forEach(seg => {
+                const temp = seg.ponto_A;
+                seg.ponto_A = seg.ponto_B;
+                seg.ponto_B = temp;
+            });
         }
 
-        // Regra 5: Ordenação não sequencial por proximidade do utilizador
-        if (this.posicaoUtilizador && coords.length > 2) {
-            coords = this.ordenarSegmentosPorProximidade(coords, this.posicaoUtilizador);
-        }
+        let tempoTotalAcumulado = 0;
+        const limitesMapa = L.latLngBounds();
 
-        if (modoTransporte === 'autocarro') {
-            // Processamento Especial Carris
-            const pPrimeiro = converterCoordenadas(coords[0]);
-            const pUltimo = converterCoordenadas(coords[coords.length - 1]);
+        // Processa as ruas reais para cada um dos segmentos sequenciais da rota
+        for (let index = 0; index < segmentos.length; index++) {
+            const segmento = segmentos[index];
             
-            const dadosCarris = await CarrisService.obterDadosAutocarroTempoReal(pPrimeiro, pUltimo);
-            const latLngsAutocarro = dadosCarris.geometria.coordinates.map(c => [c[1], c[0]]);
+            // Formato Leaflet [lat, lng] vindo das coordenadas GeoJSON do banco
+            const cA = [segmento.ponto_A.coordinates[1], segmento.ponto_A.coordinates[0]];
+            const cB = [segmento.ponto_B.coordinates[1], segmento.ponto_B.coordinates[0]];
 
-            // Marcadores de paragem Carris
-            const iconeParagem = L.divIcon({ html: '🚌', className: 'marcador-paragem' });
-            L.marker(dadosCarris.paragemPartida.coordenadas, { icon: iconeParagem })
-                .bindPopup(`<b>Paragem Próxima:</b> ${dadosCarris.paragemPartida.nome}<br>Próximo veículo em: ${dadosCarris.paragemPartida.tempoRestanteMinutos} min`)
-                .addTo(this.rotasCamadas[idRota]);
-
-            const linhaCarris = L.polyline(latLngsAutocarro, { color: '#ffcc00', weight: 6, dashArray: '10, 10' });
-            this.adicionarPopupDetalhado(linhaCarris, rota, dadosCarris, true);
-            this.rotasCamadas[idRota].addLayer(linhaCarris);
-            
-            this.adicionarSetasDirecao(latLngsAutocarro, idRota);
-        } else {
-            // Modos de Superfície padrão (A pé / Carro)
-            for (let i = 0; i < coords.length - 1; i++) {
-                const p1 = converterCoordenadas(coords[i]);
-                const p2 = converterCoordenadas(coords[i+1]);
-
-                if (p1 && p2) {
-                    const dadosCaminho = await CarrisService.obterCaminhoReal(p1, p2, modoTransporte);
-                    const latLngs = dadosCaminho.geometria.coordinates.map(c => [c[1], c[0]]);
-
-                    // Estilização dinâmica por segmento se estiver em foco (Ex: tons alternados para diferenciar)
-                    const corSegmento = i % 2 === 0 ? '#e74c3c' : '#3498db';
-
-                    const polyline = L.polyline(latLngs, {
-                        color: corSegmento,
-                        weight: 5,
-                        opacity: 0.9
-                    });
-
-                    this.adicionarPopupDetalhado(polyline, rota, dadosCaminho, false, i+1);
-                    this.rotasCamadas[idRota].addLayer(polyline);
-
-                    // Adicionar texto com o nome do local/ponto no mapa
-                    L.marker(p1, { 
-                        icon: L.divIcon({ className: 'rotulo-ponto', html: `<span>Ponto ${i+1}</span>`, iconSize: [60, 20] }) 
-                    }).addTo(this.rotasCamadas[idRota]);
-
-                    this.adicionarSetasDirecao(latLngs, idRota);
+            try {
+                let dadosRua;
+                if (modo === 'autocarro') {
+                    // Modo Carris usa o serviço de tempo real
+                    dadosRua = await CarrisService.obterDadosAutocarroTempoReal(cA, cB);
+                } else {
+                    // Modo a pé (foot) ou carro usa OSRM direto
+                    dadosRua = await CarrisService.obterCaminhoReal(cA, cB, modo);
                 }
+
+                // Desenha a linha perfeitamente moldada às ruas reais obtidas pelo OSRM
+                const camadaGeometria = L.geoJSON(dadosRua.geometria, {
+                    style: {
+                        color: rota.cor || '#ff5722',
+                        weight: 6,
+                        opacity: 0.9
+                    }
+                }).addTo(this.rotasCamadas[id]);
+
+                const tempoMinutos = Math.round((dadosRua.duracao || dadosRua.tempoRestanteMinutos * 60 || 0) / 60);
+                tempoTotalAcumulado += tempoMinutos;
+
+                // Adiciona limites para ajustar o zoom da tela no final
+                camadaGeometria.eachLayer(layer => {
+                    if (layer.getBounds) limitesMapa.extend(layer.getBounds());
+                });
+
+                // Vincula o popup interativo a esse pedaço da rua real
+                this.adicionarPopupAoSegmento(camadaGeometria, rota, segmento, index + 1, tempoMinutos);
+
+            } catch (erro) {
+                console.error(`Erro ao traçar caminho real para o segmento ${segmento.id_segmento}:`, erro);
+                // Fallback: Desenha linha reta caso o OSRM falhe
+                const polylineFallback = L.polyline([cA, cB], { color: '#ecf0f1', weight: 4 }).addTo(this.rotasCamadas[id]);
+                limitesMapa.extend(cA);
+                limitesMapa.extend(cB);
             }
         }
 
-        // Ajusta o zoom do mapa para abranger a rota completa focada
-        const limites = this.rotasCamadas[idRota].getBounds();
-        if (limites.isValid()) this.mapa.fitBounds(limites, { padding: [50, 50] });
-    }
-
-    ordenarSegmentosPorProximidade(coords, localReferencia) {
-        // Ordena os pontos originais com base em qual está mais perto do local atual do utilizador
-        return [...coords].sort((a, b) => {
-            const pA = converterCoordenadas(a);
-            const pB = converterCoordenadas(b);
-            const distA = L.latLng(localReferencia).distanceTo(L.latLng(pA));
-            const distB = L.latLng(localReferencia).distanceTo(L.latLng(pB));
-            return distA - distB;
-        });
-    }
-
-    adicionarSetasDirecao(latLngs, idRota) {
-        // Implementação nativa simples usando SVG ou polilinhas curtas intermédias para indicar a direção (Ponto A -> B)
-        if (latLngs.length < 2) return;
-        const meio = latLngs[Math.floor(latLngs.length / 2)];
-        const proximo = latLngs[Math.floor(latLngs.length / 2) + 1];
-
-        if(meio && proximo) {
-            const iconeSeta = L.divIcon({
-                className: 'seta-direcao',
-                html: `<div style="transform: rotate(${this.calcularAngulo(meio, proximo)}deg);">➔</div>`,
-                iconSize: [20, 20]
-            });
-            L.marker(meio, { icon: iconeSeta }).addTo(this.rotasCamadas[idRota]);
+        // Ajusta a câmera do mapa para enquadrar a rota inteira perfeitamente na tela
+        if (limitesMapa.isValid()) {
+            this.mapa.fitBounds(limitesMapa, { padding: [50, 50] });
         }
+
+        dispararEvento(MapEvents.ROTA_SELECIONADA, { rota, modo, tempoTotal: tempoTotalAcumulado });
     }
 
-    calcularAngulo(p1, p2) {
-        return Math.atan2(p2[0] - p1[0], p2[1] - p1[1]) * 180 / Math.PI;
-    }
-
-    adicionarPopupGeral(polyline, rota, dadosCaminho) {
-        const distKm = (dadosCaminho.distancia / 1000).toFixed(2);
-        const tempoMin = Math.round(dadosCaminho.duracao / 60);
-
+    /**
+     * Cria e monta o HTML do Popup dinâmico para cada trecho/segmento da rota
+     */
+    adicionarPopupAoSegmento(polyline, rota, segmento, numSegmento, tempoMin) {
         const containerHtml = document.createElement('div');
-        containerHtml.innerHTML = `
-            <h4>${rota.nome}</h4>
-            <p><b>Distância:</b> ${distKm} km</p>
-            <p><b>Tempo Est.:</b> ${tempoMin} min</p>
-            <button class="btn-ver-detalhes" style="padding:4px 8px; cursor:pointer;">Ver Rota Detalhada</button>
-        `;
+        containerHtml.className = 'popup-rota-container';
 
-        containerHtml.querySelector('.btn-ver-detalhes').addEventListener('click', () => {
-            this.focarEmRota(rota.id, 'foot');
-        });
-
-        polyline.bindPopup(containerHtml);
-    }
-
-    adicionarPopupDetalhado(polyline, rota, dados, ehAutocarro = false, numSegmento = 1) {
-        const containerHtml = document.createElement('div');
-        const tempoMin = Math.round(dados.duracao / 60 || dados.duracaoSegundos / 60);
-
-        if (ehAutocarro) {
+        if (this.modoFocoAtivo) {
             containerHtml.innerHTML = `
-                <h4>Linha Carris ${dados.linha}</h4>
-                <p>${dados.nomeLinha}</p>
-                <p><b>Próxima paragem:</b> ${dados.paragemPartida.nome}</p>
-                <p><b>Próximo Horário Real:</b> ${dados.paragemPartida.tempoRestanteMinutos} min</p>
-                <hr/>
-                <button class="btn-inverter" style="margin-top:5px;">🔄 Inverter Sentido</button>
+                <h4>${rota.nome}</h4>
+                <p class="popup-trecho-label"><b>Trecho ${numSegmento}:</b> ${segmento.ponto_A.nome} ➔ ${segmento.ponto_B.nome}</p>
+                <p><b>Tempo estimado do trecho:</b> ${tempoMin || '...'} min</p>
+                <div class="popup-botoes-modos" style="margin-top: 8px;">
+                    <button class="btn-mudar-modo ${this.modoTransporteAtual === 'foot' ? 'ativo' : ''}" data-modo="foot">🚶 Peão</button>
+                    <button class="btn-mudar-modo ${this.modoTransporteAtual === 'carro' ? 'ativo' : ''}" data-modo="carro">🚗 Carro</button>
+                    <button class="btn-mudar-modo ${this.modoTransporteAtual === 'autocarro' ? 'ativo' : ''}" data-modo="autocarro">🚌 Carris</button>
+                </div>
+                <button class="btn-inverter" style="margin-top:8px; display:block; width:100%;">🔄 Inverter Sentido</button>
             `;
         } else {
             containerHtml.innerHTML = `
-                <h4>${rota.nome} - Segmento ${numSegmento}</h4>
-                <p><b>Tempo do Trecho:</b> ${tempoMin} min</p>
-                <div style="margin-top: 8px;">
-                    <button class="btn-mudar-modo" data-modo="foot">🚶</button>
-                    <button class="btn-mudar-modo" data-modo="carro">🚗</button>
-                    <button class="btn-mudar-modo" data-modo="autocarro">🚌 Carris</button>
-                </div>
-                <button class="btn-inverter" style="margin-top:8px; display:block;">🔄 Inverter Sentido</button>
+                <h4>${rota.nome}</h4>
+                <p>${rota.descricao || 'Sem descrição disponível.'}</p>
+                <p class="popup-trecho-label"><b>Trecho ${numSegmento}:</b> ${segmento.ponto_A.nome} ➔ ${segmento.ponto_B.nome}</p>
+                <button class="btn-focar-rota-popup" style="margin-top:8px; width:100%;">🗺️ Ver Detalhes e Direções</button>
             `;
         }
 
-        // Listeners dos botões internos do popup dinâmico
+        // Configura os ouvintes (listeners) dos botões injetados no popup
         setTimeout(() => {
+            const btnFocar = containerHtml.querySelector('.btn-focar-rota-popup');
+            if (btnFocar) {
+                btnFocar.addEventListener('click', () => this.focarEmRota(rota.id, 'foot'));
+            }
+
             containerHtml.querySelectorAll('.btn-mudar-modo').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const modo = e.currentTarget.getAttribute('data-modo');
@@ -222,17 +186,22 @@ export class GerenciadorRotas {
                 });
             });
 
-            containerHtml.querySelector('.btn-inverter').addEventListener('click', () => {
-                this.focarEmRota(rota.id, this.modoTransporteAtual, true);
-            });
-        }, 100);
+            const btnInverter = containerHtml.querySelector('.btn-inverter');
+            if (btnInverter) {
+                btnInverter.addEventListener('click', () => {
+                    this.focarEmRota(rota.id, this.modoTransporteAtual, true);
+                });
+            }
+        }, 50);
 
         polyline.bindPopup(containerHtml);
     }
 
     limparMapasDeRotas() {
         Object.keys(this.rotasCamadas).forEach(id => {
-            this.mapa.removeLayer(this.rotasCamadas[id]);
+            if (this.mapa.hasLayer(this.rotasCamadas[id])) {
+                this.mapa.removeLayer(this.rotasCamadas[id]);
+            }
         });
         this.rotasCamadas = {};
     }

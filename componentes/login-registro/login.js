@@ -45,7 +45,7 @@ async function executarProcessoLogin(botaoSubmit) {
         console.log('✅ Login efetuado com sucesso!');
         
         // Altere para a página interna da sua plataforma turística
-        window.location.href = '/dashboard.html'; 
+        window.location.href = '/index.html'; 
 
     } catch (erro) {
         alert(erro.message || 'Falha ao autenticar. Verifique os seus dados.');

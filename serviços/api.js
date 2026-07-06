@@ -1,20 +1,13 @@
 let cacheDadosTurismo = null;
 
-function obterHeaderAutenticacao() {
-    const token = localStorage.getItem('access_token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function ChamarServidor(functionName, options = {}) {
     const method = (options.method || 'GET').toUpperCase();
-    const comAutenticacao = options.comAutenticacao !== false;
 
     try {
         const response = await fetch(`/.netlify/functions/${functionName}`, {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
-                ...(comAutenticacao ? obterHeaderAutenticacao() : {}),
                 ...options.headers
             },
             body: method !== 'GET' && options.body ? JSON.stringify(options.body) : undefined,
@@ -56,5 +49,4 @@ export async function obterDadosTurismo(forcarAtualizacao = false) {
 
 export function limparCacheTurismo() {
     cacheDadosTurismo = null;
-    console.log(' API: Cache de dados turísticos limpo');
 }
