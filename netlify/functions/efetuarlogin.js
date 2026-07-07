@@ -1,11 +1,19 @@
-import { supabase } from './supabaseClient.js'; // Importante incluir a extensão .js no import
+import { supabase } from './supabaseClient.js'; 
 
-function responder(statusCode, corpo) {
-    return {
+function responder(statusCode, corpo, cookies = []) {
+    const resposta = {
         statusCode,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(corpo)
     };
+
+    if (cookies.length > 0) {
+        resposta.headers['Set-Cookie'] = cookies.join(', ');
+    }
+
+    return resposta;
 }
 
 export const handler = async (event, context) => {
@@ -24,7 +32,7 @@ export const handler = async (event, context) => {
             password: password,
         });
 
-        if (error || !data.user) {
+        if (error || !data.user || !data.session) {
             return responder(401, { message: error?.message || 'Credenciais inválidas.' });
         }
 
@@ -34,11 +42,11 @@ export const handler = async (event, context) => {
             .eq('id', data.user.id)
             .single();
 
+        const accessToken = data.session.access_token;
+        const maxAge = data.session.expires_in;
+        const tokenCookie = `sb-access-token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+
         const respostaOtimizada = {
-            session: {
-                access_token: data.session.access_token,
-                expires_at: data.session.expires_at
-            },
             user: {
                 id: data.user.id,
                 email: data.user.email,
@@ -47,7 +55,7 @@ export const handler = async (event, context) => {
             }
         };
 
-        return responder(200, respostaOtimizada);
+        return responder(200, respostaOtimizada, [tokenCookie]);
 
     } catch (erroCritico) {
         console.error(' Erro interno no backend ao efetuar login:', erroCritico.message);

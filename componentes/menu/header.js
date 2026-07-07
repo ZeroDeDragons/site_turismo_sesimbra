@@ -133,10 +133,13 @@ async function gerirCliquesHeader(e) {
 
 async function efetuarLogout() {
     try {
+        // O próprio servidor vai expirar o cookie HttpOnly ao receber esta chamada POST
         await ChamarServidor('logout', { method: 'POST' });
         perfilUtilizador = null;
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_info');
+        
+        // REMOVIDO: localStorage.removeItem('access_token'); (Não é mais necessário!)
+        localStorage.removeItem('user_info'); 
+        
         window.location.reload();
     } catch (error) {
         alert('Erro ao efetuar logout: ' + error.message);

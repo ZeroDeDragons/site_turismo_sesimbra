@@ -1,5 +1,18 @@
 import { supabase } from './supabaseClient.js';
 
+// Função auxiliar para extrair o valor de um cookie específico por nome
+function obterCookie(cookieString, nome) {
+    if (!cookieString) return null;
+    const cookies = cookieString.split(';');
+    for (let cookie of cookies) {
+        const [chave, valor] = cookie.trim().split('=');
+        if (chave === nome) {
+            return valor;
+        }
+    }
+    return null;
+}
+
 export const handler = async (event, context) => {
     if (event.httpMethod !== 'GET') {
         return {
@@ -10,9 +23,12 @@ export const handler = async (event, context) => {
     }
 
     try {
-        const autorizacao = event.headers.authorization || event.headers.Authorization;
+        // EXTRAÇÃO VIA COOKIE: Em vez de buscar no event.headers.authorization
+        const cookieHeader = event.headers.cookie || event.headers.Cookie;
+        const token = obterCookie(cookieHeader, 'sb-access-token');
 
-        if (!autorizacao) {
+        // Se o token não existir no cookie, consideramos visitante anónimo
+        if (!token) {
             return {
                 statusCode: 200,
                 headers: { 'Content-Type': 'application/json' },
@@ -20,7 +36,6 @@ export const handler = async (event, context) => {
             };
         }
 
-        const token = autorizacao.replace('Bearer ', '');
         const { data: { user }, error: erroSupabase } = await supabase.auth.getUser(token);
 
         if (erroSupabase || !user) {
