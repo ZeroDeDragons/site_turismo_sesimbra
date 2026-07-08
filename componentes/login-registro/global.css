@@ -89,7 +89,7 @@ body {
 .visual-body {
   position: relative;
   z-index: 1;
-  margin-bottom: 64px;
+  margin-bottom: 3px;
 }
 
 /* ── Tag pill ── */

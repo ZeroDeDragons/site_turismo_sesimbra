@@ -1,129 +1,188 @@
 /* ============================================================
-   VARIÁVEIS DE CORES (Mantidas)
+   VARIÁVEIS DE CORES (alinhadas com o resto do site)
    ============================================================ */
 :root {
-  --cor-borda: #eef2f6;
-  --cor-texto-principal: #2d3748;
-  --cor-texto-secundario: #718096;
-  --cor-botao-bg: #23769d;
-  --cor-botao-hover: #1a5b7a;
+  --pedra: #f0f5fc;
+  --pedra-escura: #dbe3f0;
+  --noite-atlantico: #37474f;
+  --azul-mar: #23769d;
+  --azul-mar-escuro: #1a5a7a;
+  --terracota: #979d23;
+  --terracota-escura: #7c821c;
+  --tinta: #37474f;
+  --tinta-suave: #686868;
+
+  --cor-borda: var(--pedra-escura);
+  --cor-texto-principal: var(--noite-atlantico);
+  --cor-texto-secundario: var(--tinta-suave);
+  --cor-botao-bg: var(--azul-mar);
+  --cor-botao-hover: var(--azul-mar-escuro);
 }
 
 /* ============================================================
-   MODIFICAÇÃO: ESTRUTURA DA GRADE EM LINHA HORIZONTAL
+   ESTRUTURA DA GRADE EM LINHA HORIZONTAL
    ============================================================ */
 .grade-de-cartoes {
-  display: flex;             /* 👈 Mudado de grid para flex (coloca em linha) */
-  flex-wrap: nowrap;         /* 👈 Impede que as cartas quebrem para a linha de baixo */
-  overflow-x: auto;          /* 👈 Ativa o scroll horizontal nativo se passarem do ecrã */
-  scroll-behavior: smooth;   /* 👈 Deixa a animação de deslizar suave */
-  gap: 16px;                 /* 👈 Espaçamento menor entre elas */
-  padding: 15px 5px;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  gap: 20px;
+  padding: 18px 6px 26px;
   width: 100%;
   box-sizing: border-box;
-  
-  /* Esconde a barra de scroll feia em navegadores modernos */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
+
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Esconde a barra de scroll no Chrome/Safari */
 .grade-de-cartoes::-webkit-scrollbar {
   display: none;
 }
 
 /* ============================================================
-   MODIFICAÇÃO: CARTÃO VERSÃO PEQUENA/COMPACTA
+   CARTÃO
    ============================================================ */
 .cartao {
-  background: #ffffff;
-  border-radius: 10px;       /* Cantos um pouco mais sutis para cartas menores */
+  background: linear-gradient(165deg, #ffffff 0%, #fbfaf5 100%);
+  border-radius: 3px 14px 3px 3px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 20px rgba(55,71,79,0.10), 0 2px 5px rgba(55,71,79,0.06);
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
   border: 1px solid var(--cor-borda);
-  
-  /* Definir tamanho fixo pequeno para a linha horizontal não as esmagar */
-  width: 220px;              /* 👈 Largura ideal para cartas pequenas */
-  min-width: 220px;          /* 👈 Impede o flexbox de encolher a carta */
+  border-top: 3px solid var(--azul-mar);
+  position: relative;
+
+  width: 240px;
+  min-width: 240px;
   box-sizing: border-box;
+  scroll-snap-align: start;
+}
+
+/* alterna a cor de destaque entre azul-mar e terracota */
+.grade-de-cartoes .cartao:nth-child(even) {
+  border-top-color: var(--terracota);
 }
 
 .cartao:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 30px rgba(55,71,79,0.16), 0 4px 8px rgba(55,71,79,0.08);
 }
 
-/* CONTAINER DA IMAGEM MAIS BAIXO */
+/* canto dobrado, como uma folha de pergaminho */
+.cartao::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 16px 16px 0;
+  border-color: transparent var(--azul-mar) transparent transparent;
+  opacity: 0.8;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.grade-de-cartoes .cartao:nth-child(even)::after {
+  border-color: transparent var(--terracota) transparent transparent;
+}
+.cartao:hover::after { opacity: 1; }
+
+/* CONTAINER DA IMAGEM */
 .cartao-img-wrapper {
   position: relative;
   width: 100%;
-  height: 130px;             /* 👈 Reduzido de 200px para 130px */
+  height: 140px;
   overflow: hidden;
-  background: #f7fafc;
+  background: var(--pedra);
 }
 
 .cartao-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
 }
 
-/* SETAS DO CARROSSEL ADAPTADAS */
+.cartao:hover .cartao-img {
+  transform: scale(1.06);
+}
+
+/* leve sombreado na base da imagem para a legenda "respirar" caso exista */
+.cartao-img-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent, rgba(20,30,35,0.28));
+  pointer-events: none;
+}
+
+/* SETAS DO CARROSSEL */
 .cartao .seta {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  width: 26px;               /* 👈 Setas ligeiramente menores */
-  height: 26px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(55,71,79,0.08);
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 5;
-  font-size: 10px;
-  color: var(--cor-texto-principal);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  font-size: 11px;
+  color: var(--noite-atlantico);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
-.cartao .seta-esquerda { left: 6px; }
-.cartao .seta-direita { right: 6px; }
+.cartao .seta:hover {
+  background: var(--terracota);
+  color: #fff;
+  transform: translateY(-50%) scale(1.08);
+}
+.cartao .seta-esquerda { left: 8px; }
+.cartao .seta-direita { right: 8px; }
 
-/* TEXTOS E ESPAÇAMENTOS COMPACTOS */
+/* TEXTOS E ESPAÇAMENTOS */
 .cartao-conteudo {
-  padding: 12px;             /* 👈 Padding reduzido para poupar espaço */
+  padding: 14px 15px 15px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  font-family: 'Nunito Sans', sans-serif;
 }
 
 .cartao-titulo {
-  font-size: 0.95rem;        /* 👈 Título menor */
+  font-family: 'Poppins', 'Nunito Sans', sans-serif;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--cor-texto-principal);
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   line-height: 1.3;
-  white-space: nowrap;       /* Corta o título se for muito grande */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .cartao-descricao {
-  font-size: 0.8rem;         /* 👈 Descrição menor */
+  font-size: 0.83rem;
   color: var(--cor-texto-secundario);
-  line-height: 1.4;
-  margin: 0 0 12px 0;
+  line-height: 1.5;
+  margin: 0 0 14px 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;     /* 👈 Limita a apenas 2 linhas para ficar compacto */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* BOTÃO COMPACTO */
+/* BOTÕES DO CARTÃO */
 .cartao-botoes-rodape {
   margin-top: auto;
   display: flex;
@@ -135,61 +194,87 @@
 .cartao-btn,
 .btn-popup-revelar-rotas {
   flex: 1;
-  padding: 6px 12px;         /* 👈 Botão mais fino */
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;         /* 👈 Texto do botão menor */
-  font-weight: 600;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
   text-align: center;
+  background: rgba(35,118,157,0.08);
+  color: var(--cor-botao-bg);
+  border-color: rgba(35,118,157,0.3);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.cartao-botoes-rodape button:hover,
+.cartao-btn:hover,
+.btn-popup-revelar-rotas:hover {
+  background: var(--cor-botao-hover);
+  border-color: var(--cor-botao-hover);
+  color: #fff;
 }
 
 .cartao-botoes-rodape button:first-child,
 .cartao-btn {
   background: var(--cor-botao-bg);
+  border-color: var(--cor-botao-bg);
   color: #ffffff;
+}
+.cartao-botoes-rodape button:first-child:hover,
+.cartao-btn:hover {
+  background: var(--azul-mar-escuro);
+  border-color: var(--azul-mar-escuro);
 }
 
 /* ============================================================
    AJUSTES EXCLUSIVOS PARA O CARTÃO DENTRO DO POPUP DO MAPA
    ============================================================ */
-
-/* Altera o comportamento da fábrica quando o cartão ganha a classe .cartao-modo-popup */
 .cartao-modo-popup {
   box-shadow: none !important;
   border: none !important;
   border-radius: 0 !important;
   width: 100% !important;
   min-width: 100% !important;
-  max-width: 230px !important; /* Limita a largura para o popup não estourar */
+  max-width: 230px !important;
   background: transparent !important;
 }
+.cartao-modo-popup::after { display: none !important; }
 
-/* Remove paddings excessivos que o Leaflet coloca por padrão */
 .leaflet-popup-content-wrapper {
   padding: 0 !important;
   overflow: hidden !important;
-  border-radius: 12px !important; /* Deixa o balão do mapa com cantos arredondados lindos */
+  border-radius: 10px !important;
 }
 
 .leaflet-popup-content {
   margin: 0 !important;
-  width: 230px !important; /* Força o tamanho correto do container interno */
+  width: 230px !important;
 }
 
-/* Ajusta o texto e os botões dentro do popup para ficarem compactos */
 .cartao-modo-popup .cartao-conteudo {
   padding: 12px !important;
 }
 
 .cartao-modo-popup .cartao-descricao {
   margin-bottom: 10px !important;
-  -webkit-line-clamp: 2 !important; /* No popup, força o texto a ter no máximo 2 linhas */
+  -webkit-line-clamp: 2 !important;
 }
 
-/* Remove o botão fechar nativo do Leaflet ou posiciona-o com elegância */
 .leaflet-popup-close-button {
-  color: #ffffff !important; /* Deixa o 'X' branco para contrastar com a foto */
+  color: #ffffff !important;
   padding: 8px !important;
   z-index: 10;
+}
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+@media (max-width: 600px){
+  .cartao{ width: 200px; min-width: 200px; }
+  .cartao-img-wrapper{ height: 120px; }
+  .cartao-titulo{ font-size: 0.92rem; }
+  .cartao-descricao{ font-size: 0.78rem; }
 }

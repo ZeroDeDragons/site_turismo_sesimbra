@@ -1,0 +1,256 @@
+  /* ===================== EXTENSÕES ESPECÍFICAS DA ADMINISTRAÇÃO =====================
+     Tudo o resto (header, cores, tipografia, footer, cartões, mapa) vem de index.css,
+     para que a Administração pareça exatamente a mesma "casa" que o site público. */
+
+  main.admin-main{ padding-top: 2.6rem; }
+
+  /* ---- fio de migalhas + título da secção ---- */
+  .admin-breadcrumb{
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--grey-text);
+    margin-bottom: 0.3rem;
+  }
+  .admin-breadcrumb strong{ color: var(--dark); }
+  .admin-breadcrumb .sep{ margin: 0 6px; color: #c2ccd2; }
+
+  .admin-heading{
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 1.8rem;
+  }
+  .admin-heading h1{
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    color: var(--dark);
+    padding-left: 1.1rem;
+    border-left: 4px solid var(--primary);
+  }
+  .admin-heading p{
+    font-family: 'Nunito Sans', sans-serif;
+    color: var(--grey-text);
+    font-size: 0.92rem;
+    padding-left: 1.1rem;
+    margin-top: 4px;
+  }
+
+  /* ---- pesquisa ---- */
+  .admin-search{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid var(--pedra-escura);
+    border-radius: 40px;
+    padding: 10px 20px;
+    min-width: 260px;
+    box-shadow: 0 4px 14px rgba(55,71,79,0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .admin-search:focus-within{
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px rgba(151,157,35,0.16);
+  }
+  .admin-search i{ color: #a7b4bb; transition: color 0.2s ease; }
+  .admin-search:focus-within i{ color: var(--primary); }
+  .admin-search input{
+    border: none;
+    outline: none;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.86rem;
+    width: 100%;
+    background: transparent;
+    color: var(--dark);
+  }
+  .admin-search input::placeholder{ color: #a7b4bb; }
+
+  /* ---- separador de secções (Conteúdo público / Gestão / Ferramentas) ---- */
+  .admin-group-label{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'Nunito Sans', sans-serif;
+    color: var(--secondary);
+    margin: 2.6rem 0 1.1rem;
+  }
+  .admin-group-label::after{
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--pedra-escura);
+  }
+  .admin-group-label:first-of-type{ margin-top: 0; }
+
+  /* ---- pílulas de navegação rápida ---- */
+  .admin-tabs{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 2.2rem;
+  }
+  .admin-tab{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    font-family: 'Nunito Sans', sans-serif;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    background: #fff;
+    border: 1px solid var(--pedra-escura);
+    color: var(--grey-text);
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(55,71,79,0.04);
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease,
+                box-shadow 0.16s ease, transform 0.1s ease;
+  }
+  .admin-tab:hover{
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(151,157,35,0.14);
+  }
+  .admin-tab:active{
+    transform: translateY(0.5px) scale(0.99);
+    box-shadow: 0 1px 3px rgba(55,71,79,0.08);
+  }
+  .admin-tab.active{
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(151,157,35,0.30);
+  }
+  .admin-tab.active:hover{
+    color: #fff;
+    border-color: var(--primary-dark);
+    background: var(--primary-dark);
+  }
+
+  .admin-tab-spacer{ margin-left: auto; }
+
+  /* CTA principal — mesma linguagem dos botões do hero (index.html), adaptada a fundo claro */
+  .admin-tab.ghost{
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+    border-color: transparent;
+    color: #fff;
+    padding: 10px 24px 10px 20px;
+    box-shadow: 0 8px 18px rgba(35,118,157,0.28);
+  }
+  .admin-tab.ghost i{ font-size: 0.82rem; transition: transform 0.2s ease; }
+  .admin-tab.ghost:hover{
+    background: linear-gradient(135deg, var(--secondary-dark), var(--secondary-dark));
+    color: #fff;
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(35,118,157,0.36);
+  }
+  .admin-tab.ghost:hover i{ transform: translateX(3px); }
+  .admin-tab.ghost:active{
+    transform: translateY(0.5px) scale(0.99);
+    box-shadow: 0 5px 12px rgba(35,118,157,0.30);
+  }
+
+  /* ---- painéis de gestão (cartão "administrativo") ---- */
+  .admin-panel{
+    background: linear-gradient(165deg, #ffffff 0%, #fbfaf5 100%);
+    border: 1px solid var(--pedra-escura);
+    border-top: 3px solid var(--secondary);
+    border-radius: 3px 10px 3px 3px;
+    box-shadow: 0 8px 20px rgba(55,71,79,0.10), 0 2px 5px rgba(55,71,79,0.06);
+    margin-bottom: 2.6rem;
+    overflow: hidden;
+    scroll-margin-top: 24px;
+  }
+  .admin-panel-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 24px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--pedra-escura);
+  }
+  .admin-panel-header h2{
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .admin-panel-header h2 i{ color: var(--primary); font-size: 0.95rem; }
+  .admin-panel-header .count-pill{
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--secondary-dark);
+    background: rgba(35,118,157,0.10);
+    padding: 4px 13px;
+    border-radius: 20px;
+  }
+  .admin-panel-body{ padding: 22px 24px 26px; }
+  .admin-panel-body.no-pad{ padding: 0; }
+
+  .admin-panel .grade-de-cartoes{
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    gap: 16px;
+    padding: 4px 2px 12px;
+    margin-bottom: 0;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .admin-panel .grade-de-cartoes::-webkit-scrollbar{ display: none; }
+  .admin-panel .grade-de-cartoes .cartao{ min-width: 260px; }
+
+  .admin-panel-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 1100px){ .admin-panel-grid{ grid-template-columns: 1fr; } }
+
+  .empty-state{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 22px 18px;
+    color: var(--grey-text);
+    font-size: 0.86rem;
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--light-bg);
+    border: 1px dashed var(--pedra-escura);
+    border-radius: 10px;
+  }
+  .empty-state i{ color: #b8c2ca; font-size: 1rem; }
+
+  #map-container-admin{
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 600px){
+    .admin-heading{ align-items: flex-start; }
+    .admin-search{ width: 100%; }
+    .admin-tab-spacer{ margin-left: 0; }
+  }

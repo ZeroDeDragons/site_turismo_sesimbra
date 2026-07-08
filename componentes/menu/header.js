@@ -92,6 +92,8 @@ function fecharDropdown(navItem) {
 
 async function gerirCliquesHeader(e) {
     const userBtn = e.target.closest('#botao_usuario');
+    const inicioBtn = e.target.closest('#botao_inicio');
+    const patrimonioBtn = e.target.closest('#botao_patrimonio');
     const profileBtn = e.target.closest('#botao_perfil');
     const adminBtn = e.target.closest('#botao_admin');
     const logoutBtn = e.target.closest('#botao_login'); // o botão "Sair" usa este id no HTML
@@ -106,6 +108,16 @@ async function gerirCliquesHeader(e) {
             userBtn.classList.toggle('active');
             userDropdown?.classList.toggle('show');
         }
+        return;
+    }
+
+    if (inicioBtn) {
+        window.location.href = '/index.html';
+        return;
+    }
+
+    if (patrimonioBtn) {
+        window.location.href = '/patrimonio.html';
         return;
     }
 

@@ -90,3 +90,13 @@
   width: auto;
   flex: 1;
 }
+
+
+
+
+/* ── Body block ── */
+.visual-body {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 50px;
+}
