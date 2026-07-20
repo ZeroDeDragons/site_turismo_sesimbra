@@ -1,0 +1,160 @@
+/* editar-pontos-rotas.css */
+:root {
+    --pedra: #f0f5fc;
+    --pedra-escura: #dbe3f0;
+    --noite-atlantico: #37474f;
+    --azul-mar: #23769d;
+    --azul-mar-escuro: #1a5a7a;
+    --terracota: #979d23;
+    --terracota-escura: #7c821c;
+    --tinta-suave: #686868;
+    --danger-vermelho: #d32f2f;
+    --danger-vermelho-escuro: #b71c1c;
+}
+
+/* Wrapper Principal da Carta */
+.admin-pontos-wrapper {
+    background: transparent; /* Removido o gradiente de fundo para adotar o do painel pai */
+    padding: 0; /* Removido padding extra para não duplicar com o .admin-panel-body */
+    box-shadow: none; /* Removida a sombra que gerava contornos indesejados */
+    font-family: 'Nunito Sans', system-ui, sans-serif;
+    width: 100%;
+}
+
+/* Formulário e Agrupamentos */
+.form-admin-ponto {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--noite-atlantico);
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group select {
+    padding: 10px 12px;
+    border: 1px solid var(--pedra-escura);
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+    color: var(--noite-atlantico);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: var(--azul-mar);
+    box-shadow: 0 0 0 3px rgba(35, 118, 157, 0.15);
+}
+
+/* Grelha de Categorias (Checkboxes) */
+.checkbox-categorias-grid {
+    background-color: var(--pedra);
+    border: 1px solid var(--pedra-escura);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--noite-atlantico);
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background-color 0.1s;
+}
+
+.checkbox-item:hover {
+    background-color: var(--pedra-escura);
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--azul-mar);
+    cursor: pointer;
+}
+
+/* Faixa de Ações Inferiores (Rodapé do formulário) */
+.form-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: none; /* REMOVIDA A LINHA/FAIXA DIVISÓRIA AQUI */
+}
+
+/* Estilização Geral dos Botões */
+.btn-primary, .btn-secondary, .btn-success, .btn-danger {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+.btn-primary:active, .btn-secondary:active, .btn-success:active, .btn-danger:active {
+    transform: scale(0.98);
+}
+
+/* Botão Primário (Azul) */
+.btn-primary {
+    background-color: var(--azul-mar);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: var(--azul-mar-escuro);
+}
+
+/* Botão Secundário (Cinza/Claro) */
+.btn-secondary {
+    background-color: var(--pedra);
+    color: var(--noite-atlantico);
+    border: 1px solid var(--pedra-escura);
+}
+.btn-secondary:hover {
+    background-color: var(--pedra-escura);
+}
+
+/* Botão de Sucesso (Verde) */
+.btn-success {
+    background-color: #2e7d32;
+    color: white;
+}
+.btn-success:hover {
+    background-color: #1b5e20;
+}
+
+/* Botão de Perigo/Eliminar (Vermelho) */
+.btn-danger {
+    background-color: var(--danger-vermelho);
+    color: white;
+}
+.btn-danger:hover {
+    background-color: var(--danger-vermelho-escuro);
+}

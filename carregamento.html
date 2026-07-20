@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* ==========================================================================
+   TELA DE CARREGAMENTO - SEQUENCIAL FLAT (CORRIGIDO)
+   ========================================================================== */
+
+        .custom-loader-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: #ffffff;
+            /* Fundo estritamente branco */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: opacity 0.6s var(--ease-out, ease-out), visibility 0.6s var(--ease-out, ease-out);
+        }
+
+        /* Container do Canvas de Animação */
+        .loader-canvas {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Painel Central com a Porcentagem (Ajustado ao tamanho da camada interna) */
+        .loader-center-panel {
+            position: absolute;
+            z-index: 10;
+            width: 154px;
+            height: 154px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--clr-border, #e5e7eb);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .loader-pct {
+            font-family: var(--ff-display, 'Poppins', sans-serif);
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--clr-ink, #1e2a32);
+            line-height: 1;
+        }
+
+        .loader-status {
+            font-family: var(--ff-body, 'Nunito Sans', sans-serif);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--clr-muted, #6b7280);
+            margin-top: 4px;
+        }
+
+        /* ── Camadas de Círculos Giratórios ── */
+        .loader-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Velocidades de rotação independentes e suaves */
+        .loader-layer--1 {
+            animation: spin-clockwise 20s linear infinite;
+        }
+
+        .loader-layer--2 {
+            animation: spin-counter 16s linear infinite;
+        }
+
+        .loader-layer--3 {
+            animation: spin-clockwise 12s linear infinite;
+        }
+
+        /* ── Peças/Blocos Planos e Finos ── */
+        .loader-block {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: var(--block-width, 20px);
+            height: var(--block-thickness, 8px);
+            /* Centralização precisa do ponto pivot */
+            margin-top: calc(var(--block-thickness, 8px) / -2);
+            margin-left: calc(var(--block-width, 20px) / -2);
+            transform-origin: center center;
+            opacity: 0;
+            visibility: hidden;
+            border-radius: 0;
+            /* Remove curvas para encaixe 100% perfeito (círculo contínuo) */
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+
+        /* Ativado via Javascript */
+        .loader-block.is-active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Cores planas baseadas na sua paleta original */
+        .loader-block--blue {
+            background-color: var(--clr-sea, #23769d);
+        }
+
+        .loader-block--green {
+            background-color: var(--clr-olive-lt, #b8be3a);
+        }
+
+        /* Animação de Entrada Linear Flat */
+        @keyframes fly-in {
+            0% {
+                opacity: 0;
+                transform: translate(var(--start-x), var(--start-y)) rotate(0deg) scale(0.6);
+            }
+
+            40% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 1;
+                /* Move o bloco de fora da tela e rotaciona 90 graus para tangenciar o círculo perfeito */
+                transform: rotate(var(--angle)) translateX(var(--radius)) rotate(90deg) scale(1);
+            }
+        }
+
+        /* Rotações Contínuas */
+        @keyframes spin-clockwise {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-counter {
+            from {
+                transform: rotate(360deg);
+            }
+
+            to {
+                transform: rotate(0deg);
+            }
+        }
+
+        .custom-loader-screen.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="custom-loader" class="custom-loader-screen">
+        <div class="loader-canvas" id="loader-canvas">
+            <div class="loader-center-panel">
+                <span class="loader-pct" id="loader-pct">0%</span>
+                <span class="loader-status">Carregando...</span>
+            </div>
+        </div>
+    </div>
+    <script src="carregar.js"></script>
+</body>
+
+</html>

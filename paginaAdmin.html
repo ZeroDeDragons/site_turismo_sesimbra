@@ -1,183 +1,178 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-<title>Administração — Castelo de Sesimbra</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <title>Administração — Castelo de Sesimbra</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="icon" type="image/png" href="Imagens/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="icon" type="image/png" href="Imagens/logo.png">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<link rel="stylesheet" href="./componentes/admin/paginaAdmin.css">
-<!-- mesma folha de estilo do site público: garante o header e a paleta idênticos -->
-<link rel="stylesheet" href="./componentes/index/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="./componentes/editar/paginaAdmin.css">
+  <link rel="stylesheet" href="./componentes/index/index.css">
 
 </head>
+
 <body>
 
-<header>
-  <div id="header-container">
-  </div>
-</header>
-
-<main class="admin-main">
-
-  <div class="admin-heading">
-    <div>
-      <div class="admin-breadcrumb">Administração <span class="sep">/</span> <strong>Visão geral</strong></div>
-      <h1>Painel de Administração</h1>
-      <p>Gerir locais, rotas e categorias do património do Concelho de Sesimbra.</p>
+  <header>
+    <div id="header-container">
     </div>
-    <div class="admin-search">
-      <i class="fas fa-search"></i>
-      <input type="text" id="adminSearch" placeholder="Pesquisar locais, rotas, categorias...">
+  </header>
+
+  <main class="admin-main">
+
+    <div class="admin-heading">
+      <div>
+        <div class="admin-breadcrumb">Administração <span class="sep">/</span> <strong>Visão geral</strong></div>
+        <h1>Painel de Administração</h1>
+        <p>Gerir locais, rotas e categorias do património do Concelho de Sesimbra.</p>
+      </div>
+      <div class="admin-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="adminSearch" placeholder="Pesquisar locais, rotas, categorias...">
+      </div>
     </div>
-  </div>
 
-  <div class="admin-tabs" id="filterRow">
-    <span class="admin-tab active" data-target="">Todos</span>
-    <span class="admin-tab" data-target="locais">Locais</span>
-    <span class="admin-tab" data-target="rotas">Rotas</span>
-    <span class="admin-tab" data-target="gestao-categorias">Categorias</span>
-    <span class="admin-tab" data-target="gestao-pontos">Pontos turísticos</span>
-    <span class="admin-tab ghost admin-tab-spacer" id="scrollToMap"><i class="fas fa-map"></i> Ver mapa</span>
-  </div>
-
-  <div class="admin-group-label">Conteúdo público</div>
-
-  <!-- Locais -->
-  <section class="admin-panel" id="locais">
-    <div class="admin-panel-header">
-      <h2><i class="fas fa-map-marker-alt"></i> Locais</h2>
-      <span class="count-pill" id="stat-locais">0 locais</span>
+    <div class="admin-tabs" id="filterRow">
+      <span class="admin-tab active" data-target="">Todos</span>
+      <span class="admin-tab" data-target="locais">Locais</span>
+      <span class="admin-tab" data-target="rotas">Rotas</span>
+      <span class="admin-tab" data-target="gestao-categorias">Categorias</span>
+      <span class="admin-tab" data-target="gestao-pontos">Pontos turísticos</span>
+      <span class="admin-tab ghost admin-tab-spacer" id="scrollToMap"><i class="fas fa-map"></i> Ver mapa</span>
     </div>
-    <div class="admin-panel-body">
-      <div id="container-locais" class="grade-de-cartoes"></div>
-    </div>
-  </section>
 
-  <!-- Rotas -->
-  <section class="admin-panel" id="rotas">
-    <div class="admin-panel-header">
-      <h2><i class="fas fa-route"></i> Rotas turísticas</h2>
-      <span class="count-pill" id="stat-rotas">0 rotas</span>
-    </div>
-    <div class="admin-panel-body">
-      <div id="container-rotas" class="grade-de-cartoes"></div>
-    </div>
-  </section>
+    <div class="admin-group-label">Conteúdo público</div>
 
-  <div class="admin-group-label">Gestão</div>
-
-  <div class="admin-panel-grid">
-    <section class="admin-panel" id="gestao-categorias">
+    <!-- Locais -->
+    <section class="admin-panel" id="locais">
       <div class="admin-panel-header">
-        <h2><i class="fas fa-tags"></i> Categorias</h2>
-        <span class="count-pill" id="stat-categorias">0</span>
+        <h2><i class="fas fa-map-marker-alt"></i> Locais</h2>
+        <span class="count-pill" id="stat-locais">0 locais</span>
       </div>
       <div class="admin-panel-body">
-        <div id="container-admin-categorias"></div>
+        <div id="container-locais" class="grade-de-cartoes"></div>
       </div>
     </section>
 
-    <section class="admin-panel" id="gestao-pontos">
+    <!-- Rotas -->
+    <section class="admin-panel" id="rotas">
       <div class="admin-panel-header">
-        <h2><i class="fas fa-map-pin"></i> Pontos turísticos</h2>
-        <span class="count-pill" id="stat-pontos">0</span>
+        <h2><i class="fas fa-route"></i> Rotas turísticas</h2>
+        <span class="count-pill" id="stat-rotas">0 rotas</span>
       </div>
       <div class="admin-panel-body">
-        <div id="container-admin-pontos" class="admin-pontos-wrapper"></div>
-        <div id="admin-local-editor"></div>
+        <div id="container-rotas" class="grade-de-cartoes"></div>
       </div>
     </section>
-  </div>
 
-  <section class="admin-panel" id="gestao-rotas">
-    <div class="admin-panel-header">
-      <h2><i class="fas fa-road"></i> Editor de rotas</h2>
-    </div>
-    <div class="admin-panel-body">
-      <div id="admin-rota-editor"></div>
-      <div id="container-admin-rotas" class="admin-rotas-wrapper"></div>
-    </div>
-  </section>
+    <div class="admin-group-label">Gestão</div>
 
-  <div class="admin-group-label">Ferramentas</div>
+    <div class="admin-panel-grid">
+      <section class="admin-panel" id="gestao-categorias">
+        <div class="admin-panel-header">
+          <h2><i class="fas fa-tags"></i> Categorias</h2>
+          <span class="count-pill" id="stat-categorias">0</span>
+        </div>
+        <div class="admin-panel-body">
+          <div id="container-admin-categorias"></div>
+        </div>
+      </section>
 
-  <!-- Mapa -->
-  <section class="admin-panel" id="mapa">
-    <div class="admin-panel-header">
-      <h2><i class="fas fa-map"></i> Mapa interativo</h2>
-    </div>
-    <div class="admin-panel-body no-pad">
-      <div id="map-container" class="admin-panel-body no-pad" style="height: 440px;"></div>
-    </div>
-  </section>
+      <section class="admin-panel" id="gestao-pontos">
+        <div class="admin-panel-header" style="display: flex; align-items: center; gap: 15px; width: 100%;">
+          <h2><i class="fas fa-map-pin"></i> Pontos turísticos</h2>
+          <div class="admin-pontos-header" style="margin-left: auto; display: flex; gap: 10px;">
+            <button id="btn-modo-ponto" class="btn-primary"> Novo Ponto</button>
+            <button id="btn-modo-rota" class="btn-secondary"> Nova Rota</button>
+          </div>
+        </div>
 
-</main>
+        <div id="container-editar-pontos-rotas" class="admin-pontos-wrapper admin-panel-body">
+        </div>
+      </section>
 
-<footer>
+      <div class="admin-group-label">Ferramentas</div>
+
+      <!-- Mapa -->
+      <section class="admin-panel" id="mapa">
+        <div class="admin-panel-header">
+          <h2><i class="fas fa-map"></i> Mapa interativo</h2>
+        </div>
+        <div class="admin-panel-body no-pad">
+          <div id="map-container" class="admin-panel-body no-pad" style="height: 440px;"></div>
+        </div>
+      </section>
+
+  </main>
+
+  <footer>
     <div class="container">
-        <div class="footer-content">
-            <div class="footer-column">
-                <h4>Castelo de Sesimbra</h4>
-                <p>Uma freguesia rica em história, natureza e tradições. Entre a serra e o mar, descubra património único e paisagens de tirar o fôlego.</p>
-                <div class="footer-social">
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="Youtube"><i class="fab fa-youtube"></i></a>
-                </div>
-            </div>
-            <div class="footer-column">
-                <h4>Links Rápidos</h4>
-                <ul>
-                    <li><a href="../index.html">Início</a></li>
-                    <li><a href="#rotas">Rotas Turísticas</a></li>
-                    <li><a href="#locais">Pontos Históricos</a></li>
-                    <li><a href="#mapa">Mapa Interativo</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Contactos</h4>
-                <ul>
-                    <li><i class="fas fa-map-marker-alt"></i> Castelo, Sesimbra, Portugal</li>
-                    <li><i class="fas fa-phone"></i> +351 212 345 678</li>
-                    <li><i class="fas fa-envelope"></i> geral@jf-castelo.pt</li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h4>Informação</h4>
-                <ul>
-                    <li><a href="#">Política de Privacidade</a></li>
-                    <li><a href="#">Termos de Utilização</a></li>
-                    <li><a href="#">Livro de Reclamações</a></li>
-                    <li><a href="#">Acessibilidade</a></li>
-                </ul>
-            </div>
+      <div class="footer-content">
+        <div class="footer-column">
+          <h4>Castelo de Sesimbra</h4>
+          <p>Uma freguesia rica em história, natureza e tradições. Entre a serra e o mar, descubra património único e
+            paisagens de tirar o fôlego.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="Youtube"><i class="fab fa-youtube"></i></a>
+          </div>
         </div>
-        <div class="footer-bottom">
-            <div class="footer-bottom-left">
-                <p>© 2026 Castelo de Sesimbra — Turismo, História e Natureza</p>
-            </div>
-            <div class="footer-bottom-right">
-                <p><i class="fas fa-user-shield"></i> Área de <strong>Administração</strong></p>
-            </div>
+        <div class="footer-column">
+          <h4>Links Rápidos</h4>
+          <ul>
+            <li><a href="../index.html">Início</a></li>
+            <li><a href="#rotas">Rotas Turísticas</a></li>
+            <li><a href="#locais">Pontos Históricos</a></li>
+            <li><a href="#mapa">Mapa Interativo</a></li>
+          </ul>
         </div>
+        <div class="footer-column">
+          <h4>Contactos</h4>
+          <ul>
+            <li><i class="fas fa-map-marker-alt"></i> Castelo, Sesimbra, Portugal</li>
+            <li><i class="fas fa-phone"></i> +351 212 345 678</li>
+            <li><i class="fas fa-envelope"></i> geral@jf-castelo.pt</li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Informação</h4>
+          <ul>
+            <li><a href="#">Política de Privacidade</a></li>
+            <li><a href="#">Termos de Utilização</a></li>
+            <li><a href="#">Livro de Reclamações</a></li>
+            <li><a href="#">Acessibilidade</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-bottom-left">
+          <p>© 2026 Castelo de Sesimbra — Turismo, História e Natureza</p>
+        </div>
+        <div class="footer-bottom-right">
+          <p><i class="fas fa-user-shield"></i> Área de <strong>Administração</strong></p>
+        </div>
+      </div>
     </div>
-</footer>
+  </footer>
 
-<button id="backToTopBtn" class="back-to-top-btn" aria-label="Voltar ao topo">
-  <i class="fas fa-arrow-up"></i>
-</button>
-
-<script type="module" src="./componentes/admin/paginaAdmin.js"></script>
-
-<script type="module" src="./componentes/componentes.js"></script>
-
+  <button id="backToTopBtn" class="back-to-top-btn" aria-label="Voltar ao topo">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+  <script type="module" src="./componentes/componentes.js"></script>
+  <script type="module" src="./componentes/editar/paginaAdmin.js"></script>
 </body>
+
 </html>

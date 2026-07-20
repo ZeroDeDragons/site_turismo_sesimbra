@@ -1,4 +1,5 @@
-import { obterDadosTurismo } from '../../serviços/api.js';
+// Importa o dataManager conforme a nova arquitetura
+import dataManager from '../../serviços/GerenciadorDados.js';
 import { MapEvents, dispararEvento } from '../mapa/mapa-eventos.js';
 import './cartao.css';
 
@@ -89,14 +90,16 @@ export class GerenciadorCartoes {
             // Se nenhum dos dois existir na página atual, não faz nada
             if (!containerLocais && !containerRotas) return;
 
-            // 2. Procura os dados unificados na API (Supabase/Cache)
-            const { locais, rotas } = await obterDadosTurismo();
+            // 2. Busca de forma assíncrona os dados em paralelo usando o DataManager
+            const [locais, rotas] = await Promise.all([
+                dataManager.getTodosLocais(),
+                dataManager.getTodasRotas()
+            ]);
 
             // 3. Verifica e renderiza os LOCAIS (se o container existir)
             if (containerLocais && locais) {
                 containerLocais.innerHTML = ""; // Limpa skeletons/gráficos antigos
                 locais.forEach(local => {
-                    // Passa o tipo 'local' para a fábrica saber como etiquetar o HTML e o evento
                     const cartao = this.criarElementoCartao(local, 'local');
                     containerLocais.appendChild(cartao);
                 });
@@ -106,7 +109,6 @@ export class GerenciadorCartoes {
             if (containerRotas && rotas) {
                 containerRotas.innerHTML = ""; // Limpa
                 rotas.forEach(rota => {
-                    // Passa o tipo 'rota' para a fábrica criar o cartão correto da rota
                     const cartao = this.criarElementoCartao(rota, 'rota');
                     containerRotas.appendChild(cartao);
                 });

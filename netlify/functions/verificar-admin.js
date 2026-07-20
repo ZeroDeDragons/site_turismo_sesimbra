@@ -1,57 +1,45 @@
-import { supabaseAdmin } from './supabaseAdmin.js';
+import { supabase } from './supabase/supabaseClient.js';
 
-/**
- * Valida o token JWT e verifica se o utilizador tem permissões de administrador.
- * @param {Object} event - O objeto event da Netlify Function.
- * @returns {Promise<{userId: string|null, errorResponse: Object|null}>}
- */
 export async function verificarAdmin(event) {
-  // 1. Extrair o token do Header Authorization
-  const authHeader = event.headers.authorization || event.headers.Authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return {
-      userId: null,
-      errorResponse: { statusCode: 401, body: JSON.stringify({ message: 'Não autorizado. Token em falta.' }) }
-    };
-  }
+    try {
+        const headers = event.headers || {};
+        const cookieHeader = headers.cookie || headers.Cookie || '';
+        
+        const token = cookieHeader
+            .split(';')
+            .map(c => c.trim())
+            .find(c => c.startsWith('sb-access-token='))
+            ?.split('=')[1];
 
-  const token = authHeader.split(' ')[1];
+        if (!token) {
+            return { eAdmin: false, userId: null, token: null, erro: 'Não autenticado.' };
+        }
 
-  try {
-    // 2. Validar o token diretamente no Supabase Auth
-    const { data: { user }, error: erroAuth } = await supabaseAdmin.auth.getUser(token);
+        // 1. Valida se o token JWT é válido e obtém o utilizador básico da Auth
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        
+        if (authError || !user) {
+            return { eAdmin: false, userId: null, token: null, erro: 'Sessão expirada.' };
+        }
 
-    if (erroAuth || !user) {
-      return {
-        userId: null,
-        errorResponse: { statusCode: 401, body: JSON.stringify({ message: 'Sessão inválida ou expirada.' }) }
-      };
+        // 2. CORREÇÃO: Consulta a tabela Perfil na base de dados para validar a coluna admin
+        // NOTA: Ajusta para 'Perfil' (com P maiúsculo) se for o caso no teu banco de dados
+        const { data: perfil, error: perfilError } = await supabase
+            .from('Perfil') 
+            .select('admin')
+            .eq('id', user.id)
+            .single();
+
+        // Se der erro, se o perfil não existir ou se a coluna admin for false -> Acesso Negado
+        if (perfilError || !perfil || perfil.admin !== true) {
+            return { eAdmin: false, userId: user.id, token: token, erro: 'Acesso negado. Não possui privilégios de administrador.' };
+        }
+
+        // Se passou em todas as verificações, o utilizador está logado E é um admin real
+        return { eAdmin: true, userId: user.id, token: token, erro: null };
+
+    } catch (err) {
+        console.error(err);
+        return { eAdmin: false, userId: null, token: null, erro: 'Erro interno no servidor.' };
     }
-
-    const userId = user.id;
-
-    // 3. Verificar o status de administrador na tabela Perfil
-    const { data: perfil, error: erroPerfil } = await supabaseAdmin
-      .from('Perfil')
-      .select('admin')
-      .eq('id', userId)
-      .single();
-
-    if (erroPerfil || !perfil || !perfil.admin) {
-      return {
-        userId: null,
-        errorResponse: { statusCode: 403, body: JSON.stringify({ message: 'Acesso negado. Apenas administradores.' }) }
-      };
-    }
-
-    // Sucesso absoluto: Retorna o userId para ser usado na criação dos registos
-    return { userId, errorResponse: null };
-
-  } catch (err) {
-    console.error('Erro crítico no middleware de autenticação:', err.message);
-    return {
-      userId: null,
-      errorResponse: { statusCode: 500, body: JSON.stringify({ message: 'Erro interno na validação de acessos.' }) }
-    };
-  }
 }

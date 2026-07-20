@@ -1,4 +1,3 @@
-// O Vite vai pré-mapear todos os arquivos .js dentro das subpastas automaticamente
 const modulosGlobais = import.meta.glob('./**/*.js');
 
 const COMPONENTES_MAPA = {
@@ -23,32 +22,13 @@ const COMPONENTES_MAPA = {
             });
         }
     },
-    'container-admin-categorias': {
-        path: './admin/categoria/admin-categorias.js',
+    'gestao-pontos': {
+        path: './editar/pontos-rotas/editar-pontos-rotas.js',
         init: (modulo, elementoAlvo) => {
-            // Auto-instancia o painel administrativo passando o elemento HTML encontrado
-            new modulo.ComponenteCategoriasAdmin(elementoAlvo);
+            modulo.inicializarEditor(elementoAlvo);
         }
     },
-    'container-admin-pontos': {
-        path: './admin/pontos/admin-pontos.js', // Ajuste o caminho conforme a sua árvore de pastas
-        init: (modulo, elementoAlvo) => {
-            // Instancia a classe passando a div correspondente do HTML
-            new modulo.ComponentePontosAdmin(elementoAlvo);
-        }
-    },
-    'container-admin-rotas': {
-        path: './admin/rotas/admin-rotas.js',
-        init: (modulo, elementoAlvo) => {
-            new modulo.ComponenteRotasAdmin(elementoAlvo);
-        }
-    },
-    'container-admin-rotas': {
-        path: './admin/rotas/admin-rotas.js',
-        init: (modulo, elementoAlvo) => {
-            new modulo.ComponenteRotasAdmin(elementoAlvo);
-        }
-    }
+
 };
 
 async function carregarComponentesNecessarios() {

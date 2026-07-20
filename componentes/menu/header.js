@@ -22,7 +22,8 @@ export async function inicializarHeader() {
 
 async function verificarSessaoNoServidor() {
     try {
-        const userData = await ChamarServidor('verificarsessao', { method: 'GET' });
+        const userData = await ChamarServidor('verificar-login', { method: 'GET' });
+        console.log('Dados do usuário recebidos do servidor:', userData);
         if (userData && userData.user) {
             perfilUtilizador = userData.user;
         } else {

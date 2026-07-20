@@ -1,10 +1,8 @@
-let cacheDadosTurismo = null;
-
 export async function ChamarServidor(functionName, options = {}) {
     const method = (options.method || 'GET').toUpperCase();
 
     try {
-        const response = await fetch(`/.netlify/functions/${functionName}`, {
+        const response = await fetch(`/api/${functionName}`, {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
@@ -26,27 +24,4 @@ export async function ChamarServidor(functionName, options = {}) {
         console.error(` Falha crítica em ${functionName}:`, error.message);
         throw error;
     }
-}
-
-export async function obterDadosTurismo(forcarAtualizacao = false) {
-    if (cacheDadosTurismo && !forcarAtualizacao) {
-        return cacheDadosTurismo;
-    }
-
-    try {
-        const dados = await ChamarServidor('mapa', { method: 'GET' });
-
-        cacheDadosTurismo = {
-            locais: dados.locais || [],
-            rotas: dados.rotas || []
-        };
-
-        return cacheDadosTurismo;
-    } catch (erro) {
-        throw erro;
-    }
-}
-
-export function limparCacheTurismo() {
-    cacheDadosTurismo = null;
 }

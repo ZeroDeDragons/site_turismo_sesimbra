@@ -1,6 +1,6 @@
-import { obterDadosTurismo } from '../../serviços/api.js';
+import dataManager from '../../serviços/GerenciadorDados.js';
 import { GerenciadorPontos } from './mapa-pontos.js';
-import { GerenciadorRotas } from './mapa-rotas.js'; // Novo
+import { GerenciadorRotas } from './mapa-rotas.js'; 
 import { MapEvents } from './mapa-eventos.js';
 
 export class ModuloMapa {
@@ -18,23 +18,24 @@ export class ModuloMapa {
         }).addTo(this.mapa);
 
         this.pontosManager = new GerenciadorPontos(this.mapa);
-        this.rotasManager = new GerenciadorRotas(this.mapa); // Novo
+        this.rotasManager = new GerenciadorRotas(this.mapa); 
 
         this.inicializarPlugins();
-        this.capturarLocalizacaoUtilizador(); // Atende ao requisito do modo autocarro
+        this.capturarLocalizacaoUtilizador();
         this.carregarDadosIniciais();
     }
 
     async carregarDadosIniciais() {
         try {
-            const { locais, rotas } = await obterDadosTurismo();
+            const locais = await dataManager.getTodosLocais();
+            const rotas = await dataManager.getTodasRotas();
+
             this.pontosManager.adicionarPontos(locais, 'local');
 
-            // Ativação da camada de rotas
             this.rotasManager.definirDadosRotas(rotas);
             await this.rotasManager.renderizarTodasAsRotas();
         } catch (erro) {
-            console.error("Erro ao carregar dados no mapa principal:", erro);
+            console.error("Erro ao carregar dados no mapa principal através do DataManager:", erro);
         }
     }
 
@@ -56,10 +57,8 @@ export class ModuloMapa {
             this.focarNoPonto(id, tipo);
         });
 
-        // Intercepta pedidos vindos de fora (ex: do botão do mapa-popup.js)
         window.addEventListener('mapa:revelar-rotas-ponto', (e) => {
             const { id } = e.detail;
-            // Filtra ou foca na rota que contém o ponto clicado
             this.rotasManager.focarEmRota(id, 'foot');
         });
 

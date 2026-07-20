@@ -35,7 +35,7 @@ async function executarProcessoLogin(botaoSubmit) {
 
     try {
         // Invoca a Netlify Function criada acima usando a sua estrutura padrão
-        const resultado = await ChamarServidor('efetuarlogin', {
+        const resultado = await ChamarServidor('login', {
             method: 'POST',
             body: { email, password }
         });

@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient.js';
+import { supabase } from './supabase/supabaseClient.js'; 
 
 export const handler = async (event, context) => {
     if (event.httpMethod !== 'POST') {
