@@ -35,7 +35,7 @@ async function executarProcessoLogin(botaoSubmit) {
 
     try {
         // Invoca a Netlify Function criada acima usando a sua estrutura padrão
-        const resultado = await ChamarServidor('login', {
+        const resultado = await ChamarServidor('efetuarlogin', {
             method: 'POST',
             body: { email, password }
         });
@@ -66,4 +66,16 @@ document.addEventListener('DOMContentLoaded', () => {
             executarProcessoLogin(botaoEntrar);
         });
     }
+});
+
+
+// Mostra/oculta password
+document.querySelectorAll('.field__toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+    var input = document.getElementById(btn.dataset.toggle);
+    var isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.querySelector('.icon-eye-off').style.display = isHidden ? 'none' : 'block';
+    btn.querySelector('.icon-eye').style.display = isHidden ? 'block' : 'none';
+    });
 });

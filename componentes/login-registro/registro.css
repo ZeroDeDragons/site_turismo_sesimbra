@@ -3,6 +3,12 @@
    e continua a ser usado nas duas páginas)
 ═══════════════════════════════════════════════════ */
 
+/* ── Puxa o conteúdo do painel para cima (só nesta página) ── */
+.login-painel {
+  justify-content: flex-start;
+  padding-top: 20px;
+}
+
 /* ── Indicador de etapas (os 3 círculos) ── */
 .steps-indicator {
   display: flex;
@@ -69,6 +75,36 @@
   padding-left: 14px;
 }
 
+/* ── Botão de mostrar/ocultar senha ── */
+.field__input--toggle {
+  padding-right: 42px;
+}
+
+.field__toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #adb5bd;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+.field__toggle:hover {
+  color: var(--clr-sea);
+}
+.field__toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 /* ── Código de confirmação: maior e espaçado, como um PIN ── */
 .codigo-input {
   letter-spacing: 8px;
@@ -91,12 +127,18 @@
   flex: 1;
 }
 
-
-
-
 /* ── Body block ── */
 .visual-body {
   position: relative;
   z-index: 1;
   margin-bottom: 50px;
+}
+
+
+.visual-sub {
+  font-size: .92rem;
+  color: rgba(255,255,255,.6);
+  line-height: 1.7;
+  max-width: 340px;
+  margin-bottom: 15px;
 }

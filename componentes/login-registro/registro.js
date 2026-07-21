@@ -168,3 +168,17 @@ btnVoltar.addEventListener('click', () => {
 });
 
 atualizarInterface();
+
+
+// ───────────────────────────────────────────────────────────
+// MOSTRA/OCULTA PASSWORD
+// ───────────────────────────────────────────────────────────
+document.querySelectorAll('.field__toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+    var input = document.getElementById(btn.dataset.toggle);
+    var isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.querySelector('.icon-eye-off').style.display = isHidden ? 'none' : 'block';
+    btn.querySelector('.icon-eye').style.display = isHidden ? 'block' : 'none';
+    });
+});
