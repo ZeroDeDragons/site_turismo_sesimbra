@@ -47,6 +47,117 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════
+   GOOGLE TRANSLATE
+═══════════════════════════════════════════════════ */
+/* ── Google Translate: motor escondido, sem interface nativa visível ── */
+.gtranslate-hidden {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  height: 0;
+  overflow: hidden;
+}
+.goog-te-banner-frame { display: none !important; }
+
+/* ── Esconde por completo a barra do Google Translate ── */
+iframe.goog-te-banner-frame, .goog-te-banner-frame.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+
+body {
+  top: 0 !important;
+  position: static !important;
+}
+
+.skiptranslate iframe {
+  display: none !important;
+}
+
+
+/* ── Seletor de idioma (visual próprio) ── */
+.lang-switch {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999;
+}
+.lang-switch__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 74px;
+  padding: 9px 14px;
+  background: #fff;
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-pill);
+  color: var(--clr-ink);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.lang-switch__btn:hover {
+  border-color: var(--clr-sea);
+}
+.lang-switch__btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.lang-switch__caret {
+  width: 12px !important;
+  height: 12px !important;
+  transition: transform var(--transition);
+}
+.lang-switch.is-open .lang-switch__caret {
+  transform: rotate(180deg);
+}
+.lang-switch__menu {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 150px;
+  max-height: 320px;
+  background: #fff;
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  overflow: hidden;
+  overflow-y: auto;
+  padding: 6px;
+}
+.lang-switch.is-open .lang-switch__menu {
+  display: flex;
+}
+.lang-switch__item {
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--ff-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--clr-mid);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.lang-switch__item:hover {
+  background: var(--clr-bg);
+  color: var(--clr-ink);
+}
+.lang-switch__item.is-active {
+  color: var(--clr-sea);
+  background: var(--clr-sea-faint);
+}
+
+/* ═══════════════════════════════════════════════════
    VISUAL PANEL (left)
 ═══════════════════════════════════════════════════ */
 .visual-login {
