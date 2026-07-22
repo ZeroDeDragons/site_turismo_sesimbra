@@ -13,6 +13,51 @@
 
 <body>
 
+<!-- ── Google Translate (motor escondido) ───────────────────── -->
+<div id="google_translate_element" class="gtranslate-hidden"></div>
+<script>
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement(
+      { pageLanguage: 'pt', includedLanguages: 'pt,en,es,fr,de,it,zh-CN,ja,ko,th,ru,sv,tr,no,pl,fi,uk', layout: google.translate.TranslateElement.InlineLayout.SIMPLE },
+      'google_translate_element'
+    );
+  }
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+
+<!-- ── Seletor de idioma (visual próprio) ───────────────────── -->
+<div class="lang-switch">
+  <button class="lang-switch__btn" id="langBtn" type="button" aria-haspopup="true" aria-expanded="false">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="10" cy="10" r="7.5"/>
+      <path d="M2.5 10h15M10 2.5c2.2 2 3.4 4.8 3.4 7.5s-1.2 5.5-3.4 7.5c-2.2-2-3.4-4.8-3.4-7.5S7.8 4.5 10 2.5Z"/>
+    </svg>
+    <span id="langLabel">PT</span>
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" class="lang-switch__caret">
+      <path d="M5 7.5 10 12.5 15 7.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <div class="lang-switch__menu" id="langMenu">
+    <button type="button" class="lang-switch__item" data-lang="pt">Português</button>
+    <button type="button" class="lang-switch__item" data-lang="en">Inglês</button>
+    <button type="button" class="lang-switch__item" data-lang="es">Espanhol</button>
+    <button type="button" class="lang-switch__item" data-lang="fr">Francês</button>
+    <button type="button" class="lang-switch__item" data-lang="de">Alemão</button>
+    <button type="button" class="lang-switch__item" data-lang="it">Italiano</button>
+    <button type="button" class="lang-switch__item" data-lang="zh-CN">Chinês</button>
+    <button type="button" class="lang-switch__item" data-lang="ja">Japonês</button>
+    <button type="button" class="lang-switch__item" data-lang="ko">Coreano</button>
+    <button type="button" class="lang-switch__item" data-lang="th">Tailandês</button>
+    <button type="button" class="lang-switch__item" data-lang="ru">Russo</button>
+    <button type="button" class="lang-switch__item" data-lang="sv">Sueco</button>
+    <button type="button" class="lang-switch__item" data-lang="tr">Turco</button>
+    <button type="button" class="lang-switch__item" data-lang="no">Norueguês</button>
+    <button type="button" class="lang-switch__item" data-lang="pl">Polaco</button>
+    <button type="button" class="lang-switch__item" data-lang="fi">Finlandês</button>
+    <button type="button" class="lang-switch__item" data-lang="uk">Ucraniano</button>
+  </div>
+</div>
+
   <!-- ── Painel visual (esquerda) ─────────────────────────────── -->
   <div class="visual-login">
     <a href="#" class="visual-logo">Concelho<span>Sesimbra</span></a>
