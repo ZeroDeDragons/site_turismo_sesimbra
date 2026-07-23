@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login · ConcelhoSesimbra</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="icon" type="image/png" href="Imagens/logo.png">
   <link href="./componentes/login-registro/global.css" rel="stylesheet">
   <link href="./componentes/login-registro/login.css" rel="stylesheet">
@@ -13,7 +14,7 @@
 
 <body>
 
-<!-- ── Google Translate (motor escondido) ───────────────────── -->
+<!-- ── Google Translate ───────────────────── -->
 <div id="google_translate_element" class="gtranslate-hidden"></div>
 <script>
   function googleTranslateElementInit() {
@@ -25,7 +26,7 @@
 </script>
 <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
 
-<!-- ── Seletor de idioma (visual próprio) ───────────────────── -->
+<!-- ── Seletor de idioma ───────────────────── -->
 <div class="lang-switch">
   <button class="lang-switch__btn" id="langBtn" type="button" aria-haspopup="true" aria-expanded="false">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -33,9 +34,7 @@
       <path d="M2.5 10h15M10 2.5c2.2 2 3.4 4.8 3.4 7.5s-1.2 5.5-3.4 7.5c-2.2-2-3.4-4.8-3.4-7.5S7.8 4.5 10 2.5Z"/>
     </svg>
     <span id="langLabel">PT</span>
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" class="lang-switch__caret">
-      <path d="M5 7.5 10 12.5 15 7.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <i class="fas fa-chevron-down"></i>
   </button>
   <div class="lang-switch__menu" id="langMenu">
     <button type="button" class="lang-switch__item" data-lang="pt">Português</button>
