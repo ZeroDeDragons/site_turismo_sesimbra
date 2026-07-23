@@ -66,6 +66,10 @@ function configurarEventosHeaderGlobais() {
     document.removeEventListener('click', gerirCliquesHeader);
     document.addEventListener('click', gerirCliquesHeader);
 
+    // Google Translate: inicializa só agora, porque só agora o header
+    // (com #langBtn, #langMenu, etc.) está de facto no DOM.
+    inicializarSeletorIdioma();
+
     document.body.onmouseover = (e) => {
         const navItem = e.target.closest('.user-nav-item');
         if (navItem && perfilUtilizador) {
@@ -149,12 +153,93 @@ async function efetuarLogout() {
         // O próprio servidor vai expirar o cookie HttpOnly ao receber esta chamada POST
         await ChamarServidor('logout', { method: 'POST' });
         perfilUtilizador = null;
-        
+
         // REMOVIDO: localStorage.removeItem('access_token'); (Não é mais necessário!)
-        localStorage.removeItem('user_info'); 
-        
+        localStorage.removeItem('user_info');
+
         window.location.reload();
     } catch (error) {
         alert('Erro ao efetuar logout: ' + error.message);
     }
+}
+
+/* ═══════════════════════════════════════════════════
+   GOOGLE TRANSLATE
+═══════════════════════════════════════════════════ */
+const LANG_KEY = 'siteLang';
+let googleScriptCarregado = false;
+
+function carregarScriptGoogleTranslate() {
+    if (googleScriptCarregado) return;
+    googleScriptCarregado = true;
+
+    window.googleTranslateElementInit = function () {
+        new google.translate.TranslateElement(
+            {
+                pageLanguage: 'pt',
+                includedLanguages: 'pt,en,es,fr,de,it,zh-CN,ja,ko,th,ru,sv,tr,no,pl,fi,uk',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            },
+            'google_translate_element'
+        );
+    };
+
+    const script = document.createElement('script');
+    script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    script.async = true;
+    document.body.appendChild(script);
+}
+
+function setLangCookie(lang) {
+    const value = '/pt/' + lang;
+    document.cookie = 'googtrans=' + value + ';path=/';
+    document.cookie = 'googtrans=' + value + ';path=/;domain=' + window.location.hostname;
+}
+
+function currentLang() {
+    return localStorage.getItem(LANG_KEY) || 'pt';
+}
+
+function applyLang(lang, reload) {
+    localStorage.setItem(LANG_KEY, lang);
+    const label = document.getElementById('langLabel');
+    if (label) label.textContent = lang.toUpperCase();
+    document.querySelectorAll('.lang-switch__item').forEach(function (item) {
+        item.classList.toggle('is-active', item.dataset.lang === lang);
+    });
+    if (lang === 'pt') {
+        document.cookie = 'googtrans=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+    } else {
+        setLangCookie(lang);
+    }
+    if (reload) window.location.reload();
+}
+
+function inicializarSeletorIdioma() {
+    carregarScriptGoogleTranslate();
+    applyLang(currentLang(), false);
+
+    const wrap = document.querySelector('.lang-switch');
+    const btn = document.getElementById('langBtn');
+    if (!wrap || !btn) return;
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        wrap.classList.toggle('is-open');
+    });
+
+    document.addEventListener('click', function () {
+        wrap.classList.remove('is-open');
+    });
+
+    document.querySelectorAll('.lang-switch__item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            applyLang(item.dataset.lang, true);
+        });
+    });
+
+    // Impede o Google de voltar a empurrar a página para baixo
+    new MutationObserver(function () {
+        document.body.style.top = '0px';
+    }).observe(document.body, { attributes: true, attributeFilter: ['style'] });
 }

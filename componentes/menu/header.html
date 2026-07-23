@@ -1,35 +1,67 @@
 <link rel="stylesheet" href="componentes/header.css">
 <header>
-    <div class="container">
-        <div class="navbar">
-            <a href="#" class="logo">Concelho<span>Sesimbra</span></a>
-            <ul class="nav-links" id="navLinks">
-                <li class="user-nav-item">
-                    <div class="user-header-btn" id="botao_usuario">
-                        <i class="fas fa-user-circle"></i>
-                        <span class="user-header-name">Visitante</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="user-header-dropdown" id="userHeaderDropdown">
-                        <button class="dropdown-item" id="botao_inicio">
-                            <i class="fas fa-home"></i> Início
-                        </button>
-                        <button class="dropdown-item" id="botao_patrimonio">
-                            <i class="fas fa-landmark"></i> Património
-                        </button>
-                        <button class="dropdown-item" id="botao_perfil">
-                            <i class="fas fa-user"></i> Meu Perfil
-                        </button>
-                        <button class="dropdown-item" id="botao_admin">
-                            <i class="fas fa-user-shield"></i> Página de Administração
-                        </button>
-                        <hr class="dropdown-divider">
-                        <button class="dropdown-item logout-item" id="botao_login">
-                            <i class="fas fa-sign-out-alt"></i> Sair
-                        </button>
-                    </div>
-                </li>
-            </ul>
+
+  <!-- ── Google Translate (motor escondido) ───────────────────── -->
+  <div id="google_translate_element" class="gtranslate-hidden"></div>
+
+  <div class="container">
+    <div class="navbar">
+      <a href="#" class="logo">Concelho<span>Sesimbra</span></a>
+
+      <div class="navbar-actions">
+        <!-- ── Seletor de idioma ── -->
+        <div class="lang-switch">
+          <button class="lang-switch__btn" id="langBtn" type="button" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h8v6.5H6.5L4 12V9.5H3V3Z"/>
+              <text x="5" y="8" font-size="5" font-family="sans-serif" stroke="none" fill="currentColor">文</text>
+              <path d="M17.5 3.5c2 .4 3.3 2 3.3 4S19.5 11 17.5 11.3"/>
+              <path d="M13 14.5h8v6.5h-4.5L14 24v-2.5h-1v-7Z"/>
+              <text x="16" y="19.5" font-size="5.5" font-family="sans-serif" stroke="none" fill="currentColor">A</text>
+              <path d="M6.5 20.5c-2-.4-3.3-2-3.3-4s1.3-3.7 3.3-4"/>
+            </svg>
+            <span id="langLabel">PT</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="lang-switch__menu" id="langMenu">
+            <button type="button" class="lang-switch__item" data-lang="pt">Português</button>
+            <button type="button" class="lang-switch__item" data-lang="en">Inglês</button>
+            <button type="button" class="lang-switch__item" data-lang="es">Espanhol</button>
+            <button type="button" class="lang-switch__item" data-lang="fr">Francês</button>
+            <button type="button" class="lang-switch__item" data-lang="de">Alemão</button>
+            <button type="button" class="lang-switch__item" data-lang="it">Italiano</button>
+            <button type="button" class="lang-switch__item" data-lang="zh-CN">Chinês</button>
+            <button type="button" class="lang-switch__item" data-lang="ja">Japonês</button>
+            <button type="button" class="lang-switch__item" data-lang="ko">Coreano</button>
+            <button type="button" class="lang-switch__item" data-lang="th">Tailandês</button>
+            <button type="button" class="lang-switch__item" data-lang="ru">Russo</button>
+            <button type="button" class="lang-switch__item" data-lang="sv">Sueco</button>
+            <button type="button" class="lang-switch__item" data-lang="tr">Turco</button>
+            <button type="button" class="lang-switch__item" data-lang="no">Norueguês</button>
+            <button type="button" class="lang-switch__item" data-lang="pl">Polaco</button>
+            <button type="button" class="lang-switch__item" data-lang="fi">Finlandês</button>
+            <button type="button" class="lang-switch__item" data-lang="uk">Ucraniano</button>
+          </div>
         </div>
+
+        <ul class="nav-links" id="navLinks">
+          <li class="user-nav-item">
+            <div class="user-header-btn" id="botao_usuario">
+              <i class="fas fa-user-circle"></i>
+              <span class="user-header-name">Visitante</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="user-header-dropdown" id="userHeaderDropdown">
+              <button class="dropdown-item" id="botao_inicio"><i class="fas fa-home"></i> Início</button>
+              <button class="dropdown-item" id="botao_patrimonio"><i class="fas fa-landmark"></i> Património</button>
+              <button class="dropdown-item" id="botao_perfil"><i class="fas fa-user"></i> Meu Perfil</button>
+              <button class="dropdown-item" id="botao_admin"><i class="fas fa-user-shield"></i> Página de Administração</button>
+              <hr class="dropdown-divider">
+              <button class="dropdown-item logout-item" id="botao_login"><i class="fas fa-sign-out-alt"></i> Sair</button>
+            </div>
+          </li>
+        </ul>
+      </div>
     </div>
+  </div>
 </header>
